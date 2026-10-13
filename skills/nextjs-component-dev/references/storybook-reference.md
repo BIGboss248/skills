@@ -43,4 +43,4 @@ All Storybook stories must strictly export four canonical variants styled with s
 
 ## 4. `NextIntlClientProvider` & Progress Link Wrapping
 
-If the component renders localized copy or navigation links (`next-intl` or `@vercel/react-transition-progress`), wrap the story decorator with `NextIntlClientProvider` and `ProgressBarProvider` to prevent `No intl context found` runtime errors.
+If the component renders localized copy or navigation links (`next-intl` or `react-transition-progress`), wrap the story decorator with `NextIntlClientProvider` and `ProgressBarProvider` to prevent `No intl context found` runtime errors.

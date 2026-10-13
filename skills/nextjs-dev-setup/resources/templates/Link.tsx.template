@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Link as I18nLink } from "@/i18n/navigation";
-import { useProgress } from "@vercel/react-transition-progress";
+import { useProgress } from "react-transition-progress";
 
 export interface LinkProps extends React.ComponentProps<typeof I18nLink> {
   /**
@@ -16,7 +16,7 @@ export interface LinkProps extends React.ComponentProps<typeof I18nLink> {
 
 /**
  * Composite Link component combining localized routing from `next-intl`
- * with automatic top route progress bar triggering from `@vercel/react-transition-progress`.
+ * with automatic top route progress bar triggering from `react-transition-progress`.
  *
  * Supports optimized Next.js App Router prefetching:
  * - Default (`prefetch={null}`): Bounded $O(\text{routes})$ App Shell prefetch.

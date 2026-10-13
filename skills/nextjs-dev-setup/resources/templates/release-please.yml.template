@@ -68,9 +68,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-
 
-      # 4. Execute End-to-End browser tests against built app
+      # 4. Execute End-to-End browser tests against running app
       - name: Run Playwright E2E Tests
         run: pnpm test:e2e
+
+      # 5. Next.js Production Build Validation
+      - name: Build Next.js Application
+        run: pnpm run build
 
   release-please:
     name: Release Please Automation
