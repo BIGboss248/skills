@@ -1,0 +1,35 @@
+services:
+  nextjs-app:
+    image: ghcr.io/<lowercase-repo-owner>/<lowercase-repo-name>:${IMAGE_TAG:-latest}
+    container_name: ${CONTAINER_NAME:-nextjs-standalone-app}
+    restart: always
+    stop_grace_period: 30s
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    environment:
+      - NODE_ENV=production
+      - HOSTNAME=0.0.0.0
+      - PORT=${PORT:-3000}
+      - NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY:-}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "fetch(''http://127.0.0.1:'' + (process.env.PORT || 3000) + ''/api/health'').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"',
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "traefik.enable=true"
+      # Dynamic route rule matching primary domain and www subdomain from environment variables
+      - "traefik.http.routers.${TRAEFIK_ROUTER_NAME:-nextjs-app}.rule=Host(`${DOMAIN_NAME:-localhost}`) || Host(`www.${DOMAIN_NAME:-localhost}`)"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_NAME:-nextjs-app}.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_NAME:-nextjs-app}.tls=${TRAEFIK_TLS_ENABLED:-true}"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_NAME:-nextjs-app}.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
+      # Target internal service port
+      - "traefik.http.services.${TRAEFIK_ROUTER_NAME:-nextjs-app}.loadbalancer.server.port=${PORT:-3000}"
+      # Anti-buffering middleware to preserve React Suspense streaming & Partial Prerendering (PPR)
+      - "traefik.http.middlewares.nextjs-stream-headers.headers.customresponseheaders.X-Accel-Buffering=no"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_NAME:-nextjs-app}.middlewares=nextjs-stream-headers"

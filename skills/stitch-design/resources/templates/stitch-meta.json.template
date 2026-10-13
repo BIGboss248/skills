@@ -1,0 +1,9 @@
+{
+  "projectId": "<stitchProjectId>",
+  "screenId": "<screenId>",
+  "screenName": "projects/<projectId>/screens/<screenId>",
+  "deviceType": "DESKTOP",
+  "generationPrompt": "<synthesizedPrompt>",
+  "variantIds": ["<variantScreenId1>"]
+}
+

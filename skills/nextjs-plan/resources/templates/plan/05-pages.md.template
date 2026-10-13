@@ -1,0 +1,97 @@
+# Phase 5: Pages & Component Implementation Checklists
+
+> [!IMPORTANT]
+> **Single Source of Truth**: This file contains the canonical inventory of all application pages, sections, child components, and page-level SEO/support files.
+> **Unique Design Principle**: Components are designed uniquely for each page and section without being forced into rigid pre-made templates.
+> **Mandatory Page Infrastructure & SEO Tasks**: For EVERY page, the agent must check and implement:
+> 1. `page.tsx` (Page view & layout assembly)
+> 2. `loading.tsx` (Route streaming skeleton fallback)
+> 3. `error.tsx` (Nested route error boundary)
+> 4. `generateMetadata` / `metadata` (Localized title, description, OpenGraph & Twitter cards)
+> 5. `JSON-LD Schema` (Structured data for search crawlers)
+> 6. `generateStaticParams()` (Static route parameters if dynamic/localized route)
+> **Page Completion Rule**: A page checklist item is ticked off (`- [x]`) **IF AND ONLY WHEN all of its individual component sub-checklist items and page infrastructure/SEO tasks are completed**.
+
+---
+
+## Canonical Page & Component Inventory
+
+- [ ] **Page: Home (`/`)**
+  - [ ] **Page Infrastructure & SEO**
+    - [ ] `page.tsx` - Page view and layout assembly
+    - [ ] `loading.tsx` - Streaming loading skeleton fallback
+    - [ ] `error.tsx` - Nested route error boundary
+    - [ ] `generateMetadata` - Localized title, description, and OpenGraph/Twitter cards
+    - [ ] `JSON-LD Schema` - Structured data (`WebSite` / `Person`)
+    - [ ] `generateStaticParams()` - Static locale params generation
+  - [ ] **Section: Global Navigation / Header**
+    - [ ] `SiteNavbar` - Brand header with desktop navigation links
+    - [ ] `MobileNavDrawer` - Slide-out navigation menu for mobile viewports
+    - [ ] `LocaleSwitcher` - Language selector dropdown
+    - [ ] `ThemeToggle` - Dark / light mode switcher
+  - [ ] **Section: Hero**
+    - [ ] `HeroHeadline` - Core value proposition and intro copy
+    - [ ] `AvailabilityBadge` - Work status indicator pill
+    - [ ] `HeroMotionGraphic` - Animated systems visual or interactive hero asset
+    - [ ] `PrimaryActions` - Call-to-action button group
+  - [ ] **Section: Featured Projects**
+    - [ ] `FeaturedProjectsGrid` - Responsive card container for top projects
+    - [ ] `ProjectCard` - Showcase card with preview, tech tags, and metric highlights
+  - [ ] **Section: Interactive Features**
+    - [ ] `FeatureLauncher` - Feature section container
+    - [ ] `ToolQuickCard` - Interactive tool card with live status & trigger
+  - [ ] **Section: Trust Signals & Credentials**
+    - [ ] `CredentialsBar` - Verified credentials, degrees, and certifications
+    - [ ] `MetricHighlightList` - Production benchmark callouts
+  - [ ] **Section: Global Footer**
+    - [ ] `SiteFooter` - Author bio, contact links, copyright, and social links
+
+- [ ] **Page: About (`/about`)**
+  - [ ] **Page Infrastructure & SEO**
+    - [ ] `page.tsx` - Page view and layout assembly
+    - [ ] `loading.tsx` - Streaming loading skeleton fallback
+    - [ ] `error.tsx` - Nested route error boundary
+    - [ ] `generateMetadata` - Localized title, description, and OpenGraph/Twitter cards
+    - [ ] `JSON-LD Schema` - Structured data (`ProfilePage` / `Person`)
+    - [ ] `generateStaticParams()` - Static locale params generation
+  - [ ] **Section: Biography & Philosophy**
+    - [ ] `BioContent` - Professional narrative and engineering philosophy
+    - [ ] `SkillMatrix` - Categorized competencies and technology pills
+  - [ ] **Section: Career & Timeline**
+    - [ ] `TimelineCard` - Career and education milestones
+    - [ ] `CertBadgeList` - Vendor and research credential tokens
+
+- [ ] **Page: Projects Archive (`/projects`)**
+  - [ ] **Page Infrastructure & SEO**
+    - [ ] `page.tsx` - Page view and layout assembly
+    - [ ] `loading.tsx` - Streaming loading skeleton fallback
+    - [ ] `error.tsx` - Nested route error boundary
+    - [ ] `generateMetadata` - Localized title, description, and OpenGraph/Twitter cards
+    - [ ] `JSON-LD Schema` - Structured data (`CollectionPage`)
+    - [ ] `generateStaticParams()` - Static locale params generation
+  - [ ] **Section: Filter & Search**
+    - [ ] `ProjectFilterBar` - Category, domain, and tech stack filter buttons
+    - [ ] `ProjectSearchBar` - Real-time keyword filter
+  - [ ] **Section: Case Studies**
+    - [ ] `CaseStudyCard` - Deep-dive project overview card
+    - [ ] `MetricHighlight` - Highlighted project outcomes and benchmark stats
+
+- [ ] **Page: Contact (`/contact`)**
+  - [ ] **Page Infrastructure & SEO**
+    - [ ] `page.tsx` - Page view and layout assembly
+    - [ ] `loading.tsx` - Streaming loading skeleton fallback
+    - [ ] `error.tsx` - Nested route error boundary
+    - [ ] `generateMetadata` - Localized title, description, and OpenGraph/Twitter cards
+    - [ ] `JSON-LD Schema` - Structured data (`ContactPage`)
+    - [ ] `generateStaticParams()` - Static locale params generation
+  - [ ] **Section: Inquiry Channels**
+    - [ ] `ContactForm` - Accessible inquiry form with input validation
+    - [ ] `DirectContactCard` - Direct email, timezone, and booking link
+
+- [ ] **Page: System & Error Pages**
+  - [ ] **Section: 404 Not Found (`not-found.tsx`)**
+    - [ ] `NotFoundHero` - Branded creative 404 headline
+    - [ ] `RecoveryNavigation` - Quick recovery links
+  - [ ] **Section: Global Error Boundary (`error.tsx` / `global-error.tsx`)**
+    - [ ] `ErrorDisplayCard` - Privacy-conscious error notice
+    - [ ] `ResetErrorBoundaryButton` - Retry button calling `reset()`

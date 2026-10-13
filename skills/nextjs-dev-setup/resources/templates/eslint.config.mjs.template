@@ -1,0 +1,52 @@
+import storybook from "eslint-plugin-storybook";
+import shadcn from "@shadcn/lint";
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
+
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  globalIgnores([
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+    "storybook-static/**",
+  ]),
+  ...storybook.configs["flat/recommended"],
+  {
+    plugins: {
+      shadcn,
+    },
+    rules: {
+      "shadcn/no-restyle": [
+        "error",
+        {
+          allow: ["layout"],
+          contracts: [
+            // Sample component contract exception:
+            // { pattern: "^Button$", allow: ["w-full", "mt-*", "mb-*"] },
+          ],
+        },
+      ],
+      "shadcn/no-raw-colors": "error",
+      "shadcn/no-arbitrary-values": "error",
+      "shadcn/no-unknown-classes": "error",
+      "shadcn/no-inline-styles": "error",
+      "shadcn/require-static-classes": "error",
+    },
+  },
+  {
+    // Turn off restyle, arbitrary values & static class checks in primitive UI directories so components can style themselves
+    files: ["app/components/ui/**", "components/ui/**", "src/components/ui/**"],
+    rules: {
+      "shadcn/no-restyle": "off",
+      "shadcn/no-arbitrary-values": "off",
+      "shadcn/require-static-classes": "off",
+    },
+  },
+]);
+
+export default eslintConfig;
+

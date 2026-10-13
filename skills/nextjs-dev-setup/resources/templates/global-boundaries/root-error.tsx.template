@@ -1,0 +1,35 @@
+"use client";
+
+import * as React from "react";
+import { useTranslations } from "next-intl";
+
+export default function RootError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  const t = useTranslations("errors.runtime");
+
+  React.useEffect(() => {
+    console.error("[RootError]", error);
+  }, [error]);
+
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center p-6 text-center">
+      <h2 className="text-2xl font-bold text-foreground">
+        {t("title") || "Something went wrong"}
+      </h2>
+      <p className="mt-2 text-sm text-muted-foreground max-w-md">
+        {t("description") || "An unexpected error occurred while loading this section."}
+      </p>
+      <button
+        onClick={() => reset()}
+        className="mt-6 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition hover:opacity-90"
+      >
+        {t("retry") || "Try again"}
+      </button>
+    </div>
+  );
+}

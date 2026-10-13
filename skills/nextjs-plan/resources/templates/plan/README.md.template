@@ -1,0 +1,29 @@
+# Master Implementation Plan
+
+A modular, chronological roadmap tracking all milestones from empty workspace to production release.
+
+---
+
+## Phase Summary & Progress Dashboard
+
+| Phase | Milestone | File Link | Status |
+| :---: | :--- | :--- | :---: |
+| **01** | Discovery & Route Architecture | [01-discovery-and-architecture.md](./01-discovery-and-architecture.md) | Pending |
+| **02** | Environment, Testing & CI/CD | [02-environment-and-cicd.md](./02-environment-and-cicd.md) | Pending |
+| **03** | System Health Monitoring Probe | [03-system-health-probe.md](./03-system-health-probe.md) | Pending |
+| **04** | Core Foundations & Runtime | [04-core-foundations.md](./04-core-foundations.md) | Pending |
+| **05** | Pages & Component Implementation Checklists | [05-pages-and-components.md](./05-pages-and-components.md) | Pending |
+| **06** | Server Functions & Global SEO Metadata | [06-server-functions-and-metadata.md](./06-server-functions-and-metadata.md) | Pending |
+| **07** | Integrations & Production Release | [07-integrations-and-release.md](./07-integrations-and-release.md) | Pending |
+
+---
+
+## Quick Navigation
+
+- **Phase 1**: [Discovery & Strategy](./01-discovery-and-architecture.md)
+- **Phase 2**: [Dev Setup, Testing & CI/CD](./02-environment-and-cicd.md)
+- **Phase 3**: [System Health Probe Verification](./03-system-health-probe.md)
+- **Phase 4**: [Env Vars, i18n, Theme Tokens, Layout Shells & OTel](./04-core-foundations.md)
+- **Phase 5**: [Pages, Components, SEO & Support Files](./05-pages-and-components.md)
+- **Phase 6**: [Server Actions, Form Handlers & Global Metadata](./06-server-functions-and-metadata.md)
+- **Phase 7**: [Analytics, Resend & Release Automation](./07-integrations-and-release.md)

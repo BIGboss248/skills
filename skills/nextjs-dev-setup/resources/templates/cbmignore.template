@@ -1,0 +1,50 @@
+# codebase-memory-mcp ignore rules (.cbmignore)
+# High-churn documents & conversation logs
+.agents/
+docs/
+*.md
+
+# Next.js build outputs and compiler caches
+.next/
+out/
+build/
+dist/
+.swc/
+
+# Storybook and Playwright outputs
+storybook-static/
+*storybook.log
+playwright-report/
+test-results/
+blob-report/
+.playwright-mcp/
+/playwright/.cache/
+/playwright/.auth/
+
+# Codebase Memory artifact itself
+.codebase-memory/
+
+# Test coverage and system logs
+coverage/
+*.log
+*.tsbuildinfo
+
+# Static public assets (zero code symbols)
+public/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.webp
+*.mp4
+*.mp3
+*.pdf
+
+# Environment & lockfiles
+.env*
+*.pem
+*.lock
+pnpm-lock.yaml
+

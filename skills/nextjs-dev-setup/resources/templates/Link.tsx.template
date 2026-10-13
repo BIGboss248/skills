@@ -1,0 +1,50 @@
+"use client";
+
+import * as React from "react";
+import { Link as I18nLink } from "@/i18n/navigation";
+import { useProgress } from "@vercel/react-transition-progress";
+
+export interface LinkProps extends React.ComponentProps<typeof I18nLink> {
+  /**
+   * Prefetch strategy:
+   * - `null` / `undefined` (default): Prefetches shared App Shell (layout + static chrome). Zero per-link server invocations. Ideal for dense feeds and lists.
+   * - `true`: Prefetches App Shell AND server-evaluates dynamic `params` / `searchParams` with 1 server invocation. Best for high-intent primary CTAs.
+   * - `false`: Disables viewport prefetching.
+   */
+  prefetch?: boolean | null;
+}
+
+/**
+ * Composite Link component combining localized routing from `next-intl`
+ * with automatic top route progress bar triggering from `@vercel/react-transition-progress`.
+ *
+ * Supports optimized Next.js App Router prefetching:
+ * - Default (`prefetch={null}`): Bounded $O(\text{routes})$ App Shell prefetch.
+ * - `prefetch={true}`: Full dynamic URL data prefetch for instant zero-skeleton transitions.
+ */
+export function Link({ href, prefetch, onClick, children, ...props }: LinkProps) {
+  const startProgress = useProgress();
+
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+    if (onClick) onClick(e);
+
+    // Only start progress bar if event was not prevented and target is an internal app route
+    if (
+      !e.defaultPrevented &&
+      typeof href === "string" &&
+      !href.startsWith("http") &&
+      !href.startsWith("#") &&
+      !href.startsWith("mailto:") &&
+      !href.startsWith("tel:")
+    ) {
+      startProgress();
+    }
+  };
+
+  return (
+    <I18nLink href={href} prefetch={prefetch} onClick={handleClick} {...props}>
+      {children}
+    </I18nLink>
+  );
+}
+

@@ -1,0 +1,88 @@
+# ==============================================================================
+# Nginx Configuration Template for Next.js App Router (Self-Hosted HTTPS)
+# Place in: /etc/nginx/sites-available/<domain>
+# Symlink to: /etc/nginx/sites-enabled/<domain>
+# ==============================================================================
+
+# Next.js Upstream Server Pool
+upstream nextjs_upstream {
+    server 127.0.0.1:3000;
+    keepalive 64;
+}
+
+# ------------------------------------------------------------------------------
+# 1. HTTP Server Block: Redirect all HTTP traffic to HTTPS
+# ------------------------------------------------------------------------------
+server {
+    listen 80;
+    listen [::]:80;
+    server_name <domain> www.<domain>;
+
+    # Certbot ACME challenge directory for automatic renewals
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    # Redirect all HTTP requests to HTTPS permanently
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# ------------------------------------------------------------------------------
+# 2. HTTPS Server Block: Next.js Reverse Proxy with SSL & Anti-Buffering
+# ------------------------------------------------------------------------------
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name <domain> www.<domain>;
+
+    # Certbot SSL Certificates
+    ssl_certificate /etc/letsencrypt/live/<domain>/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/<domain>/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    # Security & Size Limits
+    client_max_body_size 10M;
+
+    # --------------------------------------------------------------------------
+    # Next.js Immutable Static Chunks & Media Caching
+    # --------------------------------------------------------------------------
+    location /_next/static/ {
+        proxy_pass http://nextjs_upstream;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    # --------------------------------------------------------------------------
+    # Next.js Application Root Proxy (Suspense Streaming & Server Actions)
+    # --------------------------------------------------------------------------
+    location / {
+        proxy_pass http://nextjs_upstream;
+        proxy_http_version 1.1;
+
+        # Anti-Buffering for React Suspense Streaming & Partial Prerendering (PPR)
+        proxy_buffering off;
+        proxy_request_buffering off;
+        proxy_set_header X-Accel-Buffering "no";
+
+        # Standard Forwarding Headers (Critical for Server Actions & CSRF validation)
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
+
+        # WebSocket & HMR Connection Upgrade Support
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        # Request Timeouts & Graceful Drain
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+}

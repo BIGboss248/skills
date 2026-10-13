@@ -1,0 +1,37 @@
+# Project Strategy Brief
+
+## 1. Executive Summary & Purpose
+- **Project Name**: [Project Name]
+- **Core Value Proposition**: [The single most compelling reason this project exists]
+- **Primary Objective**: [High-level target: lead generation, portfolio demonstration, SaaS platform]
+- **Website Category**: [Portfolio / SaaS / Ecommerce / Content Media / Educational]
+
+---
+
+## 2. Target Audience & Personas
+- **Persona A (Primary)**:
+  - Role / Profile: [e.g. Technical Hiring Manager, Engineering Director]
+  - Goals: [e.g. Evaluate technical depth, system architecture rigor, code cleanliness]
+  - Pain Points: [e.g. Generic portfolios without live demos or reproducible benchmarks]
+- **Persona B (Secondary)**:
+  - Role / Profile: [e.g. Open-source Collaborators, Peer Engineers]
+  - Goals: [e.g. Inspect lab tools, research papers, reproducible configs]
+
+---
+
+## 3. Quantifiable Goals & Success Metrics (KPIs)
+- **Performance Targets**:
+  - Lighthouse Performance: $\ge 95$ across all viewports
+  - Largest Contentful Paint (LCP): $\le 1.2\text{s}$
+  - Cumulative Layout Shift (CLS): $0.00$
+  - First Input Delay / INP: $\le 100\text{ms}$
+- **Engagement & Conversion Targets**:
+  - Inquiries / Contact form completions
+  - Direct lab prober runs and benchmark inspections
+
+---
+
+## 4. Competitive Benchmarks & Reference Sites
+- **Reference 1**: [URL] — Key takeaways (Visual density, micro-interactions, dark aesthetic).
+- **Reference 2**: [URL] — Key takeaways (Type hierarchy, interactive playground layout).
+

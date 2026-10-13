@@ -1,0 +1,29 @@
+/**
+ * Centralized Site Configuration & Metadata Profile
+ * Consumed by layout metadata, sitemap, robots, JSON-LD schema, and UI footers.
+ */
+
+export const SITE_CONFIG = {
+  name: "Amin Jamali",
+  title: "Amin Jamali | Full-Stack Engineer & Systems Architect",
+  description:
+    "Personal portfolio, interactive engineering lab, and digital credentials platform.",
+  baseUrl: process.env.NEXT_PUBLIC_BASE_URL || "https://aminjamali.com",
+  contact: {
+    email: "aminjamali248@gmail.com",
+    timezone: "Asia/Tehran (UTC+3:30)",
+    availability: "Available for contract & full-time roles",
+  },
+  social: {
+    github: "https://github.com/BIGboss248",
+    linkedin: "https://www.linkedin.com/in/amin-jamali2000",
+    orcid: "https://orcid.org/0009-0004-9921-7273",
+  },
+  credentials: {
+    orcidId: "0009-0004-9921-7273",
+    publications: [],
+  },
+} as const;
+
+export type SiteConfig = typeof SITE_CONFIG;
+

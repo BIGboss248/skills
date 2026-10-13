@@ -1,0 +1,36 @@
+{
+  "project_context_and_metadata": {
+    "package_manager": "pnpm",
+    "new_component_dir": "app/components",
+    "style_file_dir": "app/globals.css",
+    "component_library": "shadcn/ui",
+    "animation_library": ["gsap"],
+    "testing_library": [
+      "jest",
+      "playwright",
+      "@testing-library/react",
+      "@testing-library/jest-dom"
+    ],
+    "supported_languages": [
+      {
+        "language_code": "en",
+        "country_code": "US",
+        "currency_code": "USD",
+        "direction": "ltr",
+        "native_name": "English",
+        "calendar_type": "gregorian"
+      },
+      {
+        "language_code": "fa",
+        "country_code": "IR",
+        "currency_code": "IRR",
+        "direction": "rtl",
+        "native_name": "فارسی",
+        "calendar_type": "persian"
+      }
+    ],
+    "dictionaries_dir": "messages",
+    "dictionary_file_pattern": "[locale].json"
+  }
+}
+

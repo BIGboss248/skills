@@ -1,0 +1,21 @@
+# Phase 1: Project Discovery & Route Architecture
+
+---
+
+## Deliverables & Tasks
+
+- [ ] **1.1 Planning & Strategy Brief**
+  - [ ] Define project purpose, problem statement, and core value proposition
+  - [ ] Identify target audience personas and technical/geographic profiles
+  - [ ] Establish primary goals (conversions, trust, credentials, showcase)
+  - [ ] Set quantifiable KPIs (Lighthouse 95+, sub-second LCP, CLS < 0.1)
+  - [ ] Conduct competitive analysis against top reference websites
+  - [ ] Document strategy in `docs/design/01-strategy-brief.md`
+- [ ] **1.2 Information Architecture & Sitemap**
+  - [ ] Map full page route inventory in `docs/design/02-sitemap-and-routes.md`
+  - [ ] Map content sections for each page
+  - [ ] Define Next.js rendering matrix (SSG, ISR, SSR, Client) per route
+- [ ] **1.3 Type-Safe Registries & Site Config**
+  - [ ] Populate canonical technical specifications in `docs/project.json`
+  - [ ] Create centralized route registry in `lib/routes.ts`
+  - [ ] Create centralized site metadata in `lib/site-config.ts`

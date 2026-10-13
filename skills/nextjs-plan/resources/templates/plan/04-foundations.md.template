@@ -1,0 +1,35 @@
+# Phase 4: Core Foundations & Runtime Configuration
+
+---
+
+## Deliverables & Tasks
+
+- [ ] **4.1 Environment Variables Configuration**
+  - [ ] Author `.env.example` as single source of truth template (to be renamed to `.env` for production deployments) with documented load order, categories, and defaults
+  - [ ] Setup development environment file (`.env.development`) for local execution and verify `.gitignore` ignores all `.env*` files except `.env.example`
+  - [ ] Enforce repository rule: whenever any new environment variable is introduced, immediately mirror and document it in both `.env.example` (with production defaults) and `.env.development` (with local dev defaults)
+- [ ] **4.2 Multilanguage Support (i18n)**
+  - [ ] Configure request negotiation and routing with `proxy.ts` (or `middleware.ts`)
+  - [ ] Setup root translation dictionaries inside `messages/` (`messages/en.json`, `messages/fa.json`)
+  - [ ] Implement bidirectional layout support (LTR / RTL directionality) and font pairings
+  - [ ] Build localized navigation wrapper and language switcher component
+- [ ] **4.3 Theme & Color Palette**
+  - [ ] Define color palette and semantic theme tokens in `globals.css` (OKLCH tokens for Light/Dark)
+  - [ ] Implement `ThemeProvider` with system preference detection and localStorage persistence
+  - [ ] Build theme switcher toggle component (`components/theme-toggle.tsx`)
+- [ ] **4.4 Website Layout Shell**
+  - [ ] Build root layout (`app/[locale]/layout.tsx`) with dynamic `lang`, `dir`, and font classes
+  - [ ] Wrap application with global context providers (`app/providers.tsx`)
+  - [ ] Design and develop `SiteHeader`
+  - [ ] Design and develop `SiteFooter`
+  - [ ] Optimize web fonts using `next/font` with zero layout shift (CLS)
+- [ ] **4.5 Health & Telemetry (OpenTelemetry)**
+  - [ ] Setup server telemetry and distributed tracing via OpenTelemetry (`instrumentation.ts` / `@vercel/otel`)
+  - [ ] Setup Core Web Vitals (RUM) monitoring component
+- [ ] **4.6 Global Fallback Boundaries & Error Pages**
+  - [ ] Build global root error boundary (`app/global-error.tsx`)
+  - [ ] Build localized root error handler (`app/[locale]/error.tsx`)
+  - [ ] Build localized 404 Not Found page (`app/[locale]/not-found.tsx`)
+  - [ ] Build localized 401 Unauthorized page (`app/[locale]/unauthorized.tsx`)
+  - [ ] Build localized 403 Forbidden page (`app/[locale]/forbidden.tsx`)
+

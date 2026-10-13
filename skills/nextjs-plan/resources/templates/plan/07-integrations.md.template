@@ -1,0 +1,16 @@
+# Phase 7: Integrations & Production Release
+
+---
+
+## Deliverables & Tasks
+
+- [ ] **7.1 3rd Party Plugins & Services**
+  - [ ] Configure analytics and session recording (PostHog / Vercel Analytics) with consent gating
+  - [ ] Configure exception tracking and error monitoring (Sentry)
+  - [ ] Configure email delivery service (Resend)
+  - [ ] Configure database / authentication integrations if applicable
+- [ ] **7.2 Production Verification & Release Automation**
+  - [ ] Run full test suite validation (`pnpm run test:all`)
+  - [ ] Verify standalone production build (`pnpm build`)
+  - [ ] Verify Docker container standalone image build and healthcheck
+  - [ ] Trigger automated release and multi-arch GHCR publication via Release Please

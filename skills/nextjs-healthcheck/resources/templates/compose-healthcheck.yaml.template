@@ -1,0 +1,10 @@
+# Docker Compose Health Check Template Snippet
+
+# Inject into the Next.js service block in docker-compose.yml and docker-compose.prod.yml
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:' + (process.env.PORT || 3000) + '/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+

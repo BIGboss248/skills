@@ -1,0 +1,19 @@
+# Phase 3: System Health Monitoring Probe
+
+> [!IMPORTANT]
+> **Readiness Gate**: The health probe endpoint must be implemented and verified before proceeding to core runtime foundations and page/component development.
+
+---
+
+## Deliverables & Tasks
+
+- [ ] **3.1 System Health Monitoring Endpoint (`/api/health`)**
+  - [ ] Implement `app/api/health/route.ts` checking:
+    - V8 Heap memory saturation & usage
+    - Event loop delay / lag
+    - Node.js runtime process uptime
+    - Optional downstream dependency checks (database, cache, upstream APIs)
+  - [ ] Configure Docker container liveness & readiness probes against `/api/health`
+  - [ ] Document monitoring contract in `docs/operations/health-and-telemetry.md`
+- [ ] **3.2 Health Probe Verification**
+  - [ ] Execute automated curl / HTTP test against `/api/health` ensuring `200 OK` JSON response

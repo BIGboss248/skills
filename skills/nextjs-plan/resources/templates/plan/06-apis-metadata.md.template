@@ -1,0 +1,17 @@
+# Phase 6: Server Functions & Global SEO Metadata
+
+---
+
+## Deliverables & Tasks
+
+- [ ] **6.1 Server Actions & API Routes**
+  - [ ] Implement Server Actions (`'use server'`) for form actions and mutations with type safety (Zod)
+  - [ ] Implement custom API handlers (`route.ts`) under `app/api/` where external webhooks/endpoints are needed
+  - [ ] Configure cache semantics (`"use cache"`, `cacheLife`, `cacheTag`, `revalidateTag`, `revalidatePath`)
+- [ ] **6.2 File-Based Metadata & Social Previews**
+  - [ ] Configure App Icons: `app/favicon.ico` (root favicon), `app/icon.(png|svg|ico)` / `app/icon.tsx`, and `app/apple-icon.(png|jpg)` / `app/apple-icon.tsx`
+  - [ ] Configure root layout `generateMetadata` programmatic `icons` fallback
+  - [ ] Add OpenGraph and Twitter default cards (`opengraph-image.png`, `twitter-image.png` or `opengraph-image.tsx`)
+  - [ ] Configure global search engine instructions in `app/robots.ts`
+  - [ ] Generate dynamic XML sitemap in `app/sitemap.ts`
+  - [ ] Inject global structured data (`JSON-LD` via `schema-dts`)

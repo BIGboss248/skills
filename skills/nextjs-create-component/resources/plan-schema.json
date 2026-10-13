@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ComponentPlan",
+  "type": "object",
+  "required": ["goal", "mode", "history_file", "subtasks", "eval_metrics"],
+  "properties": {
+    "goal": { "type": "string" },
+    "mode": { "type": "string", "enum": ["scratch", "companion_backfill"] },
+    "existing_component_path": { "type": "string" },
+    "missing_files_detected": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "history_file": { "type": "string" },
+    "subtasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "description",
+          "workflow_phase_ref",
+          "tool_intents",
+          "verification_criteria",
+          "status"
+        ],
+        "properties": {
+          "id": { "type": "integer" },
+          "description": { "type": "string" },
+          "workflow_phase_ref": { "type": "string" },
+          "tool_intents": { "type": "array", "items": { "type": "string" } },
+          "verification_criteria": { "type": "string" },
+          "status": { "type": "string", "enum": ["pending", "completed"] }
+        }
+      }
+    },
+    "eval_metrics": { "type": "array", "items": { "type": "string" } },
+    "risk_factors": { "type": "array", "items": { "type": "string" } }
+  }
+}

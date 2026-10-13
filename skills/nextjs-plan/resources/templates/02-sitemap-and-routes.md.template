@@ -1,0 +1,33 @@
+# Sitemap & Route Inventory
+
+## 1. Information Architecture & Route Inventory
+
+| Route | Page Name | Primary Nav? | Rendering Strategy | Dynamic Params |
+| :--- | :--- | :--- | :--- | :--- |
+| `/` | Home | Yes | Static (SSG) | None |
+| `/about` | About & Credentials | Yes | Static (SSG) | None |
+| `/projects` | Projects Showcase | Yes | Static (SSG) | None |
+| `/projects/[slug]` | Case Study Detail | No | SSG + ISR | `slug` |
+| `/lab` | Interactive Lab | Yes | Client Hydrated | None |
+| `/contact` | Contact & Inquiries | Yes | Static (SSG) | None |
+| `/api/health` | Health Check | No | Dynamic (`force-dynamic`) | None |
+
+---
+
+## 2. Page & Section Hierarchy Breakdown
+
+### Home (`/`)
+- **Global Header**: Brand emblem, navigation menu, locale switcher, theme toggle.
+- **Hero Section**: Value proposition headline, status indicator badge, primary action CTAs.
+- **Featured Projects**: Responsive case study card grid with metrics and tag pills.
+- **Interactive Lab Preview**: Live diagnostic tool card launchers.
+- **Trust Signals**: ORCID credentials, verification tokens, publications list.
+- **Global Footer**: Site index links, copyright, system status.
+
+---
+
+## 3. Rendering & Hydration Matrix
+- **Static Pre-rendering (SSG)**: Home, About, Projects list, Contact.
+- **Dynamic / Incremental Regeneration (ISR)**: Project detail articles.
+- **Client Components (`"use client"`)**: Interactive lab probers, theme switcher, mobile drawer navigation, contact form.
+

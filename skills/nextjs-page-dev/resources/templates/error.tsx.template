@@ -1,0 +1,36 @@
+"use client";
+
+import { useEffect } from "react";
+import { useTranslations } from "next-intl";
+
+interface ErrorProps {
+  error: Error & { digest?: string };
+  reset: () => void;
+}
+
+export default function ErrorBoundary({ error, reset }: ErrorProps) {
+  const t = useTranslations("Common.errors");
+
+  useEffect(() => {
+    console.error("[Route Error Boundary caught error]:", error);
+  }, [error]);
+
+  return (
+    <div className="flex min-h-[50vh] flex-col items-center justify-center p-6 text-center">
+      <h2 className="text-xl font-bold tracking-tight text-foreground">
+        {t("title", { defaultValue: "Something went wrong" })}
+      </h2>
+      <p className="mt-2 text-sm text-muted-foreground">
+        {t("description", { defaultValue: "An unexpected error occurred while loading this page." })}
+      </p>
+      <button
+        type="button"
+        onClick={() => reset()}
+        className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        {t("retry", { defaultValue: "Try again" })}
+      </button>
+    </div>
+  );
+}
+

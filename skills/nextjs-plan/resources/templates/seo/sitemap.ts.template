@@ -1,0 +1,26 @@
+import type { MetadataRoute } from "next";
+import { routing } from "@/i18n/routing";
+import { SITE_CONFIG } from "@/lib/site-config";
+import { ROUTES } from "@/lib/routes";
+
+export default function sitemap(): MetadataRoute.Sitemap {
+  const baseUrl = SITE_CONFIG.url || "https://example.com";
+  const now = new Date();
+
+  // Static core routes
+  const staticRoutes = [
+    { path: ROUTES.HOME, priority: 1.0, changeFrequency: "weekly" as const },
+    { path: ROUTES.ABOUT, priority: 0.8, changeFrequency: "monthly" as const },
+    { path: ROUTES.PROJECTS, priority: 0.9, changeFrequency: "weekly" as const },
+    { path: ROUTES.CONTACT, priority: 0.7, changeFrequency: "monthly" as const },
+  ];
+
+  return routing.locales.flatMap((locale) =>
+    staticRoutes.map((route) => ({
+      url: `${baseUrl}/${locale}${route.path === "/" ? "" : route.path}`,
+      lastModified: now,
+      changeFrequency: route.changeFrequency,
+      priority: route.priority,
+    }))
+  );
+}

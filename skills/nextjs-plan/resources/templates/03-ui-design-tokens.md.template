@@ -1,0 +1,81 @@
+# UI Design Tokens & Theme Specification
+
+## 1. Brand Narrative & Visual Aesthetic
+- **Design Metaphor**: [e.g. Precision Engineering, High-Density Diagnostics, High Contrast Obsidian Dark Mode]
+- **Emotional Tone**: Authoritative, fast, crisp, resilient, minimal clutter.
+
+---
+
+## 2. Semantic CSS Variable System (Light & Dark)
+
+```css
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --radius: 0.625rem;
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.145 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.396 0.141 25.723);
+  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --border: oklch(0.269 0 0);
+  --input: oklch(0.269 0 0);
+  --ring: oklch(0.439 0 0);
+}
+```
+
+---
+
+## 3. Typography Hierarchy & Harmonious Multi-Font Pairings
+
+A deliberate mixture of complementary typefaces elevates brand distinction beyond single-font monotony. Global styles configure font variables (`next/font`) so different sections consume section-specific font classes:
+
+- **Display / Heading Font (`font-display`)**: `var(--font-heading)` — [e.g. Cal Sans, Plus Jakarta Sans, Outfit, Playfair Display] + [Persian font e.g. Vazirmatn]
+  - *Applied to*: Hero headlines, major section titles, and narrative callouts for distinct character.
+- **Body / Interface Font (`font-sans`)**: `var(--font-sans)` — [e.g. Geist Sans, Inter] + [Persian font e.g. Vazirmatn]
+  - *Applied to*: Body paragraphs, card descriptions, navigation links, and UI controls for maximum legibility.
+- **Code / Monospace Font (`font-mono`)**: `var(--font-mono)` — [e.g. Geist Mono, JetBrains Mono]
+  - *Applied to*: Technical metrics, status badges, overlines, and code blocks.
+- **Global Section Usage**:
+  - Hero & Section Titles: Consume `font-display tracking-tight font-bold`.
+  - Body & Content Copy: Consume `font-sans leading-relaxed`.
+  - Eyebrows & Meta Badges: Consume `font-mono tracking-wider uppercase text-xs`.
+
+---
+
+## 4. Reusable Component Primitives Specs
+- **Buttons**: Primary (solid primary), Secondary (outline border), Ghost (minimal).
+- **Cards**: Surface with 1px border (`border-border`), subtle hover elevate transitions.
+- **Badges**: Pill radius (`rounded-full`), semantic indicator dots.
+

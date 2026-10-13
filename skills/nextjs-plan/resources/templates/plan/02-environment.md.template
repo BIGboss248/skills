@@ -1,0 +1,21 @@
+# Phase 2: Environment, Testing & CI/CD
+
+---
+
+## Deliverables & Tasks
+
+- [ ] **2.1 Package Manager**
+  - [ ] Select and configure package manager (`pnpm` / `bun`) with lockfile
+- [ ] **2.2 Next.js Workspace Initialization**
+  - [ ] Initialize Next.js App Router with TypeScript and Tailwind CSS
+- [ ] **2.3 Agent Documentation & MCP Tools**
+  - [ ] Configure `AGENTS.md` with Next.js guidelines and discrete command rules
+  - [ ] Configure workspace `mcp.json` and host global AGY MCP configs (`next-devtools`, `playwright`, `codebase-memory`)
+- [ ] **2.4 Testing Infrastructure**
+  - [ ] Configure Jest & React Testing Library (`jest.config.ts`, `jsdom`)
+  - [ ] Configure Playwright E2E testing across Chromium, Firefox, WebKit (`playwright.config.ts`)
+  - [ ] Setup unified test verification script (`pnpm run test:all`)
+- [ ] **2.5 CI/CD & Production Containerization**
+  - [ ] Configure multi-stage production Dockerfile (`Dockerfile`, `docker-compose.yml`, `.dockerignore`) for standalone output
+  - [ ] Configure Husky git hooks (`pre-commit`, `pre-push`) with Commitlint
+  - [ ] Configure GitHub Actions Release Please and multi-arch GHCR image workflows
