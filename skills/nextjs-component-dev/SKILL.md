@@ -59,7 +59,7 @@ Specialized workflow for creating production-ready React Server Components (RSC)
 - **Semantic Tokens:** Exclusively use semantic CSS variables defined in `app/globals.css` (`bg-background`, `text-foreground`, `border-border`, `text-muted-foreground`). Hardcoded hex colors (`#FAFAFA`) or raw color scales (`bg-blue-500`) are FORBIDDEN.
 - **Class Merging:** Always merge classes using `cn(...)` (`clsx` + `tailwind-merge`).
 - **Logical Properties (BiDi):** Exclusively use Tailwind logical properties (`ms-`, `pe-`, `ps-`, `me-`, `start`, `end`). Physical directional classes (`ml-`, `mr-`, `pl-`, `pr-`, `left-`, `right-`) are FORBIDDEN.
-- **Progress Links:** Use `<Link>` from `@/app/components/Link` (powered by `react-transition-progress`) for primary navigation, hero CTAs, and interactive cards; use standard `next/link` for static utility links.
+- **Progress Links:** Use `<Link>` from `@vercel/react-transition-progress` for primary navigation, hero CTAs, and interactive cards; use standard `next/link` for static utility links.
 - **Images:** Always use `next/image` with explicit dimensions or `fill`, responsive `sizes`, and `priority` for above-the-fold LCP assets.
 
 ### 6. Instant Navigation, Granular Suspense & Caching Architecture

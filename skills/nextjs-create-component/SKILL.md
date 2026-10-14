@@ -92,7 +92,7 @@ Before creating or modifying components, read the planning artifacts created by 
 - **Theme Tokens:** Exclusively use semantic CSS variables from `app/globals.css` (`bg-background`, `text-foreground`, `border-border`, `text-muted-foreground`). Hardcoded hex/color scales (`bg-blue-500`, `#FAFAFA`) are strictly FORBIDDEN.
 - **Class Merging:** Always merge classes using `cn(...)` (`clsx` + `tailwind-merge`).
 - **BiDi RTL/LTR:** Exclusively use Tailwind logical properties (`ms-`, `pe-`, `ps-`, `me-`, `start`, `end`). Physical properties (`ml-`, `mr-`, `pl-`, `pr-`, `left-`, `right-`) are FORBIDDEN.
-- **Progress-Aware Links:** Use `<Link>` from `@/app/components/Link` (powered by `react-transition-progress`) for primary navigation, hero CTAs, and interactive cards; use standard `next/link` for static footers/utility links. Raw `<a>` tags are forbidden.
+- **Progress-Aware Links:** Use `<Link>` from `@vercel/react-transition-progress` for primary navigation, hero CTAs, and interactive cards; use standard `next/link` for static footers/utility links. Raw `<a>` tags are forbidden.
 - **Images:** Always use `next/image` with explicit dimensions or `fill`, responsive `sizes`, and `priority` for above-the-fold LCP assets.
 
 ### 4. Storybook CSF3 Component Standards (`[ComponentName].stories.tsx`)

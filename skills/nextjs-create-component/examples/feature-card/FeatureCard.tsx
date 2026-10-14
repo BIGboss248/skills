@@ -1,6 +1,6 @@
 import React from "react";
 import Image from "next/image";
-import { Link } from "@/app/components/Link";
+import { Link } from "@vercel/react-transition-progress";
 import { Graph } from "schema-dts";
 import { cn } from "@/lib/utils";
 
