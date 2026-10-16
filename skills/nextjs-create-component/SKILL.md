@@ -1,37 +1,30 @@
 ---
 name: nextjs-create-component
-description: Workflow for creating or backfilling Next.js App Router components with TDD unit tests, Suspense skeletons, CSF3 Storybook stories, and adversarial QA audits.
 description: Master orchestrator skill for creating or backfilling Next.js App Router components by coordinating component development, Storybook stories, and adversarial QA.
 metadata:
   author: BIGboss248
-  version: "2.0"
   version: "2.1"
 ---
 
-# Next.js Component Creation Skill (`nextjs-create-component`)
 # Next.js Component Creation Orchestrator (`nextjs-create-component`)
 
-Step-by-step workflow, architectural rules, and engineering standards for creating or backfilling production-ready React components (RSC and Client Components) in Next.js App Router applications.
 Master workflow orchestrator that coordinates specialized micro-skills to create or backfill production-ready Next.js React components with Suspense skeletons, CSF3 Storybook stories, and adversarial QA test suites.
 
 > [!TIP]
-> **Modular Assets Available:**
->
-> - Reference implementations (RSC & TanStack Query): [`examples/`](./examples/)
-> - Comprehensive anti-patterns & pitfalls: [`references/pitfalls.md`](./references/pitfalls.md)
-> - JSON Plan Schema: [`resources/plan-schema.json`](./resources/plan-schema.json)
-> - File Verification Script: [`scripts/verify-component-files.ts`](./scripts/verify-component-files.ts)
 > **Specialized Sub-Skills Coordinated by this Orchestrator:**
 > 1. [`nextjs-component-dev`](../nextjs-component-dev/SKILL.md): Component, Suspense skeleton, and TDD unit tests.
 > 2. [`nextjs-storybook-story`](../nextjs-storybook-story/SKILL.md): CSF3 stories with controls, action spies, and 4 theme variants.
 > 3. [`nextjs-adversarial-qa`](../nextjs-adversarial-qa/SKILL.md): Independent subagent QA audit and adversarial edge tests.
+>
+> **Modular Assets Available:**
+> - Reference implementations (RSC & TanStack Query): [`examples/`](./examples/)
+> - Comprehensive anti-patterns & pitfalls: [`references/pitfalls.md`](./references/pitfalls.md)
+> - JSON Plan Schema: [`resources/plan-schema.json`](./resources/plan-schema.json)
 
 ---
 
-## Architectural Rules & Core Constraints
 ## High-Level Orchestration Pipeline
 
-### 1. Planning Context & Single Source of Truth
 ```
                  [Step 0: Load Context (docs/project.json, design, plan)]
                                          │
@@ -58,6 +51,12 @@ Master workflow orchestrator that coordinates specialized micro-skills to create
                                          ▼
                            [Step 5: Completion & Handoff]
 ```
+
+---
+
+## Architectural Rules & Core Constraints
+
+### 1. Planning Context & Single Source of Truth
 
 Before creating or modifying components, read the planning artifacts created by `nextjs-plan`:
 
@@ -122,7 +121,6 @@ Before creating or modifying components, read the planning artifacts created by 
 ---
 
 ## Existing Component Detection & Companion Gap Analysis
-## Step-by-Step Orchestrator Workflow
 
 Before generating files, always audit whether the component already exists:
 
@@ -131,71 +129,39 @@ Before generating files, always audit whether the component already exists:
    - **Preserve Code:** DO NOT delete, re-create, or overwrite `[ComponentName].tsx`.
    - **Audit Missing Companion Files:** Check for missing `[ComponentName]Skeleton.tsx`, `[ComponentName].test.tsx`, `[ComponentName].stories.tsx`, `[ComponentName].edge.test.tsx`, or TSDoc.
    - **Backfill:** Generate only the missing companion artifacts matching the existing component contract.
-3. **If Component is Missing:** Execute standard workflow from scratch (Steps 2–8).
+3. **If Component is Missing:** Execute standard workflow from scratch (Steps 0–5).
 
 ---
 
-## Step-by-Step Implementation Workflow
+## Step-by-Step Orchestrator Workflow
 
 - [ ] **Step 0: Load Project Context & Design Specifications**
-  - Read `docs/project.json` using `view_file` to resolve paths, package manager, and libraries.
   - Read `docs/project.json` using `view_file` to resolve base paths (`new_component_dir`), package manager, and libraries.
   - Read `docs/design/03-ui-design-tokens.md` and `docs/design/02-sitemap-and-routes.md`.
-  - Verify routes from `lib/routes.ts` and author metadata from `lib/site-config.ts`.
   - Verify routes from `lib/routes.ts` (`ROUTES`) and author metadata from `lib/site-config.ts` (`SITE_CONFIG`).
 
-- [ ] **Step 1: Check Component Existence & Audit Gap**
-  - Search target directories. If component exists, audit missing companion files and set mode to `companion_backfill`; otherwise, set mode to `scratch`.
 - [ ] **Step 1: Check Component Existence & Gap Analysis**
   - Search target directories.
   - **Component Missing:** Proceed with full pipeline (Phases 1–3).
   - **Component Exists:** Do NOT overwrite `[ComponentName].tsx`. Audit missing companion files (`Skeleton.tsx`, `.test.tsx`, `.stories.tsx`, `.edge.test.tsx`) and execute only the corresponding phases.
 
-- [ ] **Step 2: Requirement Alignment & Clarification**
-  - If requirements, props, or behaviors are underspecified, interview the user (suggest `/grill-me`). Never guess missing requirements.
 - [ ] **Step 2: Phase 1 — Component & Skeleton Development**
   - Apply [`nextjs-component-dev`](../nextjs-component-dev/SKILL.md).
   - Define TypeScript contract and TDD baseline unit tests (`[ComponentName].test.tsx`).
   - Implement component (`[ComponentName].tsx`) and skeleton (`[ComponentName]Skeleton.tsx`).
   - **Verify Phase 1:** Run `pwsh .agents/skills/nextjs-component-dev/scripts/verify-dev.ps1 -ComponentPath <target_dir>` (or `bash .../verify-dev.sh`).
 
-- [ ] **Step 3: Pre-Flight JSON Plan & History Persistence**
-  - Create `.agents/history/plan-[component-name].json` following schema in [`resources/plan-schema.json`](./resources/plan-schema.json).
-  - Update subtask statuses from `"pending"` to `"completed"` as steps finish.
 - [ ] **Step 3: Phase 2 — Storybook CSF3 Story Creation**
   - Apply [`nextjs-storybook-story`](../nextjs-storybook-story/SKILL.md).
   - Create co-located `[ComponentName].stories.tsx` with controls, `fn()` action spies, markdown docs, and 4 theme variants (`Light`, `Dark`, `SkeletonLight`, `SkeletonDark`).
   - **Verify Phase 2:** Run `pwsh .agents/skills/nextjs-storybook-story/scripts/verify-storybook.ps1 -ComponentPath <target_dir>` (or `bash .../verify-storybook.sh`).
 
-- [ ] **Step 4: TypeScript Contract Definition & Baseline TDD**
-  - Define prop types with English TSDoc annotations.
-  - Write baseline unit tests in `[ComponentName].test.tsx` (or generate them against existing contract in backfill mode) before component code.
-  - Cover default props, callbacks, Suspense skeletons, ARIA accessibility, and RTL orientation.
 - [ ] **Step 4: Phase 3 — Adversarial QA & Edge-Case Injection**
   - Apply [`nextjs-adversarial-qa`](../nextjs-adversarial-qa/SKILL.md).
   - Spawn independent subagent (`Role: "Adversarial Code & QA Auditor"`) to generate `[ComponentName].edge.test.tsx`.
   - **Verify Phase 3:** Run `pnpm test -- <target_dir>/[ComponentName].edge.test.tsx`.
   - Auto-repair any failing edge cases in component code.
 
-- [ ] **Step 5a: Component & Responsive Development**
-  - Develop `[ComponentName].tsx` and `[ComponentName]Skeleton.tsx` using Tailwind responsive breakpoint classes (`sm:`, `md:`, `lg:`). Skip `.tsx` creation if in backfill mode.
-
-- [ ] **Step 5b: Co-Located Storybook Story Creation (`[ComponentName].stories.tsx`)**
-  - Create CSF3 story with `parameters.docs` markdown, `argTypes` controls, `fn()` action spies, and the 4 canonical high-contrast theme variants (`Light`, `Dark`, `SkeletonLight`, `SkeletonDark`).
-
-- [ ] **Step 6: Adversarial Auditor Subagent & Edge-Case Injection**
-  - Spawn independent subagent via `invoke_subagent` (`Role: "Adversarial Code & QA Auditor"`).
-  - The subagent reviews RSC boundaries, tokens, and Storybook setup, then generates `[ComponentName].edge.test.tsx` covering boundary values, empty states, Persian/RTL text, and keyboard navigation.
-
-- [ ] **Step 7: Verification Gate & Auto-Repair Loop (Mandatory Shell Execution)**
-  - **Tier 1 (Constraints):** Run `npx tsx .agents/skills/nextjs-create-component/scripts/verify-component-files.ts <target_dir>` via `run_command`.
-  - **Tier 2 (Tests):** Run unit and adversarial test suites (`pnpm test`) via `run_command`.
-  - **Tier 3 (Storybook Smoke & Build):** Run `pnpm run storybook:smoke` (or `storybook dev --smoke-test`) and `pnpm run build-storybook` via `run_command`.
-  - **Auto-Repair:** If any test fails, fix component or story code (adversarial tests are immutable). Re-run until all tiers pass with 0 errors.
-
-- [ ] **Step 8: Final Handoff & Plan Completion**
-  - Update `.agents/history/plan-[component-name].json` statuses to `"completed"`.
-  - Present summary: file paths, Storybook preview command (`pnpm storybook`), rendering strategy, and props/controls overview.
 - [ ] **Step 5: Completion & Handoff**
   - Present summary:
     * Component & companion files created/backfilled
