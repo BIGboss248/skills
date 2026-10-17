@@ -504,9 +504,76 @@ export async function processCheckoutAction(formData?: {
 }
 ```
 
-### 9.3. URL Pre-population Fallback
-For simple catalog links and direct purchases:
+### 9.3. Native Checkout Page Transfer (Allowing Address & Dynamic Shipping Selection)
+When an e-commerce store requires the customer to choose their shipping address (e.g. Iranian province and city selectors via Persian WooCommerce Shipping) so that shipping tariffs and options calculate dynamically before payment, avoid locking the customer into an `order-pay` URL.
+
+Instead, transfer cart items directly to WooCommerce's native checkout page:
+
 ```
-https://your-store.com/checkout/?add-to-cart=<database_id>&quantity=<quantity>
+https://your-store.com/checkout/?add-to-cart=<id>&quantity=<qty>&fill_cart=38:2,25:1
 ```
+
+#### WordPress Bridge Snippet (`functions.php`)
+```php
+/**
+ * Headless Cart Transfer: Support adding multiple products to WooCommerce cart via URL
+ * Example: https://shop.meetjamali.com/checkout/?fill_cart=38:2,25:1
+ */
+add_action( 'template_redirect', function() {
+    if ( ! empty( $_GET['fill_cart'] ) && function_exists( 'WC' ) && WC()->cart ) {
+        WC()->cart->empty_cart();
+        
+        $items = explode( ',', sanitize_text_field( $_GET['fill_cart'] ) );
+        foreach ( $items as $item ) {
+            $parts = explode( ':', $item );
+            $product_id   = isset( $parts[0] ) ? absint( $parts[0] ) : 0;
+            $quantity     = isset( $parts[1] ) ? absint( $parts[1] ) : 1;
+            $variation_id = isset( $parts[2] ) ? absint( $parts[2] ) : 0;
+            
+            if ( $product_id > 0 ) {
+                WC()->cart->add_to_cart( $product_id, $quantity, $variation_id );
+            }
+        }
+        
+        // Redirect cleanly to checkout
+        wp_safe_redirect( wc_get_checkout_url() );
+        exit;
+    }
+});
+```
+
+#### Next.js Checkout Link Generation
+```ts
+export async function getCheckoutUrlAction(
+  items?: Array<{ databaseId: number; quantity: number; variationId?: number }>,
+  customerInfo?: { email?: string; phone?: string; firstName?: string; lastName?: string }
+): Promise<{ url: string }> {
+  const base = process.env.NEXT_PUBLIC_WORDPRESS_URL || 'https://shop.meetjamali.com';
+  const cleanBase = base.replace(/\/$/, '');
+
+  if (!items || items.length === 0) {
+    return { url: `${cleanBase}/checkout/` };
+  }
+
+  const primaryItem = items[0];
+  const fillCartParam = items
+    .map((item) => `${item.databaseId}:${item.quantity || 1}${item.variationId ? `:${item.variationId}` : ''}`)
+    .join(',');
+
+  const params = new URLSearchParams();
+  if (primaryItem.databaseId) {
+    params.set('add-to-cart', String(primaryItem.databaseId));
+    params.set('quantity', String(primaryItem.quantity || 1));
+  }
+  params.set('fill_cart', fillCartParam);
+
+  if (customerInfo?.email) params.set('billing_email', customerInfo.email);
+  if (customerInfo?.phone) params.set('billing_phone', customerInfo.phone);
+
+  return {
+    url: `${cleanBase}/checkout/?${params.toString()}`,
+  };
+}
+```
+
 
