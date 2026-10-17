@@ -63,7 +63,9 @@ flowchart TD
 
 ### Phase 6: Cart Management & Native Checkout Bridge
 - [ ] **Cart State**: Capture and persist `woocommerce-session` header returned on `addToCart` mutations.
-- [ ] **Native Checkout Bridge**: Redirect users to `https://your-store.com/checkout` to leverage native WooCommerce payment gateways (ZarinPal, Mellat, Stripe) and compliance seals.
+- [ ] **Native Checkout Bridge (Order-Pay URL)**: Because cross-origin cookies block bare `/checkout` redirects, invoke WooGraphQL `checkout` mutation with `isPaid: false` to convert the cart into an order and redirect to `/checkout/order-pay/<id>/?pay_for_order=true&key=<order_key>`.
+- [ ] **Direct Cart Pre-population Fallback**: For simple single-product transfers, redirect top-level to `https://your-store.com/checkout/?add-to-cart=<id>&quantity=<qty>`.
+- [ ] **Customer & Gateway Binding**: Attach customer ID and real billing/phone info so payment gateways (ZarinPal, Mellat) accept the order and link it to the user account.
 
 ---
 
@@ -71,11 +73,13 @@ flowchart TD
 
 1. **WordPress HTTP 403 on Valid Bearer Tokens**: WordPress core REST/security filters emit an HTTP 403 status header when non-admin Bearer tokens are sent. The fetcher must inspect and return `json.data` if present rather than discarding payloads solely based on `!res.ok`.
 2. **Dual Auth Headers (`Authorization` + `X-JWT-Auth`)**: Many hosting providers (LiteSpeed, Apache, Hostinger) strip `Authorization` headers. Sending both `Authorization: Bearer <token>` and `X-JWT-Auth: <token>` guarantees authentication succeeds.
-3. **Restricted `viewer` Fields**: Fields like `capabilities` and `nicename` require administrative capabilities in WPGraphQL. Including them in customer queries causes 403 permission failures or null viewer results.
-4. **Registration Password Setting**: If WooCommerce setting "automatically generate an account password" is checked, user passwords submitted from Next.js will be ignored and replaced with emailed WordPress random strings. Always uncheck it.
-5. **Static vs. Dynamic De-optimization**: Reading cookies in the root layout or product pages switches Next.js into full SSR dynamic mode. Only read auth cookies inside Server Actions, Route Handlers, or isolated account dashboard sub-trees (`app/login`, `app/account`).
-6. **Polymorphic Fragments**: Direct queries like `products { nodes { price } }` will fail validation in WooGraphQL. Always wrap pricing and variations in `... on SimpleProduct` and `... on VariableProduct`.
-7. **Session Loss**: When adding items to cart, failing to resend the `woocommerce-session` header creates a new empty cart on every mutation.
+3. **Cross-Origin Empty Cart on Bare `/checkout`**: In cross-origin environments, browsers block third-party cookies, making bare redirects to `/checkout` show empty carts. Always use the WooGraphQL `checkout` mutation (`order-pay` URL) or parameterized direct cart URLs.
+4. **JWT Expiration & Cart 403 Errors**: WordPress default JWT token expiry is short (5 mins). Sending expired tokens causes WordPress to return HTTP 403 "Internal server error" on cart mutations. Always check `exp` before sending Bearer headers.
+5. **Restricted `viewer` Fields**: Fields like `capabilities` and `nicename` require administrative capabilities in WPGraphQL. Including them in customer queries causes 403 permission failures or null viewer results.
+6. **Registration Password Setting**: If WooCommerce setting "automatically generate an account password" is checked, user passwords submitted from Next.js will be ignored and replaced with emailed WordPress random strings. Always uncheck it.
+7. **Static vs. Dynamic De-optimization**: Reading cookies in the root layout or product pages switches Next.js into full SSR dynamic mode. Only read auth cookies inside Server Actions, Route Handlers, or isolated account dashboard sub-trees (`app/login`, `app/account`).
+8. **Polymorphic Fragments**: Direct queries like `products { nodes { price } }` will fail validation in WooGraphQL. Always wrap pricing and variations in `... on SimpleProduct` and `... on VariableProduct`.
+9. **Session Loss**: When adding items to cart, failing to resend the `woocommerce-session` header creates a new empty cart on every mutation.
 
 ---
 

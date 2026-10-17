@@ -431,7 +431,82 @@ export async function getProducts(first = 20) {
 
 Re-building address validation, multi-step shipping, tax calculation, and local Iranian payment gateways (Mellat, ZarinPal, etc.) in Next.js introduces high maintenance and compliance risks.
 
-**The Battle-Tested Pattern**:
-1. Next.js handles all catalog browsing, category filtering, product pages, and cart previews.
-2. When the user clicks **"Proceed to Checkout"**, redirect the user to the native WooCommerce checkout page (`https://your-store.com/checkout`) while maintaining their cart session (`wc_session`).
-3. WordPress completes the payment gateway handshake, bank callback, SMS confirmation, and invoice email generation reliably.
+### 9.1. Cross-Origin Session Block
+In decoupled setups (`localhost:3000` or `frontend.com` vs `shop.domain.com`), browsers block cross-origin third-party cookies. Navigating directly to a bare `https://your-store.com/checkout` will load an empty cart because WordPress cannot read the frontend session.
+
+### 9.2. Order-Pay Bridge via WooGraphQL `checkout` Mutation
+The production pattern converts the Next.js cart session into a pending order on the backend and redirects the user directly to the order payment screen:
+
+```graphql
+mutation ProcessCheckout($input: CheckoutInput!) {
+  checkout(input: $input) {
+    result
+    redirect
+    order {
+      id
+      databaseId
+      orderKey
+      total
+      status
+    }
+  }
+}
+```
+
+```ts
+// Server Action: Convert GraphQL cart session into WooCommerce order
+export async function processCheckoutAction(formData?: {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+  address1: string;
+  city: string;
+}) {
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get('wc_session')?.value;
+  const authToken = cookieStore.get('auth_token')?.value;
+
+  const res = await fetchWooCommerce<CheckoutMutationResult>(CHECKOUT_MUTATION, {
+    authToken,
+    variables: {
+      input: {
+        isPaid: false,
+        billing: formData || {
+          firstName: 'Customer',
+          lastName: 'Account',
+          email: 'order@customer.com',
+          phone: '09120000000',
+          address1: 'Tehran',
+          city: 'Tehran',
+          country: 'IR',
+        },
+      },
+    },
+  });
+
+  const redirectUrl = res.data?.checkout?.redirect;
+  if (redirectUrl) {
+    return { success: true, redirectUrl };
+  }
+
+  // Fallback: Construct order-pay URL manually from returned order ID and key
+  const order = res.data?.checkout?.order;
+  if (order?.databaseId && order?.orderKey) {
+    const backendUrl = process.env.NEXT_PUBLIC_WORDPRESS_URL || 'https://your-store.com';
+    return {
+      success: true,
+      redirectUrl: `${backendUrl}/checkout/order-pay/${order.databaseId}/?pay_for_order=true&key=${order.orderKey}`,
+    };
+  }
+
+  return { success: false, error: res.error || 'Checkout failed' };
+}
+```
+
+### 9.3. URL Pre-population Fallback
+For simple catalog links and direct purchases:
+```
+https://your-store.com/checkout/?add-to-cart=<database_id>&quantity=<quantity>
+```
+
