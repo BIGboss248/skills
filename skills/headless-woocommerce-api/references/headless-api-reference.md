@@ -198,7 +198,7 @@ WooGraphQL maintains customer cart state across requests via an ephemeral **WooC
 ## 5. Architectural Battle-Tested Principles (Next.js Headless)
 
 1. **Native Checkout Bridge**:
-   - Instead of re-building an entire PCI-compliant checkout in Next.js, transfer the user's cart session to the native WooCommerce checkout endpoint (`https://backend.com/checkout`).
+   - Instead of re-building an entire PCI-compliant checkout in Next.js, transfer the user's cart session to the native WooCommerce checkout endpoint (`https://backend.com/checkout/?fill_cart=productId:qty:variationId`) handled by `mu-plugins/headless-redirects.php` on `template_redirect` (priority `1`), resolving `$variation->get_variation_attributes()` and calling `WC()->session->set_customer_session_cookie(true)` before redirecting to `wc_get_checkout_url()`.
    - Retains existing payment gateways (Mellat, ZarinPal, Stripe, PayPal), regional shipping rules, and trust seals (e-Namad) seamlessly.
 2. **Client-Side Session Isolation**:
    - Keep `woocommerce-session` and user tokens in client-side state (Zustand, React Query, LocalStorage).

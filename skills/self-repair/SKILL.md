@@ -137,7 +137,7 @@ When a trigger occurs, perform the following atomic update:
    - **Instruction**: Written in strict imperative format: `"Never/Always do X - because Y."`
    - **Why**: Brief reason (e.g. _"user preference"_, _"codebase pattern"_, _"framework limitation"_).
 4. Append the rule into the JSON array and save the file formatted with 2-space indentation.
-5. **Never delete existing rules**. If an old rule is superseded, write the new rule so that its higher number takes precedence.
+5. **Deduplicate & Consolidate**: Merge overlapping or superseded rules in the same domain and keep `Rule_number` sequentially ordered (`1..N`) so `autofix.json` stays free of duplicates. When any skill in `.agents/skills/` is updated, sync it to `d:/Scripts/Obsidian/skills/` and commit and push the synced changes inside the `d:/Scripts/Obsidian` repository only.
 6. Briefly notify the user:
    > _"Learned rule #`<N>` (`[CATEGORY]`): `<Instruction>` — recorded in `autofix.json`."_
 

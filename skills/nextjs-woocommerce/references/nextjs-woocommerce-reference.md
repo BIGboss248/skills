@@ -510,10 +510,10 @@ When an e-commerce store requires the customer to choose their shipping address 
 Instead, transfer cart items directly to WooCommerce's native checkout page:
 
 ```
-https://your-store.com/checkout/?add-to-cart=<id>&quantity=<qty>&fill_cart=38:2,25:1
+https://your-store.com/checkout/?fill_cart=36:1:39,21:2
 ```
 
-#### WordPress Bridge Snippet (`functions.php`)
+#### WordPress Bridge Snippet (`mu-plugins/headless-redirects.php`)
 ```php
 /**
  * Headless Cart Transfer: Support adding multiple products to WooCommerce cart via URL
@@ -521,6 +521,7 @@ https://your-store.com/checkout/?add-to-cart=<id>&quantity=<qty>&fill_cart=38:2,
  */
 add_action( 'template_redirect', function() {
     if ( ! empty( $_GET['fill_cart'] ) && function_exists( 'WC' ) && WC()->cart ) {
+        if ( WC()->session && ! WC()->session->has_session() ) { WC()->session->set_customer_session_cookie( true ); }
         WC()->cart->empty_cart();
         
         $items = explode( ',', sanitize_text_field( $_GET['fill_cart'] ) );
@@ -531,11 +532,20 @@ add_action( 'template_redirect', function() {
             $variation_id = isset( $parts[2] ) ? absint( $parts[2] ) : 0;
             
             if ( $product_id > 0 ) {
-                WC()->cart->add_to_cart( $product_id, $quantity, $variation_id );
+                $variation = $variation_id > 0 ? wc_get_product( $variation_id ) : null;
+                $variation_attrs = ( $variation && is_callable( [ $variation, 'get_variation_attributes' ] ) ) ? $variation->get_variation_attributes() : [];
+                WC()->cart->add_to_cart( $product_id, $quantity, $variation_id, $variation_attrs );
             }
         }
         
         // Redirect cleanly to checkout
+        WC()->cart->calculate_totals();
+        WC()->cart->maybe_set_cart_cookies();
+        if ( WC()->session ) {
+            WC()->session->set_customer_session_cookie( true );
+            WC()->session->save_data();
+        }
+        wc_clear_notices();
         wp_safe_redirect( wc_get_checkout_url() );
         exit;
     }
@@ -561,9 +571,9 @@ export async function getCheckoutUrlAction(
     .join(',');
 
   const params = new URLSearchParams();
-  if (primaryItem.databaseId) {
-    params.set('add-to-cart', String(primaryItem.databaseId));
-    params.set('quantity', String(primaryItem.quantity || 1));
+  if (Boolean(fillCartParam)) {
+  // params.set('fill_cart', ...) handles both simple and variable products
+  // Variation IDs are passed as productId:quantity:variationId
   }
   params.set('fill_cart', fillCartParam);
 
