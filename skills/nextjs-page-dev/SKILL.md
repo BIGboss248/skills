@@ -1,14 +1,18 @@
 ---
 name: nextjs-page-dev
-description: Step-by-step workflow for designing and building Next.js App Router pages (RSC page.tsx, loading skeleton, metadata, JSON-LD schema, and dynamic static params). Triggers on "/nextjs-page-dev", "create page", "new page", "develop page", "build route", or "implement page".
+description: >-
+  Step-by-step workflow for designing and building Next.js App Router pages (RSC page.tsx, loading.tsx skeleton, error.tsx boundary, generateMetadata, JSON-LD schema, and generateStaticParams). MANDATORY SKILL: MUST ALWAYS be activated, read, and strictly followed every time the agent creates, scaffolds, or implements any new Next.js page, route, or view. Triggers on "/nextjs-page-dev", "create page", "new page", "develop page", "build route", "implement page", or any page creation task.
 metadata:
   author: BIGboss248
-  version: "1.0"
+  version: "1.1"
 ---
 
 # Next.js Page & Route Development (`nextjs-page-dev`)
 
 Specialized workflow for creating production-ready Next.js App Router pages with async route params, localized translation dictionaries, dynamic metadata, type-safe JSON-LD structured data (`schema-dts`), and static pre-rendering.
+
+> [!CRITICAL]
+> **MANDATORY PAGE CREATION INVARIANT:** Whenever you create any new Next.js App Router page or route (`page.tsx`), you **MUST** strictly follow every architectural standard and workflow step in this skill. Furthermore, if implementing a page requires creating any new section or child components, you **MUST** activate and follow [`.agents/skills/nextjs-component-dev/SKILL.md`](../nextjs-component-dev/SKILL.md) for each new component.
 
 > [!TIP]
 > **Modular Assets & Deep Guides:**
@@ -44,6 +48,9 @@ Specialized workflow for creating production-ready Next.js App Router pages with
 - **Opting Out**: If a segment is inherently dynamic and instant feedback is not desired, configure `export const instant = false`.
 - Consult [`references/streaming-and-boundaries.md`](./references/streaming-and-boundaries.md) for streaming patterns.
 
+### 6. Child Component Delegation (`nextjs-component-dev`)
+- Never write complex section components inline inside `page.tsx` or create ad-hoc component files without tests/skeletons. Whenever a page requires new section or UI components under `<new_component_dir>/<page-name>/`, activate and strictly execute [`.agents/skills/nextjs-component-dev/SKILL.md`](../nextjs-component-dev/SKILL.md) for each component.
+
 ---
 
 ## Workflow Steps
@@ -64,7 +71,7 @@ Specialized workflow for creating production-ready Next.js App Router pages with
     1. Define async props interface (`params: Promise<{ locale: string, ... }>`, `searchParams`).
     2. Export `generateMetadata()` resolving dynamic titles and canonical alternates.
     3. Export `generateStaticParams()` for localized/dynamic routes.
-    4. Implement page RSC composing section components from `<new_component_dir>/<page-name>/`.
+    4. Implement page RSC composing section components from `<new_component_dir>/<page-name>/` (using `nextjs-component-dev` for any new components).
     5. Render `<JsonLd>` structured data component.
 
 - [ ] **Step 4: Verification & Sanity Check**

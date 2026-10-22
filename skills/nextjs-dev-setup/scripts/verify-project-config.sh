@@ -311,6 +311,46 @@ else
   AUTOMATION_CHECKS+=("WARN:App Icons & PWA Web Manifest:Missing Web App Manifest ($APP_DIR/manifest.ts) and App Router icon conventions.")
 fi
 
+# 10. Next.js Internationalization (next-intl)
+HAS_INTL_DEP=false
+if [ -f "package.json" ] && grep -q '"next-intl"' package.json; then
+  HAS_INTL_DEP=true
+fi
+
+HAS_ROUTING=false
+[ -f "i18n/routing.ts" ] || [ -f "src/i18n/routing.ts" ] && HAS_ROUTING=true
+
+HAS_REQUEST=false
+[ -f "i18n/request.ts" ] || [ -f "src/i18n/request.ts" ] && HAS_REQUEST=true
+
+HAS_NAVIGATION=false
+[ -f "i18n/navigation.ts" ] || [ -f "src/i18n/navigation.ts" ] && HAS_NAVIGATION=true
+
+HAS_INTERCEPTOR=false
+[ -f "proxy.ts" ] || [ -f "src/proxy.ts" ] || [ -f "middleware.ts" ] || [ -f "src/middleware.ts" ] && HAS_INTERCEPTOR=true
+
+HAS_INTL_PLUGIN=false
+for nc in "next.config.ts" "next.config.js" "next.config.mjs"; do
+  if [ -f "$nc" ] && { grep -q "next-intl" "$nc" || grep -q "withNextIntl" "$nc"; }; then
+    HAS_INTL_PLUGIN=true
+    break
+  fi
+done
+
+MISSING_INTL=()
+[ "$HAS_INTL_DEP" = false ] && MISSING_INTL+=("package next-intl")
+[ "$HAS_ROUTING" = false ] && MISSING_INTL+=("i18n/routing.ts")
+[ "$HAS_REQUEST" = false ] && MISSING_INTL+=("i18n/request.ts")
+[ "$HAS_NAVIGATION" = false ] && MISSING_INTL+=("i18n/navigation.ts")
+[ "$HAS_INTERCEPTOR" = false ] && MISSING_INTL+=("proxy.ts/middleware.ts")
+[ "$HAS_INTL_PLUGIN" = false ] && MISSING_INTL+=("next.config wrapper")
+
+if [ ${#MISSING_INTL[@]} -eq 0 ]; then
+  AUTOMATION_CHECKS+=("OK:Next.js Internationalization (next-intl):Configured next-intl, routing, request, navigation, interceptor, and next.config plugin.")
+else
+  AUTOMATION_CHECKS+=("WARN:Next.js Internationalization (next-intl):Incomplete next-intl setup. Missing: $(IFS=', '; echo "${MISSING_INTL[*]}")")
+fi
+
 # --- Output ---
 
 if [ ${#ERRORS[@]} -eq 0 ]; then
@@ -380,4 +420,3 @@ else
   echo -e "${RED}${BOLD}✗ FAILED: project.json has missing or invalid properties.${RESET}\n"
   exit 1
 fi
-

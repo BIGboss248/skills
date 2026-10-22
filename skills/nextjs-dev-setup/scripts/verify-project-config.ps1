@@ -295,7 +295,7 @@ if ($foundAgMcp) {
         if (-not $chk.hasNext) { $missing += "next-devtools" }
         if (-not $chk.hasCbm) { $missing += "codebase-memory" }
         if (-not $chk.hasPw) { $missing += "playwright" }
-        $automationChecks.Add(@{ name = "Antigravity Global MCP Integration"; status = "warning"; details = "'$foundAgMcp' exists, but missing server(s): $($missing -join ', '). Note: Antigravity only discovers MCP servers configured globally on the system." })
+        $automationChecks.Add(@{ name = "Antigravity Global MCP Integration"; status = "warning"; details = "'$foundAgMcp' exists, but missing server(s): $($missing -join ', '). Note: Antigravity only discovers MCP servers configured globally on the host system." })
     }
 } else {
     $automationChecks.Add(@{ name = "Antigravity Global MCP Integration"; status = "warning"; details = "Missing Antigravity global mcp_config.json (~/.gemini/antigravity/mcp_config.json). Antigravity only discovers MCP servers configured globally on the host system." })
@@ -386,6 +386,47 @@ if ($foundManifest -and ($hasFavicon -or $hasIcon -or $hasAppleIcon)) {
     $automationChecks.Add(@{ name = "App Icons & PWA Web Manifest"; status = "warning"; details = "Missing Web App Manifest ($appDir/manifest.ts) and App Router icon file conventions." })
 }
 
+# 10. Next.js Internationalization (next-intl) Check
+$hasGetIntlDep = $false
+if (Test-Path $pkgPath) {
+    try {
+        $pkg = Get-Content -Raw -Path $pkgPath -Encoding UTF8 | ConvertFrom-Json
+        $deps = @{}
+        if ($pkg.dependencies) { $pkg.dependencies.PSObject.Properties | ForEach-Object { $deps[$_.Name] = $_.Value } }
+        if ($pkg.devDependencies) { $pkg.devDependencies.PSObject.Properties | ForEach-Object { $deps[$_.Name] = $_.Value } }
+        $hasGetIntlDep = $deps.ContainsKey("next-intl")
+    } catch {}
+}
+
+$hasRouting = (Test-Path (Join-Path $rootDir "i18n/routing.ts")) -or (Test-Path (Join-Path $rootDir "src/i18n/routing.ts"))
+$hasRequest = (Test-Path (Join-Path $rootDir "i18n/request.ts")) -or (Test-Path (Join-Path $rootDir "src/i18n/request.ts"))
+$hasNavigation = (Test-Path (Join-Path $rootDir "i18n/navigation.ts")) -or (Test-Path (Join-Path $rootDir "src/i18n/navigation.ts"))
+$hasProxy = (Test-Path (Join-Path $rootDir "proxy.ts")) -or (Test-Path (Join-Path $rootDir "src/proxy.ts"))
+$hasMiddleware = (Test-Path (Join-Path $rootDir "middleware.ts")) -or (Test-Path (Join-Path $rootDir "src/middleware.ts"))
+$hasInterceptor = $hasProxy -or $hasMiddleware
+
+$nextConfigs = @("next.config.ts", "next.config.js", "next.config.mjs")
+$foundNextConfig = $nextConfigs | Where-Object { Test-Path (Join-Path $rootDir $_) } | Select-Object -First 1
+$hasNextIntlPlugin = $false
+if ($foundNextConfig) {
+    $nextConfContent = Get-Content -Raw -Path (Join-Path $rootDir $foundNextConfig) -Encoding UTF8
+    $hasNextIntlPlugin = ($nextConfContent.Contains("next-intl/plugin") -or $nextConfContent.Contains("createNextIntlPlugin") -or $nextConfContent.Contains("withNextIntl"))
+}
+
+$missingIntl = @()
+if (-not $hasGetIntlDep) { $missingIntl += "package next-intl" }
+if (-not $hasRouting) { $missingIntl += "i18n/routing.ts" }
+if (-not $hasRequest) { $missingIntl += "i18n/request.ts" }
+if (-not $hasNavigation) { $missingIntl += "i18n/navigation.ts" }
+if (-not $hasInterceptor) { $missingIntl += "proxy.ts/middleware.ts" }
+if (-not $hasNextIntlPlugin) { $missingIntl += "next-intl plugin in next.config" }
+
+if ($missingIntl.Count -eq 0) {
+    $interceptorName = if ($hasProxy) { "proxy.ts (Next 16+)" } else { "middleware.ts" }
+    $automationChecks.Add(@{ name = "Next.js Internationalization (next-intl)"; status = "configured"; details = "Configured next-intl, routing, request (root-params), navigation, $interceptorName, and next.config plugin." })
+} else {
+    $automationChecks.Add(@{ name = "Next.js Internationalization (next-intl)"; status = "warning"; details = "next-intl integration incomplete. Missing: $($missingIntl -join ', ')" })
+}
 
 $passed = ($errors.Count -eq 0)
 

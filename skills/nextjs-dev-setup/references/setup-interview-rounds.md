@@ -17,12 +17,14 @@ Probe the user to determine which architectural layers should be scaffolded and 
    - Unit Testing (Jest + React Testing Library)?
    - E2E & Instant Navigation Testing (Playwright)?
    - Component Workshop (Storybook CSF3 + Accessibility addon)?
-2. **AI & Code Intelligence MCP Servers**:
+2. **Internationalization & Locales (`next-intl`)**:
+   - Supported languages, default locale, and directionality (e.g. English `en` [LTR], Persian `fa` [RTL])? *Auto-discovered from `docs/adr/`, `CONTEXT.md`, or `docs/plan.md` per Zero-Interruption Rule.*
+3. **AI & Code Intelligence MCP Servers**:
    - Next.js Dev Server (`next-devtools`)?
    - Playwright MCP for browser automation?
    - Storybook MCP for visual story inspection?
    - Codebase Memory Graph MCP (`codebase-memory-mcp` with `auto_watch=false`)?
-3. **Styling & Design Tokens**:
+4. **Styling & Design Tokens**:
    - Enforce `@shadcn/lint` and ESLint flat config design token verification?
 
 ---

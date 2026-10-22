@@ -206,3 +206,68 @@ WooGraphQL maintains customer cart state across requests via an ephemeral **WooC
 3. **HTTP GET Caching**:
    - Issue public product catalog queries as HTTP `GET` requests with URL-encoded query parameters.
    - Configure reverse proxies (Cloudflare, Varnish, Redis) to cache catalog GET queries at the edge.
+
+
+---
+
+## 6. Docker on Windows Local Environment Performance Optimization
+
+When running WordPress under Docker Desktop on Windows, mounting Windows host folders (`C:\` or `D:\`) into containers creates severe I/O bottlenecks (15s–45s per page load) due to 9P/virtiofs cross-OS filesystem translation across thousands of PHP core file checks (`stat()`, `require_once()`) and random MySQL disk writes.
+
+> [!IMPORTANT]
+> Previous diagnostic findings attributing slowness to internal WordPress container settings, database parameters, or OPcache limits were **invalid**. Tweaking container/database configs does not solve the root problem. The **only true solution** is eliminating cross-OS host bind mounts by using **Docker Named Volumes** or running the project in the native WSL 2 filesystem.
+
+### Primary Solutions:
+
+#### Strategy A: Docker Named Volumes for Core & MySQL (Recommended for Windows Host Workflows)
+- Keep WordPress core files and MySQL data in native Linux Docker named volumes (`wp_core` and `wp_db_data`), while bind-mounting only `wp-content` or specific plugins/themes from the Windows host for editing.
+- **Example `docker-compose.yml` snippet**:
+  ```yaml
+  services:
+    wordpress:
+      image: wordpress:latest
+      volumes:
+        - wp_core:/var/www/html
+        - ./wp-content:/var/www/html/wp-content
+        - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
+
+    wordpress_db:
+      image: mysql:8.0
+      volumes:
+        - wp_db_data:/var/lib/mysql
+
+  volumes:
+    wp_core:
+    wp_db_data:
+  ```
+
+#### Strategy B: WSL 2 Native Filesystem (The "Game Changer" — 500ms Response Times)
+- Store the repository and project directory directly inside the native WSL 2 Linux filesystem (e.g. `/home/<username>/projects/...` accessible via `\\wsl$\Ubuntu\home\<username>\...`), rather than the Windows NTFS drive (`/mnt/c/` or `D:\Scripts\...`).
+- Docker Desktop's WSL 2 backend interacts with WSL 2 ext4 files natively with zero cross-OS translation penalty, slashing page load times from 45 seconds down to under 500ms.
+
+#### Strategy C: Development `wp-config.php` Optimizations
+In local development environments, disable high-overhead background operations via `WORDPRESS_CONFIG_EXTRA`:
+```php
+// Disable WP-Cron from firing on every HTTP page request
+define( 'DISABLE_WP_CRON', true );
+
+// Disable or minimize post revisions to reduce DB bloat
+define( 'WP_POST_REVISIONS', false );
+
+// Increase autosave interval to reduce disk writes
+define( 'AUTOSAVE_INTERVAL', 86400 );
+```
+
+
+#### Strategy D: Automated Makefile Patching of PHP `pdo_mysql` Driver for Laravel & Regional Plugins
+- **Problem**: Plugins using Laravel Capsule or Eloquent (`Illuminate\Database`), such as **Persian WooCommerce (`persian-woocommerce`)** and Gateland, connect to MySQL via PHP PDO (`pdo_mysql`). Official `wordpress:latest` Docker images only bundle `mysqli` and `mysqlnd`.
+- **Symptom**: Unhandled `Illuminate\Database\QueryException: could not find driver` crashing `/wp-admin` with HTTP 500 fatal errors.
+- **Recommended Solution (No Custom Docker Image)**: Deploy standard `wordpress:latest` containers and execute the automated Makefile patch target to install `pdo_mysql` inside the running container:
+  ```bash
+  make patch-pdo-mysql
+  ```
+  Or CLI command:
+  ```bash
+  docker exec -u 0 <container_name> docker-php-ext-install pdo_mysql
+  docker exec <container_name> apache2ctl graceful
+  ```

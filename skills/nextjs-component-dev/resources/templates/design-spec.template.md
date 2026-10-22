@@ -92,7 +92,19 @@
 
 ---
 
-## 7. Bidirectional (RTL) Adaptations
+## 7. Edge Cases & Boundary States
+
+| Boundary Scenario | Visual Behavior & Overflow Handling | Fallback Presentation |
+| :---------------- | :---------------------------------- | :-------------------- |
+| **Extreme Text Length / Overflow** | Max characters budget; `line-clamp-2` or `line-clamp-3` with tooltip/title on hover; words break with `break-words`. | Card/container expands vertically or truncates cleanly with ellipsis; never breaks horizontal grid or leaks outside container. |
+| **Empty State / Zero Items** | Centered empty state graphic/icon, friendly localized explanation, and primary call-to-action button. | Clean placeholder card preserving grid structure with zero broken layout frames. |
+| **Network / Loading Error State** | Inline error alert or error card with subtle warning/destructive border and retry CTA button. | Graceful error card preserving section layout and height. |
+| **Viewport Extremes** | 320px ultra-narrow mobile (compact paddings, wrapped action rows) vs 2560px ultra-wide (max-w container, centered). | Seamless responsive scaling without horizontal scrollbars. |
+| **BiDi & Asymmetric Glyphs** | RTL text expansion (+30% to +50% width); asymmetric punctuation and bullet points flipped. | Preserves line height and vertical rhythm without clipping descenders. |
+
+---
+
+## 8. Bidirectional (RTL) Adaptations
 
 - **Reading Direction**: Layout flips horizontally for RTL locales (start alignment moves to right).
 - **Icons & Chevrons**: Directional navigation chevrons and back/forward arrows flip (`scaleX(-1)`).
@@ -100,7 +112,7 @@
 
 ---
 
-## 8. Accessibility & Ergonomics
+## 9. Accessibility & Ergonomics
 
 - **Contrast Ratios**: Minimum `4.5:1` contrast for body copy and `3:1` for large display headings against surface backgrounds (WCAG AA/AAA).
 - **Touch Target Sizing**: All interactive touch targets (buttons, links, icon toggles) are at least $44\text{px} \times 44\text{px}$.
@@ -108,7 +120,7 @@
 
 ---
 
-## 9. Recommended Visual Assets & Prompts
+## 10. Recommended Visual Assets & Prompts
 
 ### Visual Asset 1: `[Asset Name]`
 

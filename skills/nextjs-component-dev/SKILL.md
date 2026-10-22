@@ -1,15 +1,18 @@
 ---
 name: nextjs-component-dev
 description: >-
-  Build Next.js App Router React components with Suspense skeletons, semantic OKLCH tokens, Jest + RTL unit tests, Playwright visual/hydration checks, and Tailwind logical styling. Triggers on "/nextjs-component-dev", "create component", "new component", "build component", or "develop component".
+  Build Next.js App Router React components with Suspense skeletons, semantic OKLCH tokens, next-intl dictionaries, Jest + RTL unit tests, Playwright visual/hydration checks, and Tailwind logical styling. MANDATORY SKILL: MUST ALWAYS be activated, read, and strictly followed every time the agent creates, scaffolds, or implements any new React/Next.js component, UI section, card, widget, or layout element. Triggers on "/nextjs-component-dev", "create component", "new component", "build component", "develop component", or any component creation task.
 metadata:
   author: BIGboss248
-  version: "1.4"
+  version: "1.5"
 ---
 
 # Next.js Component & Skeleton Development (`nextjs-component-dev`)
 
 Specialized workflow for creating production-ready React Server Components (RSC) and Client Components with Suspense skeletons, dual-layer TDD testing (Jest + RTL unit tests and Playwright integration/hydration/visual checks), next-intl dictionary-backed translations, semantic theme tokens, and live runtime diagnostics via `next-devtools` MCP.
+
+> [!CRITICAL]
+> **MANDATORY COMPONENT CREATION INVARIANT:** Whenever you create any new React or Next.js component (whether requested directly by the user, created as part of a page build, or executed from `docs/plan/`), you **MUST** strictly follow every architectural standard and workflow step in this skill. Never create ad-hoc `.tsx` component files without executing this workflow (Next.js local docs lookup, `implementation_plan.md`, `messages/[locale].json` dictionary sync, TDD `[ComponentName].test.tsx`, `[ComponentName]Skeleton.tsx`, `index.ts`, and `verify-dev` verification).
 
 > [!TIP]
 > **Modular Assets & Templates:**

@@ -1,5 +1,8 @@
 import type { Preview } from "@storybook/nextjs-vite";
 import { withThemeByClassName } from "@storybook/addon-themes";
+import { NextIntlClientProvider } from "next-intl";
+import { ProgressBarProvider } from "@vercel/react-transition-progress";
+import enMessages from "../messages/en.json";
 import "../app/globals.css";
 
 const preview: Preview = {
@@ -25,9 +28,15 @@ const preview: Preview = {
       },
       defaultTheme: "light",
     }),
+    (Story) => (
+      <NextIntlClientProvider locale="en" messages={enMessages}>
+        <ProgressBarProvider>
+          <Story />
+        </ProgressBarProvider>
+      </NextIntlClientProvider>
+    ),
   ],
   tags: ["autodocs"],
 };
 
 export default preview;
-

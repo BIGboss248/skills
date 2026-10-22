@@ -577,3 +577,84 @@ export async function getCheckoutUrlAction(
 ```
 
 
+
+
+---
+
+## 8. WordPress & Docker on Windows Host Performance Optimization
+
+When developing locally on Windows machines, running WordPress via Docker Compose with host bind mounts (`./WordPress:/var/www/html` and `./WordPress_database:/var/lib/mysql`) creates an extreme I/O bottleneck. Every HTTP request requires reading thousands of PHP files across core WordPress, themes, and plugins, while MySQL executes random page writes. Passing this traffic across the Windows host NTFS and WSL2 VM boundary via 9P/virtiofs can increase page load times to 15–45+ seconds.
+
+> [!IMPORTANT]
+> Previous diagnostic findings attributing slowness to internal WordPress container settings, database parameters, or OPcache limits were **invalid**. Tweaking container/database configs does not solve the root problem. The **only true solution** is eliminating cross-OS host bind mounts by using **Docker Named Volumes** or running the project in the native WSL 2 filesystem.
+
+### Recommended Architectural Approaches
+
+#### Approach 1: Linux Named Volumes for Core & MySQL (Windows Host Workflow)
+When files must remain checked out on a Windows host:
+1. Store WordPress core in a Docker named volume (`wp_core:/var/www/html`).
+2. Store MySQL data in a Docker named volume (`wp_db_data:/var/lib/mysql`).
+3. Bind-mount **only** the `wp-content` folder (or specific custom plugins/themes) to the Windows host:
+```yaml
+services:
+  wordpress:
+    image: wordpress:latest
+    volumes:
+      - wp_core:/var/www/html
+      - ./wp-content:/var/www/html/wp-content
+      - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
+
+  wordpress_db:
+    image: mysql:8.0
+    volumes:
+      - wp_db_data:/var/lib/mysql
+
+volumes:
+  wp_core:
+  wp_db_data:
+```
+
+#### Approach 2: WSL 2 Native Filesystem (Sub-second Page Loads)
+Store the repository directly in the WSL 2 Linux filesystem (e.g. `\\wsl$\Ubuntu\home\<username>\repos\...`).
+- Docker Desktop WSL 2 engine accesses files natively via ext4 without virtualization translation overhead.
+- Benchmarks reduce page response times from 45s down to 500ms.
+- Developers can edit code using VS Code with the Remote - WSL extension.
+
+#### Approach 3: Local Dev `wp-config.php` Tuning
+Reduce I/O thrashing during development:
+```php
+define( 'DISABLE_WP_CRON', true ); // Disables cron DB polling on every page hit
+define( 'WP_POST_REVISIONS', false ); // Eliminates excessive revision writes
+define( 'AUTOSAVE_INTERVAL', 86400 ); // Minimizes autosave file & DB writes
+```
+
+
+#### Approach 4: Automated Makefile Patching of PHP `pdo_mysql` Driver for Laravel & Regional Plugins
+- **Root Problem**: Plugins utilizing Laravel Capsule or Eloquent (`Illuminate\Database`), such as **Persian WooCommerce (`persian-woocommerce`)** and Gateland, connect to MySQL via PHP PDO (`pdo_mysql`). The official `wordpress:latest` Docker image only bundles `mysqli` and `mysqlnd`.
+- **Symptom**: Unhandled `Fatal error: Uncaught Illuminate\Database\QueryException: could not find driver` on `admin_init`, triggering HTTP 500 across `/wp-admin` and storefront routes.
+- **Recommended Solution (No Custom Docker Image)**: Deploy standard `wordpress:latest` containers without creating custom Docker images, and execute the automated Makefile patch target to install `pdo_mysql` inside the running container:
+  ```bash
+  make patch-pdo-mysql
+  ```
+  Or from the `prod/` folder:
+  ```bash
+  make patch-wordpress
+  ```
+- **Direct CLI Hotfix**:
+  ```bash
+  docker exec -u 0 <container_name> docker-php-ext-install pdo_mysql
+  docker exec <container_name> apache2ctl graceful
+  ```
+
+
+---
+
+## 9. Iranian Payment Gateways & Sandbox vs. Live Mode Behavior
+
+Iranian payment gateways (both direct PSPs such as Bank Mellat / Beh Pardakht, Saman Kish, Sadad, Parsian, and aggregators/Pardakht-Yar such as ZarinPal, IDPay, Zibal, and Gateland) have strict domain and terminal verification requirements:
+
+1. **Dormant / Inactive Gateways (حالت راکد)**:
+   - Unless the gateway is activated with valid production terminal contracts and switched to **Live Mode**, transactions will be rejected with error codes (e.g. invalid merchant, unauthorized domain, or connection failed).
+2. **Local Development (shop.local) Strategy**:
+   - Local environments cannot negotiate live bank callbacks or terminal requests.
+   - For checkout integration verification in Next.js and WooCommerce, enable gateway **Sandbox Mode** (where available, e.g. ZarinPal with sandbox UUID) or utilize WooCommerce's native **Check Payments (پرداخت با چک)** or **Cash on Delivery (پرداخت در محل)**. This validates order creation, inventory deduction, customer association, and order-pay URL redirection safely without requiring live banking contracts.
