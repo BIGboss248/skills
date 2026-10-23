@@ -1,0 +1,39 @@
+ProblemDetails:
+  type: object
+  description: RFC 9457 Problem Details error envelope.
+  required:
+    - title
+    - status
+  properties:
+    type:
+      type: string
+      format: uri
+      default: "about:blank"
+      example: "https://api.example.com/errors/invalid-input"
+    title:
+      type: string
+      example: "Invalid Request Payload"
+    status:
+      type: integer
+      example: 422
+    detail:
+      type: string
+      example: "The request body failed schema validation."
+    instance:
+      type: string
+      format: uri-reference
+      example: "/api/v1/orders"
+    invalid_params:
+      type: array
+      items:
+        type: object
+        required:
+          - name
+          - reason
+        properties:
+          name:
+            type: string
+            example: "email"
+          reason:
+            type: string
+            example: "Must be a valid email address"

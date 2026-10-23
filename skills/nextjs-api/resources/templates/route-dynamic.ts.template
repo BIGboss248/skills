@@ -1,0 +1,106 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { createProblemResponse, handleValidationError } from "@/lib/api/problem-details";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+interface RouteContext {
+  params: Promise<{ id: string }>;
+}
+
+const UpdateEntitySchema = z.object({
+  name: z.string().trim().min(1).max(100).optional(),
+  description: z.string().trim().max(500).optional(),
+});
+
+// GET /api/v1/[resource]/[id] - Retrieve single resource
+export async function GET(request: NextRequest, context: RouteContext) {
+  try {
+    const { id } = await context.params;
+
+    // TODO: Fetch entity from database with abort signal
+    // const entity = await db.entity.findUnique({ where: { id }, signal: request.signal });
+    const entity = null;
+
+    if (!entity) {
+      return createProblemResponse({
+        title: "Not Found",
+        status: 404,
+        detail: `Resource with ID '${id}' was not found.`,
+        instance: request.nextUrl.pathname,
+      });
+    }
+
+    return NextResponse.json(entity, { status: 200 });
+  } catch (error) {
+    console.error("GET [id] error:", error);
+    return createProblemResponse({
+      title: "Internal Server Error",
+      status: 500,
+      detail: "An unexpected error occurred while retrieving resource.",
+      instance: request.nextUrl.pathname,
+    });
+  }
+}
+
+// PATCH /api/v1/[resource]/[id] - Partial update
+export async function PATCH(request: NextRequest, context: RouteContext) {
+  try {
+    const { id } = await context.params;
+
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return createProblemResponse({
+        title: "Bad Request",
+        status: 400,
+        detail: "Malformed or invalid JSON payload.",
+        instance: request.nextUrl.pathname,
+      });
+    }
+
+    const parseResult = UpdateEntitySchema.safeParse(body);
+    if (!parseResult.success) {
+      return handleValidationError(parseResult.error, request.nextUrl.pathname);
+    }
+
+    // TODO: Update entity in database
+    const updatedEntity = {
+      id,
+      ...parseResult.data,
+      updatedAt: new Date().toISOString(),
+    };
+
+    return NextResponse.json(updatedEntity, { status: 200 });
+  } catch (error) {
+    console.error("PATCH [id] error:", error);
+    return createProblemResponse({
+      title: "Internal Server Error",
+      status: 500,
+      detail: "An unexpected error occurred while updating resource.",
+      instance: request.nextUrl.pathname,
+    });
+  }
+}
+
+// DELETE /api/v1/[resource]/[id] - Remove resource
+export async function DELETE(request: NextRequest, context: RouteContext) {
+  try {
+    const { id } = await context.params;
+
+    // TODO: Delete entity in database
+    // await db.entity.delete({ where: { id }, signal: request.signal });
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    console.error("DELETE [id] error:", error);
+    return createProblemResponse({
+      title: "Internal Server Error",
+      status: 500,
+      detail: "An unexpected error occurred while deleting resource.",
+      instance: request.nextUrl.pathname,
+    });
+  }
+}
