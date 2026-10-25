@@ -4,7 +4,7 @@ description: >-
   Build Next.js App Router React components with Suspense skeletons, semantic OKLCH tokens, next-intl dictionaries, Jest + RTL unit tests, Playwright visual/hydration checks, and Tailwind logical styling. MANDATORY SKILL: MUST ALWAYS be activated, read, and strictly followed every time the agent creates, scaffolds, or implements any new React/Next.js component, UI section, card, widget, or layout element. Triggers on "/nextjs-component-dev", "create component", "new component", "build component", "develop component", or any component creation task.
 metadata:
   author: BIGboss248
-  version: "1.5"
+  version: "1.6"
 ---
 
 # Next.js Component & Skeleton Development (`nextjs-component-dev`)
@@ -23,6 +23,7 @@ Specialized workflow for creating production-ready React Server Components (RSC)
 > - Instant Navigation & Prefetching: [`references/instant-navigation-and-prefetching.md`](./references/instant-navigation-and-prefetching.md)
 > - Next DevTools Debugging Guide: [`references/next-devtools-debugging.md`](./references/next-devtools-debugging.md)
 > - Caching & Revalidation: [`references/caching-and-revalidation.md`](./references/caching-and-revalidation.md)
+> - RSC, State Boundaries & Lazy Loading: [`references/rsc-and-state-boundaries.md`](./references/rsc-and-state-boundaries.md)
 > - Code Templates: [`resources/templates/`](./resources/templates/) ([Component](./resources/templates/component.template.tsx), [Skeleton](./resources/templates/skeleton.template.tsx), [Jest Unit Test](./resources/templates/unit-test.template.tsx), [Playwright Spec](./resources/templates/e2e-spec.template.ts))
 > - Reference Implementations: [`examples/`](./examples/)
 > - Verification Scripts: [`scripts/verify-dev.ps1`](./scripts/verify-dev.ps1) (Windows) / [`scripts/verify-dev.sh`](./scripts/verify-dev.sh) (Linux)
@@ -56,6 +57,9 @@ Specialized workflow for creating production-ready React Server Components (RSC)
 1. **Server Components by Default:** Keep components server-rendered (`async function`).
 2. **Push `"use client"` Down:** Isolate interactive handlers (buttons, toggles, form inputs) into small leaf Client Components.
 3. **RSC Composition:** Pass Server Components as `children` or props into Client wrappers. Never import Server Components inside `"use client"` files.
+4. **Lazy Client Loading (`next/dynamic`):** For heavy, conditionally rendered, or below-the-fold Client Components (rich text editors, dialogs/modals, charts, heavy pickers), dynamically load them via `next/dynamic` with `loading: () => <[ComponentName]Skeleton />`. Consult [`references/rsc-and-state-boundaries.md`](./references/rsc-and-state-boundaries.md).
+5. **Client-Only Leaf (`ssr: false`):** When client components rely strictly on browser APIs (`window`, canvas, `localStorage`), disable SSR via `{ ssr: false }` to eliminate hydration mismatches while rendering the skeleton during SSR.
+6. **Action-Driven Library Loading:** Dynamically import heavy libraries (`await import(...)`) inside event handlers rather than top-level module imports.
 
 ### 5. Styling, Logical Properties & Theme Tokens
 
@@ -112,7 +116,7 @@ Specialized workflow for creating production-ready React Server Components (RSC)
 
 The implementation plan must cover:
 
-1. **Target Architecture & Path**: Full target directory (`<new_component_dir>/<page_or_global>/<ComponentName>/`) and classification (RSC vs. Client leaf component).
+1. **Target Architecture & Path**: Full target directory (`<new_component_dir>/<page_or_global>/<ComponentName>/`) and classification (RSC, Eager Client leaf, Lazy Client leaf with `next/dynamic`, or Client-only with `ssr: false`).
 2. **Next.js Local Docs Consulted**: Specific doc paths checked under `node_modules/next/dist/docs/` (e.g. `04-api-reference/04-components/image.md`, `03-directives/use-cache.md`, `04-api-reference/02-functions/use-router.md`).
 3. **TypeScript Contracts**: Prop interfaces and types with strict English TSDoc annotations.
 4. **Dictionary Strategy**: Explicit translation namespaces and keys to add to `messages/[locale].json` across all `supported_languages` in `docs/project.json` (zero hardcoded strings or in-file mock dictionaries).
@@ -152,7 +156,7 @@ The implementation plan must cover:
   - Test directional attributes (`dir="rtl"` vs. `dir="ltr"`), default props, interactive callbacks (`@testing-library/user-event`), Suspense skeleton fallbacks, and semantic ARIA roles.
 
 - [ ] **Step 4: Component & Skeleton Implementation**
-  - Create primary component `[ComponentName].tsx` (RSC or Client Component) consuming translations via `next-intl` (`getTranslations` or `useTranslations`) with zero hardcoded placeholders or in-file mock dictionary objects.
+  - Create primary component `[ComponentName].tsx` (RSC or Client Component) consuming translations via `next-intl` (`getTranslations` or `useTranslations`) with zero hardcoded placeholders or in-file mock dictionary objects. For heavy or conditionally rendered interactive leaves, wrap via `next/dynamic` with `loading: () => <[ComponentName]Skeleton />` (or `{ ssr: false }` for browser-only APIs).
   - Create matching Suspense skeleton `[ComponentName]Skeleton.tsx` mirroring layout geometry and classes to prevent CLS.
   - Create clean barrel export `index.ts`.
 
@@ -184,7 +188,7 @@ The implementation plan must cover:
 
 - **Local Docs Verification via Codebase Memory MCP:** Always search `node_modules/next/dist/docs/` using `codebase-memory` MCP tools (`search_code`, `search_graph`) before authoring components. Never assume deprecated Next.js API signatures or outdated caching mechanisms; local docs reflect the exact runtime version installed.
 - **Zero In-File i18n Fallbacks:** Never hardcode dictionary objects or fallbacks (`const DEFAULT_CONTENT = {...}`) in TSX files. All text must come from `messages/[locale].json`.
-- **Hydration Warning Detection:** Browser-only globals (`window`, `localStorage`) accessed during SSR cause hydration mismatch crashes. Guard them behind `useEffect` or client checks.
+- **Hydration Warning Detection & Browser APIs:** Never access browser-only globals (`window`, `localStorage`) during SSR. Use `dynamic(() => import('./Widget'), { ssr: false, loading: () => <WidgetSkeleton /> })` instead of double-rendering `useEffect(mounted)` flags to eliminate hydration crashes cleanly.
 - **Strict Logical Styling (BiDi):** Never use physical directions (`ml-`, `mr-`, `pl-`, `pr-`, `left-`, `right-`). Always use logical alternatives (`ms-`, `me-`, `ps-`, `pe-`, `start`, `end`).
 - **Targeted Test Execution:** Always run tests targeting specific component files to conserve tokens and reduce execution time (do not run full project test suites during component iterations).
 - **Storybook Story Separation:** Do not author `.stories.tsx` or run Storybook builds during standard component development unless the `nextjs-storybook-story` skill is specifically requested. Consult [`references/storybook-reference.md`](./references/storybook-reference.md).
