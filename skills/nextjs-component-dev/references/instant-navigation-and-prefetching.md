@@ -209,3 +209,60 @@ test.describe("Product Component Instant Navigation", () => {
   });
 });
 ```
+
+
+---
+
+## 8. Contextual Link Loading Feedback (`useLinkStatus`)
+
+While global progress bars (e.g. `@vercel/react-transition-progress`) indicate that a navigation transition is occurring at the viewport level, they do not communicate *which* component was triggered. In dense grids (product catalogs, search results, feeds) and primary action buttons, pair prefetching strategies with `useLinkStatus` to deliver immediate, contextual micro-feedback.
+
+### Core Mechanics
+- **Import:** `import { useLinkStatus } from "next/link";`
+- **Hook Contract:** Returns `{ pending: boolean }`.
+- **Context Scope:** Must be called inside a component rendered as a child of `<Link>`. Returns `{ pending: false }` if called outside `<Link>`.
+- **Per-Link React Transition:** Only the specific link instance clicked switches to `pending: true` during the navigation transition.
+
+### Pattern: Scoped Product Card CTA / Navigation Link
+In dense feeds where eager dynamic prefetching is avoided, wrap the link's inner content in a leaf Client Component:
+
+```tsx
+"use client";
+
+import { useLinkStatus } from "next/link";
+import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface LinkButtonContentProps {
+  label: string;
+  loadingLabel?: string;
+  className?: string;
+}
+
+export function LinkButtonContent({
+  label,
+  loadingLabel,
+  className,
+}: LinkButtonContentProps) {
+  const { pending } = useLinkStatus();
+
+  return (
+    <span
+      aria-busy={pending}
+      className={cn(
+        "inline-flex items-center justify-center gap-2 transition-opacity",
+        pending && "opacity-80 pointer-events-none cursor-wait",
+        className
+      )}
+    >
+      {pending && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+      <span>{pending && loadingLabel ? loadingLabel : label}</span>
+    </span>
+  );
+}
+```
+
+### Best Practices for Dense Grids:
+1. **Never Multi-Fire Prefetch:** Retain default `<Link>` or hover prefetching (`router.prefetch()`) across dense lists of 30+ items.
+2. **Prevent Multi-Click:** Apply `pointer-events-none cursor-wait` while `pending` is active.
+3. **Preserve Semantic Layout:** Use `useLinkStatus` strictly within the child of `<Link>` to keep semantic HTML `<a>` tags intact for SEO and screen readers.
