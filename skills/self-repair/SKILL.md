@@ -34,10 +34,14 @@ Each rule is stored inside a JSON array with the following schema:
     "Rule_number": 1,
     "Category": "CODE",
     "Instruction": "Never use default exports for React components - always use named exports.",
-    "Why": "Ensures consistency with the codebase and simplifies refactoring."
+    "Why": "Ensures consistency with the codebase and simplifies refactoring.",
+    "Issue": "#42"
   }
 ]
 ```
+
+> [!NOTE]
+> The `"Issue"` field is optional and references the GitHub Issue (e.g. `"#42"` or issue URL) where this bug or rule was diagnosed, verified, and triaged. See `github-triage`.
 
 ### Allowed Categories
 
@@ -136,6 +140,7 @@ When a trigger occurs, perform the following atomic update:
    - **Category**: One of the standard categories (`STYLE`, `CODE`, `ARCH`, `TOOL`, `PROCESS`, `DATA`, `UX`, `OTHER`).
    - **Instruction**: Written in strict imperative format: `"Never/Always do X - because Y."`
    - **Why**: Brief reason (e.g. _"user preference"_, _"codebase pattern"_, _"framework limitation"_).
+   - **Issue**: Optional GitHub Issue reference (e.g. `"#42"`), populated when triaged via `github-triage`.
 4. Append the rule into the JSON array and save the file formatted with 2-space indentation.
 5. **Deduplicate & Consolidate**: Merge overlapping or superseded rules in the same domain and keep `Rule_number` sequentially ordered (`1..N`) so `autofix.json` stays free of duplicates. When any skill in `.agents/skills/` is updated, sync it to `d:/Scripts/Obsidian/skills/` and commit and push the synced changes inside the `d:/Scripts/Obsidian` repository only.
 6. Briefly notify the user:
@@ -163,7 +168,8 @@ When a trigger occurs, perform the following atomic update:
     "Rule_number": 3,
     "Category": "CODE",
     "Instruction": "Always use Zod schemas for input validation on all external entry points - prevent untyped runtime inputs.",
-    "Why": "prevents runtime errors and enforces types"
+    "Why": "prevents runtime errors and enforces types",
+    "Issue": "#14"
   }
 ]
 ```
