@@ -13,7 +13,10 @@ flowchart LR
 
 Probe the user to determine which architectural layers should be scaffolded and enabled in `docs/project.json`:
 
-1. **Testing Suites**:
+1. **Framework Core & Agent Rules**:
+   - Always install the latest release of Next.js (`<pkg_mgr> add next@latest react@latest react-dom@latest`).
+   - Scaffold or update root `AGENTS.md` (or `agent.md`) with the mandatory notice alerting AI agents that their pre-trained context is outdated and mandating local documentation lookup in `node_modules\next\dist\docs`.
+2. **Testing Suites**:
    - Unit Testing (Jest + React Testing Library)?
    - E2E & Instant Navigation Testing (Playwright)?
    - Component Workshop (Storybook CSF3 + Accessibility addon)?

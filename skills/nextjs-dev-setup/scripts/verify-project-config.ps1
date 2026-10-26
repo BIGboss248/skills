@@ -440,6 +440,41 @@ if ($hasBugReportTpl -and $hasIssueConfigTpl) {
     $automationChecks.Add(@{ name = "GitHub Triage Infrastructure"; status = "warning"; details = "Missing GitHub triage template(s): $($missingTriage -join ', '). Run scripts/init_triage_infra.ps1." })
 }
 
+# 12. Agent Rules & Next.js Local Docs Notice (AGENTS.md / agent.md)
+$agentMdCandidates = @("AGENTS.md", "agents.md", "AGENT.md", "agent.md")
+$foundAgentMd = $agentMdCandidates | Where-Object { Test-Path (Join-Path $rootDir $_) } | Select-Object -First 1
+
+if ($foundAgentMd) {
+    $agentContent = Get-Content -Raw -Path (Join-Path $rootDir $foundAgentMd) -Encoding UTF8
+    $hasOutdatedNotice = $agentContent -match "(?i)outdated"
+    $hasDocsNotice = $agentContent -match "(?i)node_modules[\\/]next[\\/]dist[\\/]docs"
+
+    if ($hasOutdatedNotice -and $hasDocsNotice) {
+        $automationChecks.Add(@{ name = "Agent Instructions & Docs Notice ($foundAgentMd)"; status = "configured"; details = "Found '$foundAgentMd' with mandatory outdated context notice and 'node_modules\next\dist\docs' lookup mandate." })
+    } elseif (-not $hasOutdatedNotice) {
+        $automationChecks.Add(@{ name = "Agent Instructions & Docs Notice ($foundAgentMd)"; status = "warning"; details = "'$foundAgentMd' is missing notice that Next.js context is outdated." })
+    } elseif (-not $hasDocsNotice) {
+        $automationChecks.Add(@{ name = "Agent Instructions & Docs Notice ($foundAgentMd)"; status = "warning"; details = "'$foundAgentMd' is missing mandate to search 'node_modules\next\dist\docs'." })
+    }
+} else {
+    $automationChecks.Add(@{ name = "Agent Instructions & Docs Notice (AGENTS.md)"; status = "warning"; details = "Missing AGENTS.md (or agent.md). Scaffold from AGENTS.md.template with outdated context notice." })
+}
+
+# 13. Next.js Core Dependency (next@latest) Check
+if (Test-Path $pkgPath) {
+    try {
+        $pkg = Get-Content -Raw -Path $pkgPath -Encoding UTF8 | ConvertFrom-Json
+        $deps = @{}
+        if ($pkg.dependencies) { $pkg.dependencies.PSObject.Properties | ForEach-Object { $deps[$_.Name] = $_.Value } }
+        if ($deps.ContainsKey("next")) {
+            $nextVer = $deps["next"]
+            $automationChecks.Add(@{ name = "Next.js Core Dependency (next@latest)"; status = "configured"; details = "Installed Next.js version: $nextVer (configured to always target latest)." })
+        } else {
+            $automationChecks.Add(@{ name = "Next.js Core Dependency (next@latest)"; status = "warning"; details = "Missing 'next' dependency in package.json. Run '<pkg_mgr> add next@latest react@latest react-dom@latest'." })
+        }
+    } catch {}
+}
+
 $passed = ($errors.Count -eq 0)
 
 # Output rendering

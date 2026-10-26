@@ -33,11 +33,16 @@ Conduct the interactive interview in **progressive, adaptive rounds** (waiting f
 
 ## Step-by-Step Execution Flow
 
-### Stage 1: Project Metadata & Internationalization (`next-intl`)
+### Stage 1: Project Metadata, Latest Next.js & Internationalization (`next-intl`)
 
 1. **Project Metadata**: Initialize `docs/project.json` using [project.template.json](./resources/templates/project.template.json) based on user interview choices and discovered locales.
-2. **Install Internationalization Runtime**: Run `<pkg_mgr> add next-intl` (`pnpm add next-intl`).
-3. **Scaffold `next-intl` Architectural Core**:
+2. **Install Latest Next.js Framework Core**:
+   - Always install the latest release of Next.js and peer React dependencies: `<pkg_mgr> add next@latest react@latest react-dom@latest` (or `<pkg_mgr> create next-app@latest` when scaffolding from scratch). Never pin or freeze to older major/minor versions.
+3. **Agent Rules & Outdated Context Notice (`AGENTS.md`)**:
+   - Scaffold or update root `AGENTS.md` (or `agent.md`) using [AGENTS.md.template](./resources/templates/AGENTS.md.template).
+   - **Mandatory Notice**: Prominently alert agents that their pre-trained context regarding Next.js is inherently outdated. Mandate that for ANY Next.js task, agents must search and consult the local distribution documentation in `node_modules\next\dist\docs` (or `node_modules/next/dist/docs/`) using `codebase-memory` MCP tools (`search_code`, `search_graph`, `get_code_snippet`) before authoring code.
+4. **Install Internationalization Runtime**: Run `<pkg_mgr> add next-intl` (`pnpm add next-intl`).
+5. **Scaffold `next-intl` Architectural Core**:
    - `i18n/routing.ts`: Configure `defineRouting` with supported locales and default locale using [routing.ts.template](./resources/templates/i18n/routing.ts.template).
    - `i18n/request.ts`: Configure server request handler using modern `next/root-params` (`await rootParams.locale()`) using [request.ts.template](./resources/templates/i18n/request.ts.template).
    - `i18n/navigation.ts`: Export pure TypeScript navigation utilities (`Link`, `redirect`, `usePathname`, `useRouter`, `getPathname`) using [navigation.ts.template](./resources/templates/i18n/navigation.ts.template).
@@ -46,7 +51,7 @@ Conduct the interactive interview in **progressive, adaptive rounds** (waiting f
    - **Root Locale Layout**: Scaffold `app/[locale]/layout.tsx` using [locale-layout.tsx.template](./resources/templates/locale-layout.tsx.template) with `generateStaticParams()`, dynamic `lang`/`dir`, and `<NextIntlClientProvider>`.
    - **Global Types**: Declare `AppConfig.Messages` in `global.d.ts` using [global.d.ts.template](./resources/templates/global.d.ts.template).
    - Consult [i18n-setup-guide.md](./references/i18n-setup-guide.md) for in-depth rules and architecture.
-4. **Developer Tooling & Providers**:
+6. **Developer Tooling & Providers**:
    - Configure `.vscode/launch.json` using [vscode-launch.json.template](./resources/templates/vscode-launch.json.template).
    - Scaffold `app/providers.tsx` with `<ProgressBarProvider>` using [providers.tsx.template](./resources/templates/providers.tsx.template).
    - Scaffold composite `<Link>` in `app/components/Link.tsx` using [Link.tsx.template](./resources/templates/Link.tsx.template) combining `@/i18n/navigation` with progress bar triggers.
@@ -115,6 +120,8 @@ Conduct the interactive interview in **progressive, adaptive rounds** (waiting f
 
 ## Edge Cases & Known AI Pitfalls
 
+- **Outdated Next.js Context & Hallucinations**: Model training cutoffs predate recent Next.js releases. Never assume API shapes, directives, or caching mechanisms from memory. Query `node_modules\next\dist\docs` via `codebase-memory` MCP.
+- **Latest Version Enforcement**: Always install `next@latest react@latest react-dom@latest`. Never pin to legacy or older major/minor versions.
 - **Chained Commands**: Never chain commands with `&&` or `;` on a single line in terminal execution.
 - **MCP Disabling**: In AG global configs, `agy.exe` ignores `"disabled": true` inside `mcpServers`. Move disabled servers outside `mcpServers`.
 - **Docker Image Names**: Docker OCI naming strictly requires lowercase repository names (`IMAGE_NAME=$(echo ... | tr '[:upper:]' '[:lower:]')`).
@@ -133,21 +140,22 @@ Always output this report upon completing the skill workflow:
 | Step / Component                     | Target File(s) / Resource                                                                              | Status                          | Notes / Details                                                                  |
 | :----------------------------------- | :----------------------------------------------------------------------------------------------------- | :------------------------------ | :------------------------------------------------------------------------------- |
 | **1. Project Metadata**              | `docs/project.json`                                                                                    | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured package manager, directories, animation & i18n metadata.              |
-| **2. Internationalization (next-intl)** | `i18n/routing.ts`, `i18n/request.ts`, `i18n/navigation.ts`, `proxy.ts`/`middleware.ts`, `messages/`    | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured next-intl with root-params, proxy interceptor, pure TS navigation & starter dictionaries. |
-| **3. App Icons & PWA Manifest**      | `app/manifest.ts`, `app/favicon.ico`, `app/apple-icon.png`, `app/icon.png`                             | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured root favicon, Apple touch icon, and Web App Manifest using user favicon. |
-| **4. Core Dependencies**             | `package.json`, Lockfile                                                                               | `[IMPLEMENTED]` / `[UNTOUCHED]` | Verified React, Next.js, next-intl, styling, and motion libraries.                |
-| **5. Next.js Dev Server MCP**        | `~/.gemini/antigravity/mcp_config.json`, `mcp.json`, `.agents/plugins/workspace-tools/mcp_config.json` | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured Next.js Dev Server (`next-devtools`) globally for AG & in workspace.  |
-| **6. Playwright & Instant Testing** | `playwright.config.ts`, `@next/playwright`, `mcp.json`, `~/.gemini/antigravity/mcp_config.json` | `[IMPLEMENTED]` / `[UNTOUCHED]` | Verified runner, browsers, Playwright MCP & `@next/playwright` instant navigation helper. |
-| **7. Codebase Memory & Stutter Fix** | `.cbmignore`, `mcp.json`, `~/.gemini/antigravity/mcp_config.json`, `auto_watch=false`                  | `[IMPLEMENTED]` / `[UNTOUCHED]` | Registered MCP, configured .cbmignore exclusions, and disabled session watcher.  |
-| **8. Jest Unit Testing**             | `jest.config.ts`, `jest.setup.ts`                                                                      | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured Next.js Jest transformer, jsdom environment & test-dom.               |
-| **9. Storybook & Storybook MCP**     | `.storybook/main.ts`, `.storybook/preview.tsx`, `mcp.json`, `~/.gemini/antigravity/mcp_config.json`    | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured Storybook Vite, a11y, NextIntl decorator & Storybook AI MCP.          |
-| **10. Agent-First Tailwind Linter**  | `eslint.config.mjs`, `package.json`                                                                    | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured `@shadcn/lint` for agent verification of design tokens and contracts. |
-| **11. Docker & Reverse Proxy**       | `Dockerfile`, `docker-compose.prod.yml`, `nginx-site.conf`, `.dockerignore`                            | `[IMPLEMENTED]` / `[UNTOUCHED]` | Standalone container, Traefik labels / Nginx HTTPS with Certbot SSL.             |
-| **12. Husky Git Hooks**              | `.husky/commit-msg`, `.husky/pre-push`                                                                 | `[IMPLEMENTED]` / `[UNTOUCHED]` | Enforces dual pre-push test suite (Jest + Playwright) & commitlint.              |
-| **13. Commitlint Config**            | `commitlint.config.mjs`                                                                                | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured `@commitlint/config-conventional`.                                    |
-| **14. GitHub Triage Infrastructure** | `.github/ISSUE_TEMPLATE/bug_report.yml`, `.github/ISSUE_TEMPLATE/config.yml`, GitHub Labels            | `[IMPLEMENTED]` / `[UNTOUCHED]` | Scaffolded issue templates and synced `bug`, `agent-triage`, `self-repair`, `verified` labels. |
-| **15. Release & CI Build Caching**   | `.github/workflows/release-please.yml`                                                                 | `[IMPLEMENTED]` / `[UNTOUCHED]` | Next.js build cache (.next/cache), SemVer release PRs & GHCR multi-arch pkg.     |
-| **16. Environment Verification**     | `scripts/verify-project-config.ps1` / `.sh`                                                            | `[PASSED]`                      | Sanity check passed with zero errors.                                            |
+| **2. Agent Guidance & Notice**       | `AGENTS.md` / `agent.md`                                                                               | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured mandatory outdated context notice & `node_modules\next\dist\docs` lookup rule. |
+| **3. Internationalization (next-intl)** | `i18n/routing.ts`, `i18n/request.ts`, `i18n/navigation.ts`, `proxy.ts`/`middleware.ts`, `messages/`    | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured next-intl with root-params, proxy interceptor, pure TS navigation & starter dictionaries. |
+| **4. App Icons & PWA Manifest**      | `app/manifest.ts`, `app/favicon.ico`, `app/apple-icon.png`, `app/icon.png`                             | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured root favicon, Apple touch icon, and Web App Manifest using user favicon. |
+| **5. Core Dependencies**             | `package.json`, Lockfile                                                                               | `[IMPLEMENTED]` / `[UNTOUCHED]` | Verified React, Next.js (always latest: `next@latest`), next-intl, styling, and motion libraries. |
+| **6. Next.js Dev Server MCP**        | `~/.gemini/antigravity/mcp_config.json`, `mcp.json`, `.agents/plugins/workspace-tools/mcp_config.json` | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured Next.js Dev Server (`next-devtools`) globally for AG & in workspace.  |
+| **7. Playwright & Instant Testing** | `playwright.config.ts`, `@next/playwright`, `mcp.json`, `~/.gemini/antigravity/mcp_config.json` | `[IMPLEMENTED]` / `[UNTOUCHED]` | Verified runner, browsers, Playwright MCP & `@next/playwright` instant navigation helper. |
+| **8. Codebase Memory & Stutter Fix** | `.cbmignore`, `mcp.json`, `~/.gemini/antigravity/mcp_config.json`, `auto_watch=false`                  | `[IMPLEMENTED]` / `[UNTOUCHED]` | Registered MCP, configured .cbmignore exclusions, and disabled session watcher.  |
+| **9. Jest Unit Testing**             | `jest.config.ts`, `jest.setup.ts`                                                                      | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured Next.js Jest transformer, jsdom environment & test-dom.               |
+| **10. Storybook & Storybook MCP**     | `.storybook/main.ts`, `.storybook/preview.tsx`, `mcp.json`, `~/.gemini/antigravity/mcp_config.json`    | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured Storybook Vite, a11y, NextIntl decorator & Storybook AI MCP.          |
+| **11. Agent-First Tailwind Linter**  | `eslint.config.mjs`, `package.json`                                                                    | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured `@shadcn/lint` for agent verification of design tokens and contracts. |
+| **12. Docker & Reverse Proxy**       | `Dockerfile`, `docker-compose.prod.yml`, `nginx-site.conf`, `.dockerignore`                            | `[IMPLEMENTED]` / `[UNTOUCHED]` | Standalone container, Traefik labels / Nginx HTTPS with Certbot SSL.             |
+| **13. Husky Git Hooks**              | `.husky/commit-msg`, `.husky/pre-push`                                                                 | `[IMPLEMENTED]` / `[UNTOUCHED]` | Enforces dual pre-push test suite (Jest + Playwright) & commitlint.              |
+| **14. Commitlint Config**            | `commitlint.config.mjs`                                                                                | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured `@commitlint/config-conventional`.                                    |
+| **15. GitHub Triage Infrastructure** | `.github/ISSUE_TEMPLATE/bug_report.yml`, `.github/ISSUE_TEMPLATE/config.yml`, GitHub Labels            | `[IMPLEMENTED]` / `[UNTOUCHED]` | Scaffolded issue templates and synced `bug`, `agent-triage`, `self-repair`, `verified` labels. |
+| **16. Release & CI Build Caching**   | `.github/workflows/release-please.yml`                                                                 | `[IMPLEMENTED]` / `[UNTOUCHED]` | Next.js build cache (.next/cache), SemVer release PRs & GHCR multi-arch pkg.     |
+| **17. Environment Verification**     | `scripts/verify-project-config.ps1` / `.sh`                                                            | `[PASSED]`                      | Sanity check passed with zero errors.                                            |
 
 #### Status Definitions:
 - **`[IMPLEMENTED]`**: Freshly created, installed, or modified during this setup run.

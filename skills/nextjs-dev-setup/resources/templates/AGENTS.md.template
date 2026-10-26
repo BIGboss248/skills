@@ -1,0 +1,54 @@
+# Workspace Agent Rules & Mandatory Skill Enforcement
+
+> [!WARNING]
+> ### CRITICAL: Next.js Context is Outdated — Mandatory Local Documentation Lookup
+> AI agent pre-trained context and knowledge regarding Next.js is inherently outdated. Framework APIs, App Router conventions, caching directives (`'use cache'`), Server Actions, Turbopack, and configuration flags evolve rapidly.
+>
+> **For ANY Next.js tasks**, agents **MUST NOT** rely on pre-trained assumptions or memory. You **MUST ALWAYS** inspect and search the local Next.js documentation bundled directly in:
+> ```
+> node_modules\next\dist\docs
+> ```
+> (or `node_modules/next/dist/docs/`).
+> Use `codebase-memory` MCP tools (`search_code`, `search_graph`, `get_code_snippet`) to search `node_modules\next\dist\docs` for authoritative, version-exact API signatures, directives, and usage patterns before writing or modifying any Next.js code.
+
+---
+
+## 1. Mandatory Component Creation Workflow (`nextjs-component-dev`)
+
+Whenever you are asked to create, scaffold, build, or implement **any new React or Next.js component** (including UI sections, cards, widgets, forms, or layout elements — whether requested directly by the user, required while building a page, or executed from `docs/plan/`):
+
+1. **Always Activate & Read First**: You **MUST** read and follow [`.agents/skills/nextjs-component-dev/SKILL.md`](./.agents/skills/nextjs-component-dev/SKILL.md) before writing any component code. (If full UX/UI design discovery + adversarial QA orchestration is requested, use [`.agents/skills/nextjs-component-create/SKILL.md`](./.agents/skills/nextjs-component-create/SKILL.md), which delegates implementation to `nextjs-component-dev`).
+2. **Non-Negotiable Standards from `nextjs-component-dev`**:
+   - **Next.js Local Docs Lookup**: Query `node_modules\next\dist\docs` via `codebase-memory` MCP before authoring.
+   - **Implementation Plan Gate**: Generate `implementation_plan.md` covering target path (`<new_component_dir>/<page_or_global>/<ComponentName>/`), TypeScript contracts with English TSDoc, translation keys, semantic tokens, and test cases.
+   - **Dev Server Check**: Verify or start the Next.js dev server via `next-devtools` MCP (`nextjs_index`).
+   - **Zero Hardcoded Strings (i18n)**: Populate `messages/[locale].json` across all `supported_languages` in `docs/project.json` first and consume via `next-intl` (`getTranslations` / `useTranslations`). Never hardcode copy or in-file fallback objects.
+   - **TDD Unit Tests First**: Author `[ComponentName].test.tsx` (Jest + RTL + `jest-axe` + `NextIntlClientProvider`) before implementing `[ComponentName].tsx`.
+   - **Component, Skeleton & Barrel**: Implement `[ComponentName].tsx` (RSC by default, push `"use client"` to leaf nodes), matching `[ComponentName]Skeleton.tsx` (mirroring geometry to prevent CLS), and `index.ts`.
+   - **Semantic Tokens & Logical BiDi Styling**: Exclusively use semantic CSS variables from `app/globals.css` (`bg-background`, `text-foreground`, `border-border`, `text-muted-foreground`) and Tailwind logical properties (`ms-`, `me-`, `ps-`, `pe-`, `start`, `end`). Physical directional classes (`ml-`, `mr-`, `pl-`, `pr-`, `left-`, `right-`) and raw hex/palette classes are strictly forbidden.
+   - **Verification Gate**: Run `pwsh .agents/skills/nextjs-component-dev/scripts/verify-dev.ps1 -ComponentPath <target_component_dir>`, run targeted Playwright specs, and inspect runtime health via `next-devtools` MCP (`nextjs_call`).
+   - **Plan Checklist Sync**: Check off completed component items (`- [x]`) in `docs/plan/05-pages-and-components.md`.
+
+---
+
+## 2. Mandatory Page Creation Workflow (`nextjs-page-dev`)
+
+Whenever you are asked to create, scaffold, build, or implement **any new Next.js App Router page or route (`page.tsx`)**:
+
+1. **Always Activate & Read First**: You **MUST** read and follow [`.agents/skills/nextjs-page-dev/SKILL.md`](./.agents/skills/nextjs-page-dev/SKILL.md) before writing any route or page files.
+2. **Non-Negotiable Standards from `nextjs-page-dev`**:
+   - **Planning & Route Registry**: Resolve `supported_languages`, `dictionaries_dir`, and `new_component_dir` from `docs/project.json` and use `ROUTES` from `@/lib/routes`.
+   - **Zero Hardcoded Copy**: Populate page titles, meta descriptions, and copy in `messages/[locale].json` across all supported locales before writing JSX.
+   - **Companion Route Files**: Create `loading.tsx` skeleton and `error.tsx` boundary where applicable.
+   - **Page Implementation (`page.tsx`)**: Use async `params` (`Promise<{ locale: string, ... }>`), export `generateMetadata()` with canonical alternates, export `generateStaticParams()` for localized/dynamic routes, inject typed `<JsonLd>` (`schema-dts`) with `<` escaped as `\u003c`, and wrap dynamic streaming subtrees in granular `<Suspense>` boundaries.
+   - **Delegate New Page Components to `nextjs-component-dev`**: Whenever a new page requires new section or child components, you **MUST** use [`.agents/skills/nextjs-component-dev/SKILL.md`](./.agents/skills/nextjs-component-dev/SKILL.md) to build each component.
+   - **Verification Gate**: Run `pwsh .agents/skills/nextjs-page-dev/scripts/verify-page.ps1 -RoutePath <route_dir>`.
+   - **Plan Checklist Sync**: Check off completed page infrastructure items (`page.tsx`, `loading.tsx`, `error.tsx`, `generateMetadata`, `JSON-LD Schema`, `generateStaticParams()`) in `docs/plan/05-pages-and-components.md`, and check off the parent page item when all its sub-items are complete.
+
+---
+
+## 3. Always-Active Lifecycle & Code Intelligence Skills
+
+- **Self-Repair (`self-repair`)**: Always read [`.agents/skills/self-repair/SKILL.md`](./.agents/skills/self-repair/SKILL.md) and load [`.agents/autofix.json`](./.agents/autofix.json) at session start and before executing any task. Immediately record any new user correction or preference to `.agents/autofix.json`.
+- **Codebase Memory (`codebase-memory`)**: Always follow [`.agents/skills/codebase-memory/SKILL.md`](./.agents/skills/codebase-memory/SKILL.md) (`index_status` / `index_repository` first, then `search_graph`, `trace_path`, `get_code_snippet`) before searching or exploring the codebase.
+- **GitHub Triage (`github-triage`)**: Always read and follow [`.agents/skills/github-triage/SKILL.md`](./.agents/skills/github-triage/SKILL.md) whenever fixing any bug or regression — whether autonomously detected during development/testing or explicitly requested by the user. Automatically ensure GitHub issue infrastructure is active, log diagnostic investigation, verify the fix, link the newly formulated imperative rule in `autofix.json` to the GitHub issue (`"Issue": "#N"`), and close the issue upon verification.

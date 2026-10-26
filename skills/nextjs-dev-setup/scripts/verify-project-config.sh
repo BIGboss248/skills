@@ -358,6 +358,29 @@ else
   AUTOMATION_CHECKS+=("WARN:GitHub Triage Infrastructure:Missing .github/ISSUE_TEMPLATE/bug_report.yml or config.yml. Run scripts/init_triage_infra.ps1.")
 fi
 
+# 12. Agent Rules & Next.js Local Docs Notice (AGENTS.md / agent.md)
+FOUND_AGENT_MD=""
+for am in "AGENTS.md" "agents.md" "AGENT.md" "agent.md"; do
+  if [ -f "$am" ]; then FOUND_AGENT_MD="$am"; break; fi
+done
+
+if [ -n "$FOUND_AGENT_MD" ]; then
+  if grep -qi "outdated" "$FOUND_AGENT_MD" && grep -qiE "node_modules[\\/]next[\\/]dist[\\/]docs" "$FOUND_AGENT_MD"; then
+    AUTOMATION_CHECKS+=("OK:Agent Instructions & Docs Notice ($FOUND_AGENT_MD):Found '$FOUND_AGENT_MD' with outdated context notice and node_modules/next/dist/docs mandate.")
+  else
+    AUTOMATION_CHECKS+=("WARN:Agent Instructions & Docs Notice ($FOUND_AGENT_MD):Missing outdated context notice or node_modules/next/dist/docs search mandate.")
+  fi
+else
+  AUTOMATION_CHECKS+=("WARN:Agent Instructions & Docs Notice (AGENTS.md):Missing AGENTS.md / agent.md file.")
+fi
+
+# 13. Next.js Core Dependency (next@latest)
+if [ -f "package.json" ] && grep -q '"next"' package.json; then
+  AUTOMATION_CHECKS+=("OK:Next.js Core Dependency (next@latest):Found 'next' dependency in package.json (always target latest).")
+else
+  AUTOMATION_CHECKS+=("WARN:Next.js Core Dependency (next@latest):Missing 'next' dependency in package.json. Run '<pkg_mgr> add next@latest'.")
+fi
+
 # --- Output ---
 
 if [ ${#ERRORS[@]} -eq 0 ]; then
