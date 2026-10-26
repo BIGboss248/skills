@@ -18,13 +18,14 @@ Specialized workflow for creating production-ready React Server Components (RSC)
 > **Modular Assets & Templates:**
 >
 > - Next.js Docs Search & Context: [`references/nextjs-docs-lookup.md`](./references/nextjs-docs-lookup.md)
+> - Forms & Server Actions Guide: [references/form-server-actions.md](./references/form-server-actions.md)
 > - Testing Architecture & Verification: [`references/testing-architecture-guide.md`](./references/testing-architecture-guide.md)
 > - Storybook Standards & Separation: [`references/storybook-reference.md`](./references/storybook-reference.md)
 > - Instant Navigation & Prefetching: [`references/instant-navigation-and-prefetching.md`](./references/instant-navigation-and-prefetching.md)
 > - Next DevTools Debugging Guide: [`references/next-devtools-debugging.md`](./references/next-devtools-debugging.md)
 > - Caching & Revalidation: [`references/caching-and-revalidation.md`](./references/caching-and-revalidation.md)
 > - RSC, State Boundaries & Lazy Loading: [`references/rsc-and-state-boundaries.md`](./references/rsc-and-state-boundaries.md)
-> - Code Templates: [`resources/templates/`](./resources/templates/) ([Component](./resources/templates/component.template.tsx), [Skeleton](./resources/templates/skeleton.template.tsx), [Link Status Button](./resources/templates/link-status-button.template.tsx), [Jest Unit Test](./resources/templates/unit-test.template.tsx), [Playwright Spec](./resources/templates/e2e-spec.template.ts))
+> - Code Templates: [`resources/templates/`](./resources/templates/) ([Component](./resources/templates/component.template.tsx), [Form Component](./resources/templates/form-component.template.tsx), [Skeleton](./resources/templates/skeleton.template.tsx), [Link Status Button](./resources/templates/link-status-button.template.tsx), [Jest Unit Test](./resources/templates/unit-test.template.tsx), [Playwright Spec](./resources/templates/e2e-spec.template.ts))
 > - Reference Implementations: [`examples/`](./examples/)
 > - Verification Scripts: [`scripts/verify-dev.ps1`](./scripts/verify-dev.ps1) (Windows) / [`scripts/verify-dev.sh`](./scripts/verify-dev.sh) (Linux)
 
@@ -136,6 +137,7 @@ The implementation plan must cover:
   - Synthesize component requirements, scan `docs/project.json`, and generate `implementation_plan.md` documenting consulted docs and contracts.
   - Set `request_feedback = true` and `user_facing = true` on the artifact.
   - Wait for user review and explicit approval before writing any code.
+  - **Form / Mutation Component Routing Gate**: If the component renders a form or accepts user mutations, read references/form-server-actions.md. Grill the user on whether to include useOptimistic and document the recommendation in implementation_plan.md.
 
 - [ ] **Step 1: Dev Server Verification & Next DevTools Connection**
   - Query `next-devtools` MCP via `nextjs_index` to detect running Next.js dev server instances.
