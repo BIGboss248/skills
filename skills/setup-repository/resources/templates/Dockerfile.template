@@ -1,0 +1,28 @@
+ARG NODE_VERSION=22-slim
+
+FROM node:${NODE_VERSION} AS dependencies
+WORKDIR /app
+ENV CI=true
+COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+  if [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm install --frozen-lockfile; \
+  elif [ -f package-lock.json ]; then npm ci; \
+  else yarn install --frozen-lockfile; fi
+
+FROM node:${NODE_VERSION} AS builder
+WORKDIR /app
+COPY --from=dependencies /app/node_modules ./node_modules
+COPY . .
+ENV NODE_ENV=production
+RUN if [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; else npm run build; fi
+
+FROM node:${NODE_VERSION} AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ARG PORT=3000
+ENV PORT=${PORT}
+ENV HOSTNAME="0.0.0.0"
+COPY --from=builder --chown=node:node /app/dist ./dist
+USER node
+EXPOSE ${PORT}
+CMD ["node", "dist/index.js"]

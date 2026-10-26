@@ -88,12 +88,13 @@ Conduct the interactive interview in **progressive, adaptive rounds** (waiting f
    - **Nginx**: Deploy or output [nginx-site.conf.template](./resources/templates/nginx-site.conf.template) for `/etc/nginx/sites-available/<domain>` with Certbot SSL certificates.
 5. Review architecture and multi-container cache drift callout in [docker-containerization-guide.md](./references/docker-containerization-guide.md).
 
-### Stage 6: Git Hooks & Credit-Optimized CI/CD
+### Stage 6: Git Hooks, GitHub Triage Setup & Credit-Optimized CI/CD
 
 1. Install `husky`, `@commitlint/cli`, `@commitlint/config-conventional`.
 2. Configure [commitlint.config.mjs.template](./resources/templates/commitlint.config.mjs.template), `.husky/commit-msg`, and `.husky/pre-push` (`pnpm run test:all`).
-3. Deploy [.github/workflows/release-please.yml](./resources/templates/release-please.yml.template) with `.next/cache` build caching and multi-arch matrix publishing.
-4. Review caching in [cicd-and-release-automation-guide.md](./references/cicd-and-release-automation-guide.md).
+3. **GitHub Triage Infrastructure Setup**: Execute [`init_triage_infra.ps1`](./scripts/init_triage_infra.ps1) to scaffold `.github/ISSUE_TEMPLATE/bug_report.yml` (from [bug_report.yml.template](./resources/templates/bug_report.yml.template)) and `.github/ISSUE_TEMPLATE/config.yml` (from [issue_config.yml.template](./resources/templates/issue_config.yml.template)), and provision remote triage labels (`bug`, `agent-triage`, `self-repair`, `verified`) for `github-triage`.
+4. Deploy [.github/workflows/release-please.yml](./resources/templates/release-please.yml.template) with `.next/cache` build caching and multi-arch matrix publishing.
+5. Review caching and triage setup in [cicd-and-release-automation-guide.md](./references/cicd-and-release-automation-guide.md).
 
 ### Stage 7: Final Execution Report & Verification
 
@@ -144,8 +145,9 @@ Always output this report upon completing the skill workflow:
 | **11. Docker & Reverse Proxy**       | `Dockerfile`, `docker-compose.prod.yml`, `nginx-site.conf`, `.dockerignore`                            | `[IMPLEMENTED]` / `[UNTOUCHED]` | Standalone container, Traefik labels / Nginx HTTPS with Certbot SSL.             |
 | **12. Husky Git Hooks**              | `.husky/commit-msg`, `.husky/pre-push`                                                                 | `[IMPLEMENTED]` / `[UNTOUCHED]` | Enforces dual pre-push test suite (Jest + Playwright) & commitlint.              |
 | **13. Commitlint Config**            | `commitlint.config.mjs`                                                                                | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured `@commitlint/config-conventional`.                                    |
-| **14. Release & CI Build Caching**   | `.github/workflows/release-please.yml`                                                                 | `[IMPLEMENTED]` / `[UNTOUCHED]` | Next.js build cache (.next/cache), SemVer release PRs & GHCR multi-arch pkg.     |
-| **15. Environment Verification**     | `scripts/verify-project-config.ps1` / `.sh`                                                            | `[PASSED]`                      | Sanity check passed with zero errors.                                            |
+| **14. GitHub Triage Infrastructure** | `.github/ISSUE_TEMPLATE/bug_report.yml`, `.github/ISSUE_TEMPLATE/config.yml`, GitHub Labels            | `[IMPLEMENTED]` / `[UNTOUCHED]` | Scaffolded issue templates and synced `bug`, `agent-triage`, `self-repair`, `verified` labels. |
+| **15. Release & CI Build Caching**   | `.github/workflows/release-please.yml`                                                                 | `[IMPLEMENTED]` / `[UNTOUCHED]` | Next.js build cache (.next/cache), SemVer release PRs & GHCR multi-arch pkg.     |
+| **16. Environment Verification**     | `scripts/verify-project-config.ps1` / `.sh`                                                            | `[PASSED]`                      | Sanity check passed with zero errors.                                            |
 
 #### Status Definitions:
 - **`[IMPLEMENTED]`**: Freshly created, installed, or modified during this setup run.

@@ -1,6 +1,6 @@
-# CI/CD, Release Automation & Multi-Arch GHCR Packaging Guide
+# CI/CD, Release Automation, GitHub Triage Setup & Multi-Arch GHCR Packaging Guide
 
-This guide covers credit-optimized GitHub Actions CI/CD workflows, Release Please semantic release automation, Husky git hooks, and multi-architecture Docker container deployment to GitHub Container Registry (GHCR).
+This guide covers credit-optimized GitHub Actions CI/CD workflows, Release Please semantic release automation, GitHub Triage infrastructure scaffolding, Husky git hooks, and multi-architecture Docker container deployment to GitHub Container Registry (GHCR).
 
 ---
 
@@ -43,7 +43,26 @@ To minimize GitHub Actions minutes and eliminate unnecessary billing overhead:
 
 ---
 
-## 4. Release Please Workflow Specification
+## 4. GitHub Triage Infrastructure Setup
+
+Initialize the repository's GitHub Issues templates and standard triage labels during project setup so the `github-triage` skill can track issues and link `autofix.json` rules immediately:
+
+1. **Templates**:
+   - `.github/ISSUE_TEMPLATE/bug_report.yml` from [`bug_report.yml.template`](../resources/templates/bug_report.yml.template)
+   - `.github/ISSUE_TEMPLATE/config.yml` from [`issue_config.yml.template`](../resources/templates/issue_config.yml.template)
+2. **Automated Initialization & Label Sync (`init_triage_infra.ps1`)**:
+   Execute [`scripts/init_triage_infra.ps1`](../scripts/init_triage_infra.ps1) to scaffold `.github/ISSUE_TEMPLATE/` and ensure standard triage labels exist in the remote repository via `gh label create --force`:
+   - `bug` (`#d73a4a`): Something isn't working
+   - `agent-triage` (`#0e8a16`): Triaged and managed by AI agent
+   - `self-repair` (`#1d76db`): Linked to an `autofix.json` imperative rule
+   - `verified` (`#5319e7`): Fix verified through automated test suites
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .agents/skills/nextjs-dev-setup/scripts/init_triage_infra.ps1
+   ```
+
+---
+
+## 5. Release Please Workflow Specification
 
 Full GitHub Actions release workflow template: [`release-please.yml.template`](../resources/templates/release-please.yml.template)
 

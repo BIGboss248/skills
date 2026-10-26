@@ -1,0 +1,54 @@
+# codebase-memory-mcp ignore rules (.cbmignore)
+# Prevents non-code and high-churn files from triggering graph indexing or inflating the AST graph.
+
+# Agent logs, metadata, and planning documents (high churn during active sessions)
+.agents/
+docs/
+*.md
+
+# Build artifacts & compilation caches
+dist/
+build/
+out/
+.next/
+.swc/
+
+# Testing, reports, and coverage
+coverage/
+test-results/
+playwright-report/
+blob-report/
+.playwright-mcp/
+storybook-static/
+*storybook.log
+
+# Codebase Memory local artifacts (prevent self-triggering loops)
+.codebase-memory/
+
+# System and logs
+*.log
+*.tsbuildinfo
+.DS_Store
+
+# Static assets and media (zero code symbols)
+public/
+assets/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.webp
+*.mp4
+*.mp3
+*.pdf
+
+# Environment & lockfiles
+.env*
+*.pem
+*.lock
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+bun.lockb

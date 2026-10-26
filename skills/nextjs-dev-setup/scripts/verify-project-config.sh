@@ -351,6 +351,13 @@ else
   AUTOMATION_CHECKS+=("WARN:Next.js Internationalization (next-intl):Incomplete next-intl setup. Missing: $(IFS=', '; echo "${MISSING_INTL[*]}")")
 fi
 
+# 11. GitHub Triage Infrastructure (.github/ISSUE_TEMPLATE)
+if [ -f ".github/ISSUE_TEMPLATE/bug_report.yml" ] && [ -f ".github/ISSUE_TEMPLATE/config.yml" ]; then
+  AUTOMATION_CHECKS+=("OK:GitHub Triage Infrastructure:Found .github/ISSUE_TEMPLATE/bug_report.yml and config.yml for github-triage.")
+else
+  AUTOMATION_CHECKS+=("WARN:GitHub Triage Infrastructure:Missing .github/ISSUE_TEMPLATE/bug_report.yml or config.yml. Run scripts/init_triage_infra.ps1.")
+fi
+
 # --- Output ---
 
 if [ ${#ERRORS[@]} -eq 0 ]; then

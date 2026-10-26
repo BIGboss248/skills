@@ -1,14 +1,12 @@
 ---
 name: self-repair
-description: >
-  Self-correcting rules engine and feedback loop that learns from user corrections, mistakes, and project-specific constraints by maintaining a persistent autofix ruleset. Scans learned rules before starting any task, resolves conflicts, and automatically appends new rules upon corrections. Triggers on user corrections ("no, do it this way", "never do X", "always use Y"), /learn, "self repair", "add rule", "update rules", or when diagnosing assumptions and bugs.
-  CRITICAL ALWAYS-ACTIVE LIFECYCLE SKILL. Must always be kept in context, loaded at session start, and consulted before starting ANY task to read and apply active constraints from autofix.json. MUST ALWAYS be triggered immediately whenever the user provides ANY correction, preference, criticism, rejection of an approach, or adjustment ("no", "don't do X", "use Y", "remember", "prefer"), or when any mistake/bug is identified. Automatically and immediately formulates and appends the new imperative rule to the project's autofix.json ruleset file.
-allowed-tools: Read, Grep, Glob, Bash, Write, Edit, AskUserQuestion
+description: >-
+  Self-correcting rules engine that loads active constraints from autofix.json before tasks and captures new imperative rules upon user corrections or diagnosed bugs. Triggers on user corrections ("no, do it this way", "never do X", "always use Y"), "/learn", "self repair", "add rule", or bug resolution.
 ---
 
 # Self-Repair (Self-Correcting Rules Engine)
 
-A self-correcting memory and learning engine that records corrections, project conventions, and bug fixes into a persistent ruleset file (`autofix.json`). It ensures the agent continuously adapts, eliminates repeat mistakes across sessions, and adheres strictly to user preferences.
+A self-correcting memory and learning engine that records corrections, project conventions, and bug fixes into a persistent ruleset file (`autofix.json`). Must always be loaded at session start and consulted before starting any task to apply active constraints, and triggered immediately whenever the user provides any correction, preference, or criticism, or when a bug is diagnosed.
 
 **Why this works:** AI agents tend to repeat the same default assumptions or stylistic errors across fresh sessions. By externalizing learned knowledge into an imperative, versioned JSON ruleset with strict precedence (newer rules win), the agent retains hard boundaries tailored to the specific user and repository.
 
@@ -60,41 +58,14 @@ Each rule is stored inside a JSON array with the following schema:
 
 ## Operational Workflow
 
-```
-[Session Start / Task Received]
-            │
-            ▼
-┌───────────────────────────────┐
-│ 1. Pre-Task Scan              │ ◄── Read autofix.json
-│    - Load all rules           │
-│    - Resolve conflicts (new>old)
-│    - Build active constraints │
-└───────────┬───────────────────┘
-            │
-            ▼
-┌───────────────────────────────┐
-│ 2. Task Execution             │
-│    - Apply constraints        │
-│    - Execute code / edits     │
-└───────────┬───────────────────┘
-            │
-            ├─────────────────────────────────────────┐
-            │                                         │
-     [No Corrections]                         [Trigger Detected]
-            │                                         │
-            ▼                                         ▼
-┌───────────────────────────────┐       ┌───────────────────────────────┐
-│ Task Complete                 │       │ 3. Self-Repair & Capture      │
-│ Deliver output to user        │       │    - Formulate imperative rule│
-└───────────────────────────────┘       │    - Append to autofix.json   │
-                                        │    - Acknowledge learning     │
-                                        └─────────────┬─────────────────┘
-                                                      │
-                                                      ▼
-                                        ┌───────────────────────────────┐
-                                        │ 4. Re-execute & Correct       │
-                                        │ Fix current task output       │
-                                        └───────────────────────────────┘
+```mermaid
+flowchart TD
+    Start["Session Start / Task Received"] --> Scan["1. Pre-Task Scan: Read autofix.json & Resolve Conflicts"]
+    Scan --> Exec["2. Task Execution: Apply Active Constraints"]
+    Exec --> Check{"Correction or Bug?"}
+    Check -- "No" --> Done["Task Complete"]
+    Check -- "Yes" --> Capture["3. Self-Repair & Capture: Append Imperative Rule to autofix.json"]
+    Capture --> ReExec["4. Re-Execute & Correct Output"]
 ```
 
 ---
@@ -142,7 +113,7 @@ When a trigger occurs, perform the following atomic update:
    - **Why**: Brief reason (e.g. _"user preference"_, _"codebase pattern"_, _"framework limitation"_).
    - **Issue**: Optional GitHub Issue reference (e.g. `"#42"`), populated when triaged via `github-triage`.
 4. Append the rule into the JSON array and save the file formatted with 2-space indentation.
-5. **Deduplicate & Consolidate**: Merge overlapping or superseded rules in the same domain and keep `Rule_number` sequentially ordered (`1..N`) so `autofix.json` stays free of duplicates. When any skill in `.agents/skills/` is updated, sync it to `d:/Scripts/Obsidian/skills/` and commit and push the synced changes inside the `d:/Scripts/Obsidian` repository only.
+5. **Deduplicate & Consolidate**: Merge overlapping or superseded rules in the same domain and keep `Rule_number` sequentially ordered (`1..N`) so `autofix.json` stays free of duplicates. When any skill in `.agents/skills/` is updated, sync it to `d:/Scripts/Obsidian/skills/`.
 6. Briefly notify the user:
    > _"Learned rule #`<N>` (`[CATEGORY]`): `<Instruction>` — recorded in `autofix.json`."_
 

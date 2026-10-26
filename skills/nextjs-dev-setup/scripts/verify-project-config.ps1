@@ -428,6 +428,18 @@ if ($missingIntl.Count -eq 0) {
     $automationChecks.Add(@{ name = "Next.js Internationalization (next-intl)"; status = "warning"; details = "next-intl integration incomplete. Missing: $($missingIntl -join ', ')" })
 }
 
+# 11. GitHub Triage Infrastructure (.github/ISSUE_TEMPLATE) Check
+$hasBugReportTpl = Test-Path (Join-Path $rootDir ".github/ISSUE_TEMPLATE/bug_report.yml")
+$hasIssueConfigTpl = Test-Path (Join-Path $rootDir ".github/ISSUE_TEMPLATE/config.yml")
+if ($hasBugReportTpl -and $hasIssueConfigTpl) {
+    $automationChecks.Add(@{ name = "GitHub Triage Infrastructure"; status = "configured"; details = "Found .github/ISSUE_TEMPLATE/bug_report.yml and config.yml for github-triage." })
+} else {
+    $missingTriage = @()
+    if (-not $hasBugReportTpl) { $missingTriage += ".github/ISSUE_TEMPLATE/bug_report.yml" }
+    if (-not $hasIssueConfigTpl) { $missingTriage += ".github/ISSUE_TEMPLATE/config.yml" }
+    $automationChecks.Add(@{ name = "GitHub Triage Infrastructure"; status = "warning"; details = "Missing GitHub triage template(s): $($missingTriage -join ', '). Run scripts/init_triage_infra.ps1." })
+}
+
 $passed = ($errors.Count -eq 0)
 
 # Output rendering
