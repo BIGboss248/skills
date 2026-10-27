@@ -675,7 +675,7 @@ Iranian payment gateways (both direct PSPs such as Bank Mellat / Beh Pardakht, S
 ## 10. Payment Gateway Callback Architecture (`wc-api`) & Next.js Trailing Slash Handling
 
 ### 10.1. The Callback Problem in Shared-Domain Deployments
-In a unified-domain setup (`shop.local` or `shop.meetjamali.com`), payment gateways redirect customers (and send server-to-server IPN webhooks) back to WooCommerce via `WC()->api_request_url()`. Depending on the gateway plugin and permalink configuration, URLs take three shapes:
+In a unified-domain setup (`shop.local` or `shop.example.com`), payment gateways redirect customers (and send server-to-server IPN webhooks) back to WooCommerce via `WC()->api_request_url()`. Depending on the gateway plugin and permalink configuration, URLs take three shapes:
 - `/wc-api/<Gateway>/` (pretty permalinks with trailing slash)
 - `/index.php/wc-api/<Gateway>/` (PATHINFO permalinks)
 - `/?wc-api=<Gateway>` (plain permalinks / hardcoded gateway URLs)
@@ -683,6 +683,9 @@ In a unified-domain setup (`shop.local` or `shop.meetjamali.com`), payment gatew
 Without specialized handling, two critical failure modes occur:
 1. **Next.js 404 Loss**: If gateway callbacks reach Next.js directly, Next.js answers with a 404 because no such route exists. The callback never reaches WooCommerce, and orders remain in "Pending payment" status.
 2. **Next.js 308 Trailing Slash Interception**: By default, Next.js normalizes URLs ending with `/` by issuing an HTTP `308 Permanent Redirect` (e.g. `/wc-api/WC_ZPal/` -> `/wc-api/WC_ZPal`). Because this redirect occurs **before** custom middleware executes, POST requests from payment gateways or strict return URLs lose their method or payload, failing verification.
+
+> [!IMPORTANT]
+> Do **not** add `PathPrefix('/wc-api')` to the WordPress Traefik router. Let Next.js middleware own `wc-api` URLs so the 307 safety net is reachable. The `QueryRegexp('wc-api', '.+')` rule still forwards `/checkout/?wc-api=...` to WordPress.
 
 ### 10.2. Next.js Configuration (`skipTrailingSlashRedirect`)
 Disable Next.js's premature trailing-slash redirect in `next.config.ts`:
@@ -771,17 +774,59 @@ export function resolveWcApiRedirect(url: URL, wordpressUrl?: string): string | 
 
   return wordpressBase ? `${wordpressBase}${pathAndQuery}` : pathAndQuery;
 }
+
+// Helpers kept in the same module:
+function parseExternalBase(url: URL, wordpressUrl?: string): string | null {
+  if (!wordpressUrl) return null;
+  try {
+    const wp = new URL(wordpressUrl);
+    if (wp.host === url.host) return null;
+    return `${wp.origin}${wp.pathname.replace(/\/+$/, "")}`;
+  } catch {
+    return null;
+  }
+}
+
+function safeDecode(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
 ```
 
 ### 10.5. WordPress MU-Plugin Callback Filter (`headless-redirects.php`)
-Filter `woocommerce_api_request_url` so WordPress and payment gateway plugins generate return URLs directly under `/checkout/?wc-api=...`:
+Filter `woocommerce_api_request_url` so WordPress and payment gateway plugins generate return URLs directly under `/checkout/?wc-api=...`. Preserve query parameters and honor the requested scheme:
 
 ```php
-add_filter('woocommerce_api_request_url', function ($url, $request) {
+add_filter('woocommerce_api_request_url', function ($url, $request, $ssl) {
     if (empty($request)) {
         return $url;
     }
-    // Emit /checkout/?wc-api=<Gateway> directly to enter via the checkout reverse-proxy route
-    return home_url('/checkout/?wc-api=' . urlencode($request));
-}, 10, 2);
+
+    $scheme = is_null($ssl)
+        ? wp_parse_url(home_url(), PHP_URL_SCHEME)
+        : ($ssl ? 'https' : 'http');
+
+    $args = [];
+    $query = wp_parse_url($url, PHP_URL_QUERY);
+    if (!empty($query)) {
+        wp_parse_str($query, $args);
+        unset($args['wc-api']);
+    }
+
+    return add_query_arg(
+        array_merge(['wc-api' => $request], $args),
+        home_url('/checkout/', $scheme)
+    );
+}, 99, 3);
 ```
+
+### 10.6. Verification
+```powershell
+curl.exe -k -sS -D - -o NUL --resolve shop.local:443:127.0.0.1 https://shop.local/wc-api/TestGateway/
+curl.exe -k -sS -D - -o NUL -X POST --resolve shop.local:443:127.0.0.1 https://shop.local/wc-api/TestGateway/
+```
+
+Both must return **307** with `Location: https://shop.local/checkout/?wc-api=TestGateway`. A **308** means `skipTrailingSlashRedirect` is missing or the middleware did not run.
