@@ -105,6 +105,7 @@ flowchart TD
 - [ ] **Payment gateways**:
   - COD: `wp wc payment_gateway update cod --enabled=true --user=1`.
   - Persian WooCommerce bundles **Zibal**, not ZarinPal. Install `zarinpal-woocommerce-payment-gateway` separately; its gateway id is `WC_ZPal` and sandbox is `woocommerce_WC_ZPal_settings['sandbox']='yes'`.
+  - **ZarinPal sandbox needs no merchant contract**: set `sandbox='yes'` and put a generated UUID (`wp_generate_uuid4()`, or a literal `00000000-0000-0000-0000-000000000000`) in `merchantcode`. The sandbox endpoint does not validate it, so checkout, `order-pay`, and `?wc-api=WC_ZPal` return flows are all verifiable locally.
   - Persist defaults with `wp wc payment_gateway update <id> --enabled=true --user=1` before patching settings; `wp option patch update` fails when the option does not exist yet.
 - [ ] **Shipping**: `wp wc shipping_zone update` does not accept `--locations`. Use PHP `WC_Shipping_Zone::set_locations()` + `add_shipping_method('flat_rate')`; see the store configuration reference.
 - [ ] **Seed products** from temporary files outside the repository (avoid committing sample data):
@@ -153,7 +154,7 @@ flowchart TD
 9. **JWT filter units** — `graphql_jwt_auth_expire` takes seconds; a timestamp produces a multi-decade token.
 10. **Registration nulls** — re-query the customer after sign-up.
 11. **Price entities** — `price` is display-formatted HTML, not a number.
-12. **Zibal ≠ ZarinPal** — Persian WooCommerce bundles Zibal; ZarinPal requires its own plugin and sandbox merchant code.
+12. **Zibal ≠ ZarinPal** — Persian WooCommerce bundles Zibal; ZarinPal requires its own plugin. Its sandbox accepts a random UUID as `merchantcode`, so no real merchant code is needed to activate it locally.
 13. **WP-CLI permissions** — run as `www-data`; root-owned files break plugin updates. The cache-directory warning is harmless.
 14. **Apache logs** — `/var/log/apache2/error.log` is stderr; use `docker logs`.
 15. **Block checkout** — empty cart redirects `/checkout/` to `/cart/`; populate first.

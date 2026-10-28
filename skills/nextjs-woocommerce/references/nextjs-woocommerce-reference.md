@@ -667,7 +667,7 @@ Iranian payment gateways (both direct PSPs such as Bank Mellat / Beh Pardakht, S
    - Unless the gateway is activated with valid production terminal contracts and switched to **Live Mode**, transactions will be rejected with error codes (e.g. invalid merchant, unauthorized domain, or connection failed).
 2. **Local Development (shop.local) Strategy**:
    - Local environments cannot negotiate live bank callbacks or terminal requests.
-   - For checkout integration verification in Next.js and WooCommerce, enable gateway **Sandbox Mode** (where available, e.g. ZarinPal with sandbox UUID) or utilize WooCommerce's native **Check Payments (پرداخت با چک)** or **Cash on Delivery (پرداخت در محل)**. This validates order creation, inventory deduction, customer association, and order-pay URL redirection safely without requiring live banking contracts.
+   - For checkout integration verification in Next.js and WooCommerce, enable gateway **Sandbox Mode** (where available, e.g. ZarinPal — toggle `sandbox=yes` and set `merchantcode` to a generated UUID, no live terminal required) or utilize WooCommerce's native **Check Payments (پرداخت با چک)** or **Cash on Delivery (پرداخت در محل)**. This validates order creation, inventory deduction, customer association, and order-pay URL redirection safely without requiring live banking contracts.
 
 
 ---

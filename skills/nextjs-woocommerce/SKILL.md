@@ -43,7 +43,7 @@ Before writing code, establish:
 3. **TLS** — trusted local certificate (mkcert) or Traefik self-signed default? Can the user accept a browser warning or elevate for a hosts edit?
 4. **Catalog** — simple products only, or variable products with attributes? Variable products are required to validate `fill_cart`.
 5. **Checkout** — native `/checkout` transfer via `fill_cart` (recommended for regional gateways) or the WooGraphQL `checkout` → `order-pay` mutation?
-6. **Payments** — COD, ZarinPal sandbox, Zibal, or another gateway? Is a sandbox merchant code available?
+6. **Payments** — COD, ZarinPal sandbox, Zibal, or another gateway? ZarinPal needs no merchant contract for local work: toggle sandbox mode and place a generated UUID in `merchantcode`.
 7. **Persistence** — disposable local database or data that must survive container recreation?
 
 ### Phase 1: Local Development Environment & Universal Fetcher
@@ -146,6 +146,7 @@ Before writing code, establish:
 - [ ] Profile query resolves viewer and customer data, including billing and orders.
 - [ ] `addToCart` returns `woocommerce-session`; a follow-up cart query with that header retains the item.
 - [ ] `/wc-api/<Gateway>/` returns 307 to `/checkout/?wc-api=<Gateway>` (including POST and trailing slash).
+- [ ] ZarinPal sandbox is active (`sandbox=yes` + UUID `merchantcode`) and a sandbox order returns through `/checkout/?wc-api=WC_ZPal`.
 - [ ] `?wc-ajax=` reaches WordPress, not Next.js HTML.
 - [ ] `/wp-admin/` returns 200 after login (no `could not find driver`).
 - [ ] Full command set: [verification-playbook.md](./references/verification-playbook.md).

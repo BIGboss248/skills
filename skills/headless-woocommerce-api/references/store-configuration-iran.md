@@ -92,7 +92,28 @@ docker exec -u www-data wordpress wp wc payment_gateway update WC_ZPal --enabled
 docker exec -u www-data wordpress wp option patch update woocommerce_WC_ZPal_settings sandbox yes --path=/var/www/html
 ```
 
-`wp option patch update` fails with `No data exists for key` until the gateway settings option exists. A real sandbox merchant code is still required before a sandbox payment can complete; leave `merchantcode` empty until you have one.
+`wp option patch update` fails with `No data exists for key` until the gateway settings option exists.
+
+#### Activating the ZarinPal sandbox with a random UUID (no merchant contract)
+
+Sandbox mode never validates the merchant ID — the plugin calls the ZarinPal **sandbox** endpoint, so any UUID-shaped `merchantcode` is accepted. Toggle sandbox and plant a generated UUID in one atomic write:
+
+```powershell
+docker exec -u www-data wordpress wp eval '
+$s = get_option("woocommerce_WC_ZPal_settings", []);
+$s["enabled"]      = "yes";
+$s["sandbox"]      = "yes";
+$s["merchantcode"] = wp_generate_uuid4();
+update_option("woocommerce_WC_ZPal_settings", $s);
+printf("%s|%s|%s\n", $s["enabled"], $s["sandbox"], $s["merchantcode"]);
+' --path=/var/www/html
+```
+
+- `wp_generate_uuid4()` returns a canonical 36-character UUID; a literal `00000000-0000-0000-0000-000000000000` works just as well.
+- Re-running the command rotates the value (the DB volume keeps it, but each run writes a new UUID). Use a fixed UUID literal when you want a stable, documented ID.
+- Run the `wp wc payment_gateway update WC_ZPal` call first so the option exists; the `wp eval` above also creates it when missing, but the gateway must still be enabled for it to render at `/checkout/`.
+
+With `sandbox=yes` + UUID `merchantcode`, a sandbox order is created, redirects to the ZarinPal sandbox page, and returns through `/checkout/?wc-api=WC_ZPal`, which exercises the whole native checkout bridge without a live terminal. Live Mode (and a real merchant ID from the ZarinPal dashboard) is only needed for real money.
 
 ### Dormant gateways
 

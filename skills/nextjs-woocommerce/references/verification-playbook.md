@@ -39,6 +39,39 @@ curl.exe -k -sS -D - -o NUL --resolve $resolve "$base/?wc-ajax=update_order_revi
 
 An empty cart redirects `/checkout/` to `/cart/` with 302; populate the cart first before asserting checkout HTML.
 
+### ZarinPal sandbox (random UUID merchant)
+
+The ZarinPal plugin (`zarinpal-woocommerce-payment-gateway` 5.1.1) reads `merchantcode` and `sandbox` from `woocommerce_WC_ZPal_settings`. Sandbox mode talks to `https://sandbox.zarinpal.com/pg/v4/payment/` and never validates the merchant ID, so a generated UUID is enough to activate the gateway — no merchant contract required.
+
+```powershell
+# Enabled + sandbox + UUID merchant code
+docker exec -u www-data wordpress wp eval '
+$s = get_option("woocommerce_WC_ZPal_settings", []);
+$s["enabled"] = "yes";
+$s["sandbox"] = "yes";
+$s["merchantcode"] = wp_generate_uuid4();
+update_option("woocommerce_WC_ZPal_settings", $s);
+echo json_encode($s) . "\n";
+' --path=/var/www/html
+```
+
+Assert the sandbox handshake end-to-end (expects an `S...` authority and a `sandbox.zarinpal.com/pg/StartPay/` URL, never an "invalid merchant" error):
+
+```powershell
+docker exec -u www-data wordpress wp eval '
+$z = get_option("woocommerce_WC_ZPal_settings");
+try {
+  $zp = new ZarinpalHelperClass($z["merchantcode"], true, "");
+  $authority = $zp->requestPayment(10000, "https://shop.local/checkout/?wc-api=WC_ZPal", "sandbox check");
+  echo "OK " . $zp->getRedirectUrl($authority) . "\n";
+} catch (Exception $e) {
+  echo "ERR " . $e->getMessage() . "\n";
+}
+' --path=/var/www/html
+```
+
+Verified 2026-10-28 on the local stack: UUID `merchantcode` + `sandbox=yes` returned `https://sandbox.zarinpal.com/pg/StartPay/S000...`.
+
 ---
 
 ## 2. GraphQL Catalog
