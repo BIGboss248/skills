@@ -1,0 +1,32 @@
+## Summary
+
+<!-- What changed, and why? Link the plan item or issue. -->
+
+Refs:
+
+## Type of change
+
+- [ ] `feat` — new capability
+- [ ] `fix` — bug fix
+- [ ] `docs` — documentation only
+- [ ] `chore` / `ci` / `test` / `refactor` — no user-facing behavior change
+- [ ] Breaking change (describe the migration below)
+
+## Verification
+
+<!-- Paste the commands you ran and their result. -->
+
+```text
+pnpm lint
+pnpm exec tsc --noEmit
+pnpm test:all
+pnpm build
+```
+
+## Checklist
+
+- [ ] Conventional Commit title and one logical change per commit.
+- [ ] Tests added or updated for the changed behavior.
+- [ ] Documentation updated (`README.md`, `PLAN.md`, `docs/`) where behavior changed.
+- [ ] No secrets, `.env*` values, dumps, or credentials in the diff.
+- [ ] `PLAN.md` progress updated with the code commit hash (if this closes a plan item).

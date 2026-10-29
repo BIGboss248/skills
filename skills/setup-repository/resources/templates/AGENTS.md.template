@@ -1,0 +1,84 @@
+# AGENTS.md
+
+Operating contract for AI agents working in this repository. Keep this file
+short and imperative; link to the detailed documents instead of duplicating
+them.
+
+## Mandatory skills (load every session)
+
+> These are hard requirements, not suggestions. Load them before planning or
+> editing anything.
+
+| Skill | When | Why |
+| :--- | :--- | :--- |
+| `self-repair` | Session start, before every task, and immediately after any user correction, preference, or diagnosed bug. | Reads and appends imperative rules in `.agents/autofix.json` so the same mistake is not repeated. |
+| `codebase-memory` | Before any codebase search, symbol lookup, or architecture inspection. | Enforces the index-first protocol (`index_status` / `index_repository`) and graph-first exploration instead of naive grep. |
+| `github-triage` | When a bug, regression, or failing test is found, or an issue needs triage or closure. | Deduplicates issues, logs diagnostics, gates closure on tests, and bridges the fix into `autofix.json`. |
+| `<stack>-component-dev` | Before creating or editing a component on that stack (e.g. `nextjs-component-dev`, `flutter-component-dev`). | Applies the project's component standards, tokens, tests, and accessibility rules. |
+| `<stack>-page-dev` | Before creating or editing a route/page on that stack (e.g. `nextjs-page-dev`). | Applies the page contract: metadata, loading/error boundaries, data fetching, tests. |
+
+Replace the `<stack>-*` rows with the skills that match this repository's
+framework and delete the rows that do not apply. Keep `self-repair` and
+`codebase-memory`; keep `github-triage` only when GitHub Issues are enabled for
+this repository.
+
+## Rule capture (`autofix.json`)
+
+- Rules live in `.agents/autofix.json` (fall back to `autofix.json` or
+  `.rules/autofix.json` if the project already uses one).
+- Newer, higher-numbered rules win over older ones.
+- When the user corrects an approach, append the rule immediately — do not
+  defer it to the end of the task.
+- Keep rules imperative and concrete: `Always …` / `Never … - because …`.
+
+## Issue logging (`github-triage`)
+
+Applies when GitHub Issues are enabled (feature F7 of the repository setup).
+Every bug, regression, or failing test follows this loop:
+
+1. **Deduplicate first.** Search open issues for the keywords or module before
+   creating anything (`gh issue list --search "<keywords>" --state open`). If a
+   match exists, comment on it instead of opening a duplicate.
+2. **Register.** New issues use `fix(<scope>): <short description>` with labels
+   `bug` and `agent-triage`:
+   `gh issue create --title "fix(<scope>): …" --label bug --label agent-triage --body "…"`.
+3. **Diagnose.** Comment the root cause, affected files, and proposed
+   remediation before touching code.
+4. **Fix and verify.** Add or update a regression test, then run the project
+   gate. Never close an issue while tests fail.
+5. **Capture the rule.** Append the preventative rule to `.agents/autofix.json`
+   with a sequential `Rule_number`, a valid `Category`, an imperative
+   `Instruction`, `Why`, and `"Issue": "#N"`.
+6. **Resolve.** Post the summary (changes, test command and result, rule number)
+   and close with `state_reason: completed` only after the gate passes.
+7. **Report.** Give the user the triage summary: issue link, status, root cause,
+   verification, and the rule that was added.
+
+Details and templates live in the `github-triage` skill
+(`references/triage-lifecycle.md`, `references/self-repair-bridge.md`,
+`resources/templates/diagnostic_comment.md`, `resources/templates/resolution_comment.md`).
+
+## Repository documents
+
+- `PLAN.md` — source of truth for scope, progress, and the continuation
+  protocol. Read it top to bottom before starting work.
+- `CONTRIBUTING.md` — branch, commit, review, and test-gate rules.
+- `SECURITY.md` — how to report vulnerabilities privately.
+- `CODE_OF_CONDUCT.md` — community expectations.
+- `README.md` — setup and run instructions.
+
+## Machine-owned blocks
+
+Framework integrations may inject their own sections into this file (for
+example, Next.js writes the `nextjs-agent-rules` block on every `next dev`).
+Do not delete or reword those blocks: committing them keeps the working tree
+clean, and removing them only recreates the change. Append project rules
+outside the managed block.
+
+## Commit and quality gates
+
+- Conventional Commits only (`feat:`, `fix:`, `docs:`, `chore:`, `ci:`,
+  `test:`, `refactor:`); one logical change per commit.
+- Run the documented test gate before pushing (for example
+  `pnpm lint && pnpm exec tsc --noEmit && pnpm test:all`).
+- Never commit secrets, `.env*` values, database dumps, or credentials.

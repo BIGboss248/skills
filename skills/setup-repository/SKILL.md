@@ -1,153 +1,111 @@
 ---
 name: setup-repository
 description: >-
-  End-to-end repository onboarding and development environment setup for project metadata, codebase-memory-mcp, Husky/Commitlint git hooks, GitHub triage infrastructure, Docker, and Release Please CI/CD. Triggers on "/setup-repository", "setup repository", "setup repo", or "initialize repository".
+  Interviews the user for which repository setup features to enable, then applies
+  only those with per-feature runbooks. Triggers on /setup-repository, setup
+  repo, or initialize repository.
 metadata:
   author: BIGboss248
-  version: "2.3"
+  version: "2.5"
 ---
 
-# Universal Repository Setup & Environment Skill (`setup-repository`)
+# Setup Repository (Feature-Driven)
 
-Establishes, configures, and validates the standard development environment for any software repository, covering project metadata (`docs/project.json`), code intelligence (`codebase-memory-mcp`), Git hooks (`husky` & `commitlint`), GitHub triage infrastructure (`.github/ISSUE_TEMPLATE/` & triage labels), production Docker containerization, and credit-optimized Release Please CI/CD.
+Turns repository onboarding into a **menu of independently selectable features**.
+Never run a fixed checklist: interview first, execute only what the user enables.
 
----
+## Contract
 
-## Workflow Overview
+- **No writes before selection.** Phase 1 must end with explicit confirmation.
+- **Selected only.** Disabled features are reported as `[SKIPPED]` and left untouched.
+- **Dependencies are explicit.** If an enabled feature needs a disabled one, ask the user to enable it or accept the documented degraded result.
+- **Idempotent.** Re-running merges and updates; never overwrite existing documents or machine-owned blocks.
+- **No dummy tests.** Never scaffold placeholder or sample test files in the workspace.
 
-```mermaid
-flowchart TD
-    A["1. Automated Discovery & Zero-Interruption Scan"] --> B["2. Project Metadata Ground Truth (docs/project.json)"]
-    B --> C["3. Codebase Memory MCP Setup (Workspace & AGY Global)"]
-    C --> D["4. Git Hooks & Commitlint Configuration"]
-    D --> E["5. Production Docker & Compose Stacks"]
-    E --> F["6. GitHub Triage Setup & Release Please CI/CD"]
-    F --> G["7. Environment Sanity Verification"]
-    G --> H["8. Standardized Execution Report & Git Guidance"]
-```
-
----
-
-## Step 1: Automated Discovery & Repository Scan (Zero Interruption Rule)
+## Phase 1 — Feature Selection Interview (mandatory)
 
 > [!IMPORTANT]
-> **DO NOT PROMPT THE USER IF INFORMATION IS AVAILABLE IN REPOSITORY FILES.**
-> Scan repository files, lockfiles, and `docs/` first. Only prompt the user for missing or ambiguous configuration.
+> Present the menu and wait for an answer. Do not infer consent from silence or from a generic "set it up".
 
-1. **Detect Framework, Runtime & Package Manager**:
-   - Inspect `package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`, or `pubspec.yaml`.
-   - Deduce package manager from lockfiles (`pnpm-lock.yaml` -> `pnpm`, `bun.lockb` -> `bun`, `yarn.lock` -> `yarn`, `package-lock.json` -> `npm`).
-2. **Scan Existing Documentation**:
-   - Read `CONTEXT.md`, `docs/plan.md`, `docs/adr/*.md`, and `README.md`.
-3. **Interactive Clarification**:
-   - If runtime, test command, build command, or release target cannot be determined from existing files, ask focused questions before scaffolding.
+### 1.1 Detect first (no questions yet)
 
----
+Scan `package.json` / `pyproject.toml` / `go.mod`, lockfiles, `.git` and remotes, `gh auth status`, `docker --version`, MCP config, and `.github/`. Only ask about what cannot be detected.
 
-## Step 2: Project Metadata Ground Truth (`docs/project.json`)
+### 1.2 Present the menu
 
-Create or update `docs/project.json` with discovered project metadata:
+Use [feature-selection-interview.md](./resources/templates/feature-selection-interview.md).
 
-```json
-{
-  "project_context_and_metadata": {
-    "project_name": "my-project",
-    "runtime": "node",
-    "package_manager": "pnpm",
-    "source_dir": "src",
-    "test_command": "pnpm test",
-    "build_command": "pnpm run build",
-    "testing_library": ["jest", "playwright"],
-    "containerization": "docker-standalone",
-    "ci_cd_provider": "github-actions",
-    "release_automation": "release-please",
-    "publish_target": "container"
-  }
-}
-```
+| ID | Feature | Default | Depends on |
+| :--- | :--- | :--- | :--- |
+| F1 | Project metadata (`docs/project.json`) | on | — |
+| F2 | Agent contract (`AGENTS.md` + `.agents/autofix.json`) | on | — |
+| F3 | Codebase Memory MCP | on if installed | binary/MCP |
+| F4 | Git hooks (Husky + Commitlint + guarded pre-push) | on | Node project |
+| F5 | Production Docker (Dockerfile, compose, `.dockerignore`) | off | lockfile |
+| F6 | GitHub repository provisioning (create/attach, metadata, topics, docs) | on | `gh` auth |
+| F7 | GitHub Issues & triage infrastructure (enable issues, issue forms, PR template, labels) | on | F6, F2 for the logging contract |
+| F8 | Release Please (config, manifest, workflow) | on | F6 for effect |
+| F9 | Branch protection | off | existing CI check |
 
----
+### 1.3 Ask in adaptive rounds
 
-## Step 3: Setup `codebase-memory-mcp` Code Intelligence Server
+1. **Preset** — Minimal (`F1, F2`), Standard (`F1, F2, F4, F6, F7, F8`, plus `F3` when installed), Full (all except `F9` unless a CI check exists), or Custom.
+2. **Adjustments** — multi-select overrides; record every add/remove.
+3. **Per-feature options** — only for enabled features; each runbook lists its own questions.
 
-1. **Install & Register `codebase-memory-mcp`**:
-   - Register in workspace `mcp.json` (and `.agents/mcp_config.json` if present).
-   - Register globally **strictly for Google Antigravity (AGY) only** in `~/.gemini/antigravity/mcp_config.json` and `~/.gemini/config/mcp_config.json`.
-2. **Stutter Prevention & Exclusions**:
-   - Deploy [`cbmignore.template`](./resources/templates/cbmignore.template) to `<repo>/.cbmignore`.
-   - Disable automatic session file-watching globally: `codebase-memory-mcp config set auto_watch false`.
-   - Add `.codebase-memory/` to `.gitignore`.
-3. **Initial On-Demand Indexing**:
-   - Run `codebase-memory-mcp cli index_repository --repo-path "<canonical-repo-path>" --mode moderate`.
-   - Consult [codebase-memory-and-mcp.md](./references/codebase-memory-and-mcp.md) for full installation and configuration details.
+### 1.4 Resolve and record
 
----
+- Check dependencies and confirm any degraded mode.
+- Write the canonical selection to `.agents/setup-features.json` using the [schema](./resources/templates/setup-features.schema.json).
+- If F1 is enabled, merge `setup_features` into `docs/project.json`.
+- Summarize enabled/disabled features and ask for confirmation before Phase 2.
 
-## Step 4: Setup Git Hooks with Husky & Commitlint
+## Phase 2 — Execute Enabled Features
 
-1. Install dev dependencies: `pnpm add -D husky @commitlint/cli @commitlint/config-conventional`.
-2. Configure `commitlint.config.mjs` extending `@commitlint/config-conventional`.
-3. Initialize Husky (`pnpm exec husky init`) and configure:
-   - `.husky/commit-msg`: `pnpm exec commitlint --edit $1`
-   - `.husky/pre-push`: `pnpm run test:all` (ensure `--passWithNoTests` is set so empty test suites do not block pushes; never create dummy test files).
+Run in dependency order: **F1 → F2 → F3 → F4 → F5 → F6 → F7 → F8 → F9**.
 
----
+For each enabled feature:
 
-## Step 5: Setup Multi-Stage Production Docker Containerization
+- [ ] Open its runbook and follow it exactly.
+- [ ] Run its acceptance check.
+- [ ] Record `[IMPLEMENTED]`, `[BLOCKED]`, or `[SKIPPED]` with a reason.
 
-1. Configure `.dockerignore` excluding `node_modules/`, `.env*`, `.git/`, build caches, and `.codebase-memory/`.
-2. Deploy multi-stage production [`Dockerfile.template`](./resources/templates/Dockerfile.template).
-3. Deploy [`docker-compose.yml.template`](./resources/templates/docker-compose.yml.template) and [`docker-compose.prod.yml.template`](./resources/templates/docker-compose.prod.yml.template).
-4. Review specifications in [docker-and-cicd-guide.md](./references/docker-and-cicd-guide.md).
+| Feature | Runbook |
+| :--- | :--- |
+| F1 Project metadata | [01-project-metadata.md](./references/features/01-project-metadata.md) |
+| F2 Agent contract | [02-agent-contract.md](./references/features/02-agent-contract.md) |
+| F3 Codebase Memory | [03-codebase-memory.md](./references/features/03-codebase-memory.md) |
+| F4 Git hooks | [04-git-hooks.md](./references/features/04-git-hooks.md) |
+| F5 Production Docker | [05-docker.md](./references/features/05-docker.md) |
+| F6 GitHub repository | [06-github-repository.md](./references/features/06-github-repository.md) |
+| F7 GitHub Issues & triage | [07-triage-templates.md](./references/features/07-triage-templates.md) |
+| F8 Release Please | [08-release-please.md](./references/features/08-release-please.md) |
+| F9 Branch protection | [09-branch-protection.md](./references/features/09-branch-protection.md) |
 
----
+Do not touch files owned only by disabled features — not even to "prepare" them.
 
-## Step 6: Setup GitHub Triage Infrastructure & Credit-Optimized CI/CD
+## Phase 3 — Verify
 
-1. **GitHub Triage Infrastructure Setup**:
-   - Execute [`init_triage_infra.ps1`](./scripts/init_triage_infra.ps1) to scaffold `.github/ISSUE_TEMPLATE/bug_report.yml` (from [bug_report.yml.template](./resources/templates/bug_report.yml.template)) and `.github/ISSUE_TEMPLATE/config.yml` (from [issue_config.yml.template](./resources/templates/issue_config.yml.template)), and provision remote triage labels (`bug`, `agent-triage`, `self-repair`, `verified`) for `github-triage`.
-2. **Release Please & Multi-Arch CI/CD**:
-   - Deploy [`.github/workflows/release-please.yml`](./resources/templates/release-please.yml.template) with `concurrency.cancel-in-progress: false`, native AMD64/ARM64 matrix runners, digest manifest merging, and lowercase OCI image names.
-   - Consult [docker-and-cicd-guide.md](./references/docker-and-cicd-guide.md) for full workflow architecture.
+- [ ] Re-run every enabled feature's acceptance check.
+- [ ] `git ls-files` contains no `.env*` values, database dumps, or `acme.json`.
+- [ ] Reconcile the selection record against the working tree; no feature is half-applied.
+- [ ] Confirm each disabled feature was left untouched.
 
----
+## Phase 4 — Report and Handoff
 
-## Step 7: Environment Sanity Verification
+Produce the report defined at the end of the interview template. It must include:
 
-- [ ] `docs/project.json` exists with valid schema.
-- [ ] `mcp.json` and AGY global `mcp_config.json` contain `codebase-memory`.
-- [ ] `<repo>/.cbmignore` exists and `codebase-memory-mcp config get auto_watch` returns `false`.
-- [ ] `.codebase-memory/` is in `.gitignore` and `codebase-memory-mcp cli get_architecture` succeeds.
-- [ ] Commitlint and `.husky/commit-msg` / `.husky/pre-push` are configured.
-- [ ] `.github/ISSUE_TEMPLATE/bug_report.yml` and `.github/ISSUE_TEMPLATE/config.yml` exist.
-- [ ] Docker configuration (`docker compose config`) and `.github/workflows/release-please.yml` are valid.
+- the selected preset and the final enabled/disabled list;
+- one row per feature with status and reason;
+- the exact commands run and their result;
+- `git add` / `git commit` commands limited to selected features; leave committing to the user.
 
----
+## Edge Cases & Common Mistakes
 
-## Step 8: Standardized Dev Setup Execution Report & Git Commit Protocol
-
-Always output the standardized execution report upon completion:
-
-```markdown
-## 🛠️ Repository Setup Execution Report
-
-| Step / Component                     | Target File(s) / Resource                                                             | Status                          | Notes / Details                                                                   |
-| :----------------------------------- | :------------------------------------------------------------------------------------ | :------------------------------ | :-------------------------------------------------------------------------------- |
-| **1. Project Metadata**              | `docs/project.json`                                                                   | `[IMPLEMENTED]` / `[UNTOUCHED]` | Recorded runtime, package manager, and test tooling metadata.                     |
-| **2. Codebase Memory MCP**           | `mcp.json`, `.cbmignore`, AGY global configs (`auto_watch=false`)                     | `[IMPLEMENTED]` / `[UNTOUCHED]` | Binary installed, registered in workspace & globally for AGY only, indexed graph. |
-| **3. Husky Git Hooks**               | `.husky/commit-msg`, `.husky/pre-push`                                                | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured Conventional Commits gate and pre-push test suite runner.              |
-| **4. Commitlint Config**             | `commitlint.config.mjs`                                                               | `[IMPLEMENTED]` / `[UNTOUCHED]` | Enforces `@commitlint/config-conventional` specification.                         |
-| **5. Docker Containerization**       | `Dockerfile`, `docker-compose.yml`, `docker-compose.prod.yml`, `.dockerignore`        | `[IMPLEMENTED]` / `[UNTOUCHED]` | Multi-stage production container & local/GHCR compose stacks.                     |
-| **6. GitHub Triage Infrastructure**  | `.github/ISSUE_TEMPLATE/bug_report.yml`, `.github/ISSUE_TEMPLATE/config.yml`, Labels  | `[IMPLEMENTED]` / `[UNTOUCHED]` | Scaffolded issue templates and synced `bug`, `agent-triage`, `self-repair`, `verified` labels. |
-| **7. Release Please & Multi-Arch**   | `.github/workflows/release-please.yml`                                                | `[IMPLEMENTED]` / `[UNTOUCHED]` | Automated SemVer release PRs and native AMD64/ARM64 GHCR deployment.              |
-| **8. Environment Sanity Check**      | Workspace Audit                                                                       | `[PASSED]`                      | All configuration files, issue templates, and hooks verified clean.               |
-```
-
-### Git Commit Instructions
-
-Output the exact git commands and leave committing to the user:
-
-```bash
-git add docs/project.json mcp.json .cbmignore commitlint.config.mjs .husky/ Dockerfile docker-compose*.yml .github/ISSUE_TEMPLATE/ .github/workflows/
-git commit -m "chore: configure standard repository tooling, github triage, codebase intelligence, and ci/cd"
-```
+- **F9 before CI** — protection that requires a non-existent check blocks every push. Defer it.
+- **F7 labels** — templates work locally; remote labels need an authenticated `gh` and a remote.
+- **F6 scaffolding flags** — `gh repo create --license` / `--gitignore` can overwrite existing files.
+- **F8 baseline** — without `bootstrap-sha`, Release Please scans history from before the tooling existed.
+- **F2 merges** — never delete machine-owned blocks; Next.js rewrites its own `AGENTS.md` section.
+- **F3 watchers** — `auto_watch=true` causes editor stutter; keep it off and index on demand.
+- **Scope drift** — if the user adds or removes a feature mid-run, reopen Phase 1 and update the record.
