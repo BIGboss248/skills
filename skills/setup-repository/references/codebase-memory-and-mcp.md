@@ -26,6 +26,8 @@ Equip the repository with the `codebase-memory-mcp` persistent knowledge graph s
 
 ## 2. Register MCP Server (Workspace & AGY Global Only)
 
+> For the full server list, recommendation matrix, and disabling semantics, see [mcp-server-catalog.md](./mcp-server-catalog.md).
+
 > [!IMPORTANT]
 > **Global MCP Registration is for Antigravity (AGY) ONLY.**
 > Antigravity discovers and loads MCP servers that are configured globally on the host system. **Never configure or register MCP servers globally for other coding agents** (e.g., Claude Desktop, Cursor, VS Code, Cline).

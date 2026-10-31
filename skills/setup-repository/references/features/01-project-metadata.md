@@ -22,12 +22,15 @@ is missing or ambiguous:
    `setup_features` from `.agents/setup-features.json`.
 4. Record `containerization`, `ci_cd_provider`, and `release_automation` so the
    F5/F8 runbooks can branch on them.
+5. If F3 is enabled, merge `project_context_and_metadata.mcp_servers` with the
+   accepted server list.
 
 ## Acceptance
 
 - [ ] `node -e "JSON.parse(require('fs').readFileSync('docs/project.json','utf8'))"` passes (or the stack equivalent).
 - [ ] `project_name`, `runtime`, `package_manager`, `test_command`, `build_command` are non-empty.
 - [ ] `setup_features.enabled` matches the confirmed selection.
+- [ ] When F3 is enabled, `mcp_servers` lists exactly the accepted servers.
 
 ## Notes
 

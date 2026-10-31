@@ -6,7 +6,7 @@ description: >-
   repo, or initialize repository.
 metadata:
   author: BIGboss248
-  version: "2.5"
+  version: "2.6"
 ---
 
 # Setup Repository (Feature-Driven)
@@ -39,7 +39,7 @@ Use [feature-selection-interview.md](./resources/templates/feature-selection-int
 | :--- | :--- | :--- | :--- |
 | F1 | Project metadata (`docs/project.json`) | on | — |
 | F2 | Agent contract (`AGENTS.md` + `.agents/autofix.json`) | on | — |
-| F3 | Codebase Memory MCP | on if installed | binary/MCP |
+| F3 | MCP servers (ask + recommend) & Codebase Memory | on if installed | binary/MCP |
 | F4 | Git hooks (Husky + Commitlint + guarded pre-push) | on | Node project |
 | F5 | Production Docker (Dockerfile, compose, `.dockerignore`) | off | lockfile |
 | F6 | GitHub repository provisioning (create/attach, metadata, topics, docs) | on | `gh` auth |
@@ -74,7 +74,7 @@ For each enabled feature:
 | :--- | :--- |
 | F1 Project metadata | [01-project-metadata.md](./references/features/01-project-metadata.md) |
 | F2 Agent contract | [02-agent-contract.md](./references/features/02-agent-contract.md) |
-| F3 Codebase Memory | [03-codebase-memory.md](./references/features/03-codebase-memory.md) |
+| F3 MCP servers & Codebase Memory | [03-mcp-servers.md](./references/features/03-mcp-servers.md) |
 | F4 Git hooks | [04-git-hooks.md](./references/features/04-git-hooks.md) |
 | F5 Production Docker | [05-docker.md](./references/features/05-docker.md) |
 | F6 GitHub repository | [06-github-repository.md](./references/features/06-github-repository.md) |
@@ -108,4 +108,5 @@ Produce the report defined at the end of the interview template. It must include
 - **F8 baseline** — without `bootstrap-sha`, Release Please scans history from before the tooling existed.
 - **F2 merges** — never delete machine-owned blocks; Next.js rewrites its own `AGENTS.md` section.
 - **F3 watchers** — `auto_watch=true` causes editor stutter; keep it off and index on demand.
+- **F3 MCP selection** — never enable every server silently; ask with a recommendation from [mcp-server-catalog.md](./references/mcp-server-catalog.md) and register only the accepted set.
 - **Scope drift** — if the user adds or removes a feature mid-run, reopen Phase 1 and update the record.

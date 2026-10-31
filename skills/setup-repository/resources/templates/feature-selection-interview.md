@@ -14,6 +14,7 @@ Git remote:       <origin URL or "none">
 GitHub CLI:       <authenticated as … | not authenticated | not installed>
 Docker:           <version | not installed>
 Codebase Memory:  <MCP registered | binary installed | unavailable>
+MCP servers:      <registered servers or "none">
 Existing files:   <AGENTS.md, docs/project.json, .github/, Dockerfile, .husky/ …>
 ```
 
@@ -23,7 +24,7 @@ Existing files:   <AGENTS.md, docs/project.json, .github/, Dockerfile, .husky/ �
 | :--- | :--- | :--- | :--- |
 | F1 | Project metadata (`docs/project.json`) | on | — |
 | F2 | Agent contract (`AGENTS.md` + `.agents/autofix.json`) | on | — |
-| F3 | Codebase Memory MCP | on if installed | binary/MCP |
+| F3 | MCP servers (ask + recommend) & Codebase Memory | on if installed | binary/MCP |
 | F4 | Git hooks (Husky + Commitlint + guarded pre-push) | on | Node project |
 | F5 | Production Docker (Dockerfile, compose, `.dockerignore`) | off | lockfile |
 | F6 | GitHub repository provisioning (create/attach, metadata, topics, docs) | on | `gh` auth |
@@ -51,7 +52,7 @@ Resolve every removal of a dependency:
 
 Ask only the questions for enabled features; each runbook lists them. Examples:
 
-- **F3**: install if missing, or wire workspace-only?
+- **F3**: which MCP servers does this repo need (present the recommendation from `references/mcp-server-catalog.md`); install codebase-memory if missing, or wire workspace-only?
 - **F4**: pre-push gate — `test:all`, lint only, or no test gate?
 - **F5**: app image only, compose too, and which port?
 - **F6**: create a new repo or attach the existing one; visibility; confirm suggested topics; which documents to generate?
@@ -68,7 +69,7 @@ Ask only the questions for enabled features; each runbook lists them. Examples:
 | :--- | :--- |
 | F1 Project metadata | ENABLED |
 | F2 Agent contract | ENABLED |
-| F3 Codebase Memory | ENABLED |
+| F3 MCP servers & Codebase Memory | ENABLED |
 | F4 Git hooks | ENABLED |
 | F5 Production Docker | DISABLED |
 | F6 GitHub repository | ENABLED |
@@ -90,7 +91,7 @@ Proceed with these features? (yes / adjust)
 | :--- | :--- | :--- | :--- |
 | F1 Project metadata | `docs/project.json` | `[IMPLEMENTED]` / `[SKIPPED]` / `[BLOCKED]` | … |
 | F2 Agent contract | `AGENTS.md`, `.agents/autofix.json` | … | … |
-| F3 Codebase Memory | `mcp.json`, `.cbmignore`, AGY configs | … | … |
+| F3 MCP servers & Codebase Memory | `mcp.json`, `.cbmignore`, AGY configs, `docs/project.json` | … | accepted servers: … |
 | F4 Git hooks | `.husky/*`, `commitlint.config.mjs` | … | … |
 | F5 Docker | `Dockerfile`, `docker-compose*.yml`, `.dockerignore` | … | … |
 | F6 GitHub repository | remote, topics, `README.md`, docs | … | … |
