@@ -4,9 +4,10 @@ Baseline standard for **all code generation, in every project, by every agent**.
 It is the default behavior; a project's `AGENTS.md` may refine it, never silently
 override it.
 
-This file is the single source of truth. It is loaded globally by OpenCode and
-deployed verbatim to `.agents/rules/engineering-standards.md` in repositories
-set up with this skill.
+This file is the single source of truth. It is deployed verbatim to
+`.agents/rules/engineering-standards.md` in repositories set up with this skill
+and loaded from there at repository level (project `opencode.json`
+`instructions` and an `AGENTS.md` section, both created by F2).
 
 ## 0. Pre-flight checklist
 

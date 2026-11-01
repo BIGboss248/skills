@@ -29,11 +29,13 @@ the same corrections.
 5. Create `.agents/autofix.json` with `[]` if missing; the `self-repair` skill
    owns the schema and appends rules.
 6. Deploy [engineering-standards.md](../../resources/engineering-standards.md) to
-   `.agents/rules/engineering-standards.md` verbatim, and keep the
-   "Engineering standards" section in `AGENTS.md` pointing at it. If the
-   repository already defines its own standards, merge instead of replacing:
-   keep the stricter rule and record the conflict in
-   `.agents/setup-features.json` under `notes`.
+   `.agents/rules/engineering-standards.md` verbatim and keep the
+   "Engineering standards" section in `AGENTS.md` pointing at it. When the
+   repository uses OpenCode, also add it to the project `opencode.json`
+   (`"instructions": [".agents/rules/engineering-standards.md"]`), creating the
+   file from the schema if it does not exist. If the repository already defines
+   its own standards, merge instead of replacing: keep the stricter rule and
+   record the conflict in `.agents/setup-features.json` under `notes`.
 7. Link `PLAN.md`, `CONTRIBUTING.md`, `SECURITY.md`, and `README.md` rather than
    duplicating their content.
 
@@ -43,7 +45,7 @@ the same corrections.
 - [ ] The issue-logging contract is present when `github-triage` is listed.
 - [ ] No machine-owned block was removed or reworded.
 - [ ] `.agents/autofix.json` parses as a JSON array.
-- [ ] When question 3 is accepted, `.agents/rules/engineering-standards.md` exists, `AGENTS.md` links to it, and the file differs from the skill copy only by an intentional, recorded merge.
+- [ ] When question 3 is accepted, `.agents/rules/engineering-standards.md` exists, `AGENTS.md` links to it, `opencode.json` loads it through `instructions` when the repository uses OpenCode, and the file differs from the skill copy only by an intentional, recorded merge.
 
 ## Notes
 
