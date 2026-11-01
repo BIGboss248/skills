@@ -50,6 +50,9 @@ fi
 
 echo -e "\033[0;32m[PASS] Files present: ${COMP_NAME}.tsx, ${COMP_NAME}Skeleton.tsx, $(basename "$TEST_FILE")\033[0m"
 
+# Test authoring and execution are owned by nextjs-adversarial-qa.
+echo -e "\033[0;36m[INFO] Test execution is delegated. Run nextjs-adversarial-qa/scripts/verify-qa.sh \"$RESOLVED_DIR\" all\033[0m"
+
 # Verify zero in-file i18n placeholders / mock translation dictionaries
 if [ -f "$COMPONENT_FILE" ]; then
     if grep -qE "const\s+DEFAULT_CONTENT\s*=|const\s+DEFAULT_TRANSLATIONS\s*=" "$COMPONENT_FILE"; then
@@ -57,17 +60,6 @@ if [ -f "$COMPONENT_FILE" ]; then
         exit 1
     fi
 fi
-
-# Detect package manager
-PKG_MANAGER="pnpm"
-if [ -f "pnpm-lock.yaml" ]; then PKG_MANAGER="pnpm";
-elif [ -f "bun.lockb" ]; then PKG_MANAGER="bun";
-elif [ -f "package-lock.json" ]; then PKG_MANAGER="npm";
-elif [ -f "yarn.lock" ]; then PKG_MANAGER="yarn";
-fi
-
-echo -e "\033[0;36m[INFO] Executing unit test suite via $PKG_MANAGER...\033[0m"
-$PKG_MANAGER test -- "$TEST_FILE"
 
 echo -e "\033[0;32m[SUCCESS] Dev verification passed for $COMP_NAME.\033[0m"
 exit 0

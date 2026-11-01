@@ -4,7 +4,7 @@ Conduct the developer setup interview in **progressive, adaptive rounds**. Do no
 
 ```mermaid
 flowchart LR
-    R1["Round 1: Target Scope & Tooling"] --> R2["Round 2: Reverse Proxy & Production Hosting"] --> R3["Round 3: CI/CD & Registry Automation"]
+    R1["Round 1: Target Scope & Tooling"] --> R2["Round 2: Reverse Proxy & Production Hosting"] --> R3["Round 3: CI/CD & Registry Automation"] --> R4["Round 4: Agent Roster & Models"]
 ```
 
 ---
@@ -60,5 +60,33 @@ Probe the user on repository automation, versioning, and commit conventions:
 2. **GitHub Actions CI/CD**:
    - Enable Google Release Please for automated SemVer release PRs and changelogs?
    - Enable automated multi-arch Docker image compilation (AMD64 + ARM64) to GitHub Container Registry (GHCR)?
-3. **Execution Protocol**:
-   - Present a complete `implementation_plan.md` artifact summarizing all agreed choices before applying changes, and proceed directly with execution without waiting for manual confirmation.
+
+---
+
+## Round 4: Agent Roster & Models
+
+Short round. The 3-role roster is the contract; do not offer a 2-role downgrade.
+
+1. **Roster Confirmation**:
+   - Install `nextjs-dev`, `nextjs-test-author`, `nextjs-qa-auditor`, and the `nextjs-orchestrator` primary agent?
+   - Install the `/create-nextjs-component` and `/create-nextjs-page` command shortcuts?
+2. **Model Overrides** (default: inherit the primary agent's model):
+   - Orchestrator model?
+   - Implementation (`nextjs-dev`) model?
+   - Test author model?
+   - QA auditor model?
+   - Record every choice in `docs/project.json` → `project_context_and_metadata.agents`; leave `null` to inherit.
+3. **Boundary Confirmation**:
+   - Confirm the operator understands that `nextjs-dev` cannot edit tests, both test agents cannot edit implementation, and edge tests are immutable after creation.
+   - Confirm the repair rule: failing assertions go to the dev agent, not to a test agent.
+
+> [!NOTE]
+> Do not ask about agent roster in Round 1. Later rounds depend on the roster being
+> settled, so it runs last and the plan can deploy it in one pass.
+
+---
+
+## Post-Interview Execution Protocol
+
+Present the `implementation_plan.md` artifact summarizing all agreed choices, then
+proceed directly with execution without waiting for manual confirmation.

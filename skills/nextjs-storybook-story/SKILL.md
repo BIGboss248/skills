@@ -3,7 +3,7 @@ name: nextjs-storybook-story
 description: Workflow and engineering standards for crafting co-located Storybook CSF3 stories ([ComponentName].stories.tsx) with interactive controls, action spies, and 4 canonical theme variants.
 metadata:
   author: BIGboss248
-  version: "1.0"
+  version: "1.1"
 ---
 
 # Next.js Storybook CSF3 Story Generation (`nextjs-storybook-story`)
@@ -13,6 +13,7 @@ Specialized workflow for generating and updating co-located Storybook stories (`
 > [!TIP]
 > **Modular Assets:**
 > - Reference story implementations: [`examples/`](./examples/)
+> - Test authoring is owned by [`nextjs-adversarial-qa`](../nextjs-adversarial-qa/SKILL.md); do not add test files here.
 > - Verification Scripts: [`scripts/verify-storybook.ps1`](./scripts/verify-storybook.ps1) (Windows) / [`scripts/verify-storybook.sh`](./scripts/verify-storybook.sh) (Linux)
 
 ---

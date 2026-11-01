@@ -1,0 +1,84 @@
+# Agent Boundaries & Delegation
+
+Per-repository contract for the Next.js role agents installed in
+`.opencode/agents/`. Permissions enforce the boundaries; this file explains them
+so every agent and the human operator share one model.
+
+---
+
+## Roster
+
+| Agent | Mode | Purpose | Writes |
+| :--- | :--- | :--- | :--- |
+| `nextjs-orchestrator` | primary | Runs the pipeline, owns gates and the plan checklist | delegation, plan checklist, approved edge-test corrections |
+| `nextjs-dev` | subagent | Components and pages | implementation, skeletons, dictionaries, barrel files |
+| `nextjs-test-author` | subagent | Baseline and page suites | `*.test.ts(x)`, `tests/e2e/pages/**`, `test-plan.md` |
+| `nextjs-qa-auditor` | subagent | Adversarial edge suites and audit | `*.edge.test.tsx`, `tests/e2e/components/**` |
+
+---
+
+## Write Matrix
+
+| Path | orchestrator | dev | test-author | qa-auditor |
+| :--- | :--- | :--- | :--- | :--- |
+| `app/**`, `components/**`, `lib/**` | approve | write | deny | deny |
+| `messages/**` | approve | write | deny | deny |
+| `docs/design/**` | write | read | read | read |
+| `docs/plan/05-pages-and-components.md` | write | deny | deny | deny |
+| `*.test.ts(x)` | escalate | deny | write | deny |
+| `*.edge.test.tsx` | user-approved only | deny | deny | write |
+| `tests/e2e/pages/**` | escalate | deny | write | deny |
+| `tests/e2e/components/**` | escalate | deny | deny | write |
+| `test-plan.md` | approve | deny | write | read |
+| `jest.config.*`, `playwright.config.*`, `package.json`, lockfiles | user only | deny | deny | deny |
+
+`write` means the agent's `edit` permission covers the path. `approve` means the
+agent coordinates the change but does not perform it. `deny` means the tool is
+unavailable — the agent must report the need instead of working around it.
+
+---
+
+## Rules
+
+1. **One role per artifact.** No agent writes both implementation and tests.
+2. **Edge tests are immutable.** Created once by `nextjs-qa-auditor`; only an
+   explicit user decision changes one, and the orchestrator applies it and logs it.
+3. **Baseline tests are mutable with a reason.** `nextjs-test-author` records
+   every revision in `revision_reasons`.
+4. **Failing test means failing code.** The default response is a
+   `code_fixes_required` entry, not an assertion change.
+5. **Subagents cannot delegate.** `task` is denied, so no hidden spawn trees.
+6. **Subagents cannot ask.** `question` is denied; they return `BLOCKED` with the
+   exact missing input.
+7. **No shell workarounds.** Redirects, compound commands, and
+   `Set-Content`/`Out-File`/`New-Item` are denied, so a file write cannot bypass
+   the `edit` boundary.
+8. **The orchestrator audits the diff.** Before reporting success it verifies that
+   each agent touched only its allowed classes of files.
+
+---
+
+## Repair Loop
+
+```
+suite fails
+  -> owning test agent returns failures[] + code_fixes_required[]
+  -> nextjs-dev fixes implementation (never the test)
+  -> owning test agent re-runs the same files
+  -> repeat until exit 0
+```
+
+Escalation:
+
+- Baseline wrong → `nextjs-test-author` fixes it, logs the reason.
+- Edge wrong → user decision; orchestrator edits and logs it.
+- Spec ambiguous → `BLOCKED: ambiguous specification` with the rows in question.
+
+---
+
+## Degraded Mode
+
+If `.opencode/agents/` is absent (different harness), the pipeline may still run
+with prompt-level roles, but the orchestrator must announce
+`DEGRADED: agent permissions unavailable` and run the write audit before
+reporting success.

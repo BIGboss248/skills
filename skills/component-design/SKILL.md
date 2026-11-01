@@ -99,7 +99,7 @@ To guarantee unbiased quality, invoke an independent reviewer subagent before pr
 Once `design-spec.md` is approved and verified:
 
 1. **Visual Prototyping**: Trigger [`stitch-design`](file:///d:/Scripts/aminwebsite/.agents/skills/stitch-design/SKILL.md) to generate UI screens and layout variants in Google Stitch.
-2. **Code Implementation**: Provide `design-spec.md` to component implementation skills (e.g., `nextjs-component-dev` / `nextjs-create-component`).
+2. **Code Implementation**: Provide `design-spec.md` to component implementation skills (e.g., `nextjs-component-dev` / `nextjs-component-create`).
 
 ---
 

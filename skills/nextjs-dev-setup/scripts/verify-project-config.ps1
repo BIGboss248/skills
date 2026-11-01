@@ -475,6 +475,48 @@ if (Test-Path $pkgPath) {
     } catch {}
 }
 
+# 14. Agent Roster & Permission Boundaries (.opencode/agents)
+$agentSpecs = @(
+    @{ Name = "nextjs-dev"; File = ".opencode/agents/nextjs-dev.md"; Mode = "subagent"; Required = @("*.test.tsx", "task: deny") },
+    @{ Name = "nextjs-test-author"; File = ".opencode/agents/nextjs-test-author.md"; Mode = "subagent"; Required = @("edit:", "task: deny") },
+    @{ Name = "nextjs-qa-auditor"; File = ".opencode/agents/nextjs-qa-auditor.md"; Mode = "subagent"; Required = @("edge.test.tsx", "task: deny") },
+    @{ Name = "nextjs-orchestrator"; File = ".opencode/agents/nextjs-orchestrator.md"; Mode = "primary"; Required = @("nextjs-dev", "nextjs-test-author", "nextjs-qa-auditor") }
+)
+
+$missingAgents = @()
+$invalidAgents = @()
+foreach ($spec in $agentSpecs) {
+    $agentPath = Join-Path $rootDir $spec.File
+    if (-not (Test-Path $agentPath -PathType Leaf)) {
+        $missingAgents += $spec.File
+        continue
+    }
+    $agentContent = Get-Content -Raw -Path $agentPath -Encoding UTF8
+    $problems = @()
+    if ($agentContent -notmatch "(?m)^mode:\s*$($spec.Mode)\s*$") { $problems += "mode must be '$($spec.Mode)'" }
+    if ($agentContent -match '\{\{[A-Z_]+\}\}') { $problems += "unreplaced {{TOKEN}} placeholder" }
+    foreach ($needle in $spec.Required) {
+        if (-not $agentContent.Contains($needle)) { $problems += "missing required token '$needle'" }
+    }
+    if ($problems.Count -gt 0) { $invalidAgents += "$($spec.File): $($problems -join '; ')" }
+}
+
+$boundariesRule = Join-Path $rootDir ".agents/rules/agent-boundaries.md"
+$commandsMissing = @()
+foreach ($cmd in @(".opencode/commands/create-nextjs-component.md", ".opencode/commands/create-nextjs-page.md")) {
+    if (-not (Test-Path (Join-Path $rootDir $cmd) -PathType Leaf)) { $commandsMissing += $cmd }
+}
+
+if ($missingAgents.Count -eq 0 -and $invalidAgents.Count -eq 0 -and (Test-Path $boundariesRule) -and $commandsMissing.Count -eq 0) {
+    $automationChecks.Add(@{ name = "Agent Roster & Permission Boundaries"; status = "configured"; details = "Found 4 agents in .opencode/agents with enforced write boundaries, .agents/rules/agent-boundaries.md, and both command shortcuts." })
+} else {
+    if ($missingAgents.Count -gt 0) { $errors.Add("Missing agent file(s): $($missingAgents -join ', '). Run Stage 1.5 of nextjs-dev-setup.") }
+    if ($invalidAgents.Count -gt 0) { $errors.Add("Invalid agent configuration - $($invalidAgents -join ' | ')") }
+    if (-not (Test-Path $boundariesRule)) { $errors.Add("Missing .agents/rules/agent-boundaries.md.") }
+    if ($commandsMissing.Count -gt 0) { $warnings.Add("Missing command shortcut(s): $($commandsMissing -join ', ').") }
+    $automationChecks.Add(@{ name = "Agent Roster & Permission Boundaries"; status = "missing"; details = "Agent roster incomplete. Missing: $($missingAgents -join ', '); invalid: $($invalidAgents.Count); boundaries rule: $(Test-Path $boundariesRule)." })
+}
+
 $passed = ($errors.Count -eq 0)
 
 # Output rendering

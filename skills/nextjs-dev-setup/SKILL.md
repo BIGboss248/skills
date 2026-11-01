@@ -26,8 +26,9 @@ Conduct the interactive interview in **progressive, adaptive rounds** (waiting f
    - **Traefik via Docker Compose**: Automated container discovery using Compose labels reading from environment variables (`${DOMAIN_NAME}`, `${TRAEFIK_ENTRYPOINT}`, `${TRAEFIK_CERTRESOLVER}`) with anti-buffering.
    - **Nginx via Host System**: Standalone configuration in `/etc/nginx/sites-available/<domain>` using Certbot SSL certificates.
 3. **Round 3 (CI/CD, Git Hooks & Registry)**: Probe Husky pre-push test suites, Commitlint, and GitHub Actions Release Please / GHCR workflows.
-4. Consult [setup-interview-rounds.md](./references/setup-interview-rounds.md) for complete question sets and branching logic.
-5. **Plan & Execution**: Generate and present an `implementation_plan.md` artifact detailing all planned file creations, configurations, and packages before applying changes, and proceed directly with execution without waiting for manual confirmation.
+4. **Round 4 (Agent Roster & Models)**: Confirm the 3-role agent roster (`nextjs-dev`, `nextjs-test-author`, `nextjs-qa-auditor`) plus the `nextjs-orchestrator` primary agent, and collect an optional model override per role (default: inherit the primary agent's model).
+5. Consult [setup-interview-rounds.md](./references/setup-interview-rounds.md) for complete question sets and branching logic.
+6. **Plan & Execution**: Generate and present an `implementation_plan.md` artifact detailing all planned file creations, configurations, and packages before applying changes, and proceed directly with execution without waiting for manual confirmation.
 
 ---
 
@@ -57,6 +58,37 @@ Conduct the interactive interview in **progressive, adaptive rounds** (waiting f
    - Scaffold composite `<Link>` in `app/components/Link.tsx` using [Link.tsx.template](./resources/templates/Link.tsx.template) combining `@/i18n/navigation` with progress bar triggers.
    - Scaffold `.env.example` using [env.example.template](./resources/templates/env.example.template) for production and `.env.development` using [env.local.template](./resources/templates/env.local.template) for local development (Rule 39).
    - **App Icons, Apple Icon & PWA Manifest**: Deploy [manifest.ts.template](./resources/templates/manifest.ts.template) to `app/manifest.ts`. Configure root `app/favicon.ico`, `app/icon.png`, and `app/apple-icon.png` per [app-icons-and-pwa-guide.md](./references/app-icons-and-pwa-guide.md).
+
+### Stage 1.5: Agent Roster & Permission Boundaries
+
+Install the role agents that enforce component/test separation in this repository. Read [agent-roster-guide.md](./references/agent-roster-guide.md) for the full model.
+
+1. **Collect model overrides** from Round 4. For each role, `{{MODEL_LINE}}` becomes `model: <provider>/<model>` or an empty line to inherit the primary agent's model.
+2. **Deploy the roster.** Create `.opencode/agents/`, `.opencode/commands/`, and `.agents/rules/` when missing, then deploy from [agents/](./resources/templates/agents/) and [rules/](./resources/templates/rules/):
+   - [nextjs-dev.md.template](./resources/templates/agents/nextjs-dev.md.template) → `.opencode/agents/nextjs-dev.md`
+   - [nextjs-test-author.md.template](./resources/templates/agents/nextjs-test-author.md.template) → `.opencode/agents/nextjs-test-author.md`
+   - [nextjs-qa-auditor.md.template](./resources/templates/agents/nextjs-qa-auditor.md.template) → `.opencode/agents/nextjs-qa-auditor.md`
+   - [nextjs-orchestrator.md.template](./resources/templates/agents/nextjs-orchestrator.md.template) → `.opencode/agents/nextjs-orchestrator.md`
+   - [agent-boundaries.md.template](./resources/templates/rules/agent-boundaries.md.template) → `.agents/rules/agent-boundaries.md`
+3. **Substitute placeholders** — never leave a `{{TOKEN}}` in a deployed file:
+
+   | Token | pnpm | npm | yarn | bun |
+   | :--- | :--- | :--- | :--- | :--- |
+   | `{{PM}}` | `pnpm` | `npm` | `yarn` | `bun` |
+   | `{{PM_RUN}}` | `pnpm` | `npm run` | `yarn` | `bun run` |
+   | `{{MODEL_LINE}}` | `model: …` or empty line | same | same | same |
+
+4. **Install the command shortcuts** from [commands/](./resources/templates/commands/):
+   - [create-nextjs-component.md.template](./resources/templates/commands/create-nextjs-component.md.template) → `.opencode/commands/create-nextjs-component.md`
+   - [create-nextjs-page.md.template](./resources/templates/commands/create-nextjs-page.md.template) → `.opencode/commands/create-nextjs-page.md`
+5. **Record the roster** in `docs/project.json` under `project_context_and_metadata.agents` (names, paths, model overrides, `enabled: true`).
+6. **Update `AGENTS.md`** with the Agent Roster & Delegation section from [AGENTS.md.template](./resources/templates/AGENTS.md.template).
+7. **Verify discovery**: run `opencode debug agents` where the CLI is available and confirm all four agents load. New agent files register on the next session, not the current one.
+
+> [!IMPORTANT]
+> **No placeholder tests (Rule 3).** Stage 1.5 configures agents only. It never creates sample or dummy test files.
+
+---
 
 ### Stage 2: Testing Suites (Jest, Playwright & Instant Navigation)
 
@@ -114,6 +146,8 @@ Conduct the interactive interview in **progressive, adaptive rounds** (waiting f
 - [ ] Execute configuration verification script:
   - **Windows (PowerShell)**: `powershell -ExecutionPolicy Bypass -File .agents/skills/nextjs-dev-setup/scripts/verify-project-config.ps1`
   - **Linux / macOS (Bash)**: `bash .agents/skills/nextjs-dev-setup/scripts/verify-project-config.sh`
+- [ ] Confirm the agent roster check passes: all four agent files exist, `nextjs-dev` denies `**/*.test.tsx`, both test agents deny `edit` by default, all three subagents deny `task`, and no `{{TOKEN}}` placeholder remains.
+- [ ] When the OpenCode CLI is available, run `opencode debug agents` and confirm `nextjs-dev`, `nextjs-test-author`, `nextjs-qa-auditor`, and `nextjs-orchestrator` are listed with their expected permission order.
 - [ ] Fix any reported errors and re-verify until all checks pass.
 
 ---
@@ -127,6 +161,10 @@ Conduct the interactive interview in **progressive, adaptive rounds** (waiting f
 - **Docker Image Names**: Docker OCI naming strictly requires lowercase repository names (`IMAGE_NAME=$(echo ... | tr '[:upper:]' '[:lower:]')`).
 - **Storybook Intl Context**: Always wrap Storybook stories rendering `Link` or `useTranslations` with `NextIntlClientProvider` and `ProgressBarProvider` (Rule 25).
 - **Navigation Purity**: `i18n/navigation.ts` must remain pure TypeScript without JSX. Component wrappers like `Link` belong in `app/components/Link.tsx` (Rule 11).
+- **Agent Roster Placeholders**: A deployed agent file containing `{{MODEL_LINE}}`, `{{PM}}`, or `{{PM_RUN}}` is invalid and will be rejected by the verification script. Substitute before writing.
+- **Agent Discovery Timing**: New `.opencode/agents/*.md` files register on the next session. Do not claim the roster is active inside the session that created it.
+- **Edit Deny Scope**: In OpenCode, `edit: deny` removes the write, edit, and apply-patch tools. It does not block shell redirection, which is why the templates also deny `*>*`, `*;*`, `Set-Content`, `Out-File`, and friends.
+- **Harness Support**: The roster is OpenCode-specific. Other harnesses fall back to prompt-level roles plus the orchestrator's write audit (`DEGRADED: agent permissions unavailable`).
 
 ---
 
@@ -155,7 +193,8 @@ Always output this report upon completing the skill workflow:
 | **14. Commitlint Config**            | `commitlint.config.mjs`                                                                                | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured `@commitlint/config-conventional`.                                    |
 | **15. GitHub Triage Infrastructure** | `.github/ISSUE_TEMPLATE/bug_report.yml`, `.github/ISSUE_TEMPLATE/config.yml`, GitHub Labels            | `[IMPLEMENTED]` / `[UNTOUCHED]` | Scaffolded issue templates and synced `bug`, `agent-triage`, `self-repair`, `verified` labels. |
 | **16. Release & CI Build Caching**   | `.github/workflows/release-please.yml`                                                                 | `[IMPLEMENTED]` / `[UNTOUCHED]` | Next.js build cache (.next/cache), SemVer release PRs & GHCR multi-arch pkg.     |
-| **17. Environment Verification**     | `scripts/verify-project-config.ps1` / `.sh`                                                            | `[PASSED]`                      | Sanity check passed with zero errors.                                            |
+| **17. Agent Roster & Permissions**   | `.opencode/agents/*.md`, `.opencode/commands/*.md`, `.agents/rules/agent-boundaries.md`                | `[IMPLEMENTED]` / `[UNTOUCHED]` | Dev/test/auditor subagents + orchestrator, permission boundaries, command shortcuts. |
+| **18. Environment Verification**     | `scripts/verify-project-config.ps1` / `.sh`                                                            | `[PASSED]`                      | Sanity check passed with zero errors, including agent roster checks.            |
 
 #### Status Definitions:
 - **`[IMPLEMENTED]`**: Freshly created, installed, or modified during this setup run.

@@ -23,11 +23,11 @@ Whenever you are asked to create, scaffold, build, or implement **any new React 
    - **Implementation Plan Gate**: Generate `implementation_plan.md` covering target path (`<new_component_dir>/<page_or_global>/<ComponentName>/`), TypeScript contracts with English TSDoc, translation keys, semantic tokens, and test cases.
    - **Dev Server Check**: Verify or start the Next.js dev server via `next-devtools` MCP (`nextjs_index`).
    - **Zero Hardcoded Strings (i18n)**: Populate `messages/[locale].json` across all `supported_languages` in `docs/project.json` first and consume via `next-intl` (`getTranslations` / `useTranslations`). Never hardcode copy or in-file fallback objects.
-   - **TDD Unit Tests First**: Author `[ComponentName].test.tsx` (Jest + RTL + `jest-axe` + `NextIntlClientProvider`) before implementing `[ComponentName].tsx`.
+   - **TDD Baseline Delegation**: The `nextjs-test-author` agent authors `[ComponentName].test.tsx` (Jest + RTL + `jest-axe` + `NextIntlClientProvider`) before implementation. Implementation agents never write or edit tests.
    - **Component, Skeleton & Barrel**: Implement `[ComponentName].tsx` (RSC by default, push `"use client"` to leaf nodes), matching `[ComponentName]Skeleton.tsx` (mirroring geometry to prevent CLS), and `index.ts`.
    - **Semantic Tokens & Logical BiDi Styling**: Exclusively use semantic CSS variables from `app/globals.css` (`bg-background`, `text-foreground`, `border-border`, `text-muted-foreground`) and Tailwind logical properties (`ms-`, `me-`, `ps-`, `pe-`, `start`, `end`). Physical directional classes (`ml-`, `mr-`, `pl-`, `pr-`, `left-`, `right-`) and raw hex/palette classes are strictly forbidden.
    - **Verification Gate**: Run `pwsh .agents/skills/nextjs-component-dev/scripts/verify-dev.ps1 -ComponentPath <target_component_dir>`, run targeted Playwright specs, and inspect runtime health via `next-devtools` MCP (`nextjs_call`).
-   - **Plan Checklist Sync**: Check off completed component items (`- [x]`) in `docs/plan/05-pages-and-components.md`.
+   - **Plan Checklist Sync**: The orchestrator checks off completed component items (`- [x]`) in `docs/plan/05-pages-and-components.md`. Role agents never edit the plan.
 
 ---
 
@@ -42,12 +42,39 @@ Whenever you are asked to create, scaffold, build, or implement **any new Next.j
    - **Companion Route Files**: Create `loading.tsx` skeleton and `error.tsx` boundary where applicable.
    - **Page Implementation (`page.tsx`)**: Use async `params` (`Promise<{ locale: string, ... }>`), export `generateMetadata()` with canonical alternates, export `generateStaticParams()` for localized/dynamic routes, inject typed `<JsonLd>` (`schema-dts`) with `<` escaped as `\u003c`, and wrap dynamic streaming subtrees in granular `<Suspense>` boundaries.
    - **Delegate New Page Components to `nextjs-component-dev`**: Whenever a new page requires new section or child components, you **MUST** use [`.agents/skills/nextjs-component-dev/SKILL.md`](./.agents/skills/nextjs-component-dev/SKILL.md) to build each component.
+   - **Page Test Delegation**: The `nextjs-test-author` agent writes `tests/e2e/pages/<route>.spec.ts` in `page` mode after the route is implemented. Implementation agents never write or edit tests.
    - **Verification Gate**: Run `pwsh .agents/skills/nextjs-page-dev/scripts/verify-page.ps1 -RoutePath <route_dir>`.
-   - **Plan Checklist Sync**: Check off completed page infrastructure items (`page.tsx`, `loading.tsx`, `error.tsx`, `generateMetadata`, `JSON-LD Schema`, `generateStaticParams()`) in `docs/plan/05-pages-and-components.md`, and check off the parent page item when all its sub-items are complete.
+   - **Plan Checklist Sync**: The orchestrator checks off completed page infrastructure items (`page.tsx`, `loading.tsx`, `error.tsx`, `generateMetadata`, `JSON-LD Schema`, `generateStaticParams()`) in `docs/plan/05-pages-and-components.md`, and checks off the parent page item when all its sub-items are complete.
 
 ---
 
-## 3. Always-Active Lifecycle & Code Intelligence Skills
+## 3. Agent Roster & Delegation
+
+This repository installs four OpenCode agents. Permissions enforce the boundaries; assume a denied write is intentional.
+
+| Agent | Mode | Owns | Never touches |
+| :--- | :--- | :--- | :--- |
+| `nextjs-orchestrator` | primary | gates, delegation, plan checklist, approved edge-test corrections | implementation or tests |
+| `nextjs-dev` | subagent | components, pages, skeletons, dictionaries, barrel files | tests, test plans, runner configs, manifests |
+| `nextjs-test-author` | subagent | `*.test.ts(x)`, `tests/e2e/pages/**`, `test-plan.md` | implementation, dictionaries, edge tests |
+| `nextjs-qa-auditor` | subagent | `*.edge.test.tsx`, `tests/e2e/components/**` | implementation, baseline tests |
+
+Rules:
+
+1. **One role per artifact.** No agent writes both implementation and tests.
+2. **Failing test means failing code.** Report `code_fixes_required`; never weaken an assertion.
+3. **Edge tests are immutable.** Only an explicit user decision changes one, applied by the orchestrator.
+4. **Baseline tests are mutable with a reason.** `nextjs-test-author` records every revision.
+5. **Subagents cannot delegate or ask.** `task` and `question` are denied; return `BLOCKED` with the missing input.
+6. **No shell write workarounds.** Redirects, compound commands, and `Set-Content`/`Out-File` are denied.
+7. **The orchestrator audits the diff** before reporting success.
+8. **Command shortcuts**: `/create-nextjs-component` and `/create-nextjs-page` route to `nextjs-orchestrator`.
+
+Full contract: [`.agents/rules/agent-boundaries.md`](./.agents/rules/agent-boundaries.md).
+
+---
+
+## 4. Always-Active Lifecycle & Code Intelligence Skills
 
 - **Self-Repair (`self-repair`)**: Always read [`.agents/skills/self-repair/SKILL.md`](./.agents/skills/self-repair/SKILL.md) and load [`.agents/autofix.json`](./.agents/autofix.json) at session start and before executing any task. Immediately record any new user correction or preference to `.agents/autofix.json`.
 - **Codebase Memory (`codebase-memory`)**: Always follow [`.agents/skills/codebase-memory/SKILL.md`](./.agents/skills/codebase-memory/SKILL.md) (`index_status` / `index_repository` first, then `search_graph`, `trace_path`, `get_code_snippet`) before searching or exploring the codebase.

@@ -381,6 +381,52 @@ else
   AUTOMATION_CHECKS+=("WARN:Next.js Core Dependency (next@latest):Missing 'next' dependency in package.json. Run '<pkg_mgr> add next@latest'.")
 fi
 
+# 14. Agent Roster & Permission Boundaries (.opencode/agents)
+AGENT_MISSING=()
+AGENT_INVALID=()
+check_agent() {
+  local name="$1"; local file="$2"; local mode="$3"; local needles="$4"
+  if [ ! -f "$file" ]; then
+    AGENT_MISSING+=("$file")
+    return
+  fi
+  local problems=""
+  grep -Eq "^mode:[[:space:]]*${mode}[[:space:]]*$" "$file" || problems="$problems mode must be '$mode';"
+  grep -Eq '\{\{[A-Z_]+\}\}' "$file" && problems="$problems unreplaced {{TOKEN}} placeholder;"
+  IFS='|' read -ra NEEDLES <<< "$needles"
+  for needle in "${NEEDLES[@]}"; do
+    grep -Fq "$needle" "$file" || problems="$problems missing '$needle';"
+  done
+  [ -n "$problems" ] && AGENT_INVALID+=("$file:$problems")
+  return 0
+}
+
+check_agent "nextjs-dev" ".opencode/agents/nextjs-dev.md" "subagent" "*.test.tsx|task: deny"
+check_agent "nextjs-test-author" ".opencode/agents/nextjs-test-author.md" "subagent" "edit:|task: deny"
+check_agent "nextjs-qa-auditor" ".opencode/agents/nextjs-qa-auditor.md" "subagent" "edge.test.tsx|task: deny"
+check_agent "nextjs-orchestrator" ".opencode/agents/nextjs-orchestrator.md" "primary" "nextjs-dev|nextjs-test-author|nextjs-qa-auditor"
+
+COMMANDS_MISSING=()
+for cmd in ".opencode/commands/create-nextjs-component.md" ".opencode/commands/create-nextjs-page.md"; do
+  [ -f "$cmd" ] || COMMANDS_MISSING+=("$cmd")
+done
+
+if [ ${#AGENT_MISSING[@]} -eq 0 ] && [ ${#AGENT_INVALID[@]} -eq 0 ] && [ -f ".agents/rules/agent-boundaries.md" ] && [ ${#COMMANDS_MISSING[@]} -eq 0 ]; then
+  AUTOMATION_CHECKS+=("OK:Agent Roster & Permission Boundaries:Found 4 agents in .opencode/agents with enforced write boundaries, .agents/rules/agent-boundaries.md, and both command shortcuts.")
+else
+  if [ ${#AGENT_MISSING[@]} -gt 0 ]; then
+    ERRORS+=("Missing agent file(s): ${AGENT_MISSING[*]}. Run Stage 1.5 of nextjs-dev-setup.")
+  fi
+  if [ ${#AGENT_INVALID[@]} -gt 0 ]; then
+    ERRORS+=("Invalid agent configuration - ${AGENT_INVALID[*]}")
+  fi
+  [ -f ".agents/rules/agent-boundaries.md" ] || ERRORS+=("Missing .agents/rules/agent-boundaries.md.")
+  if [ ${#COMMANDS_MISSING[@]} -gt 0 ]; then
+    WARNINGS+=("Missing command shortcut(s): ${COMMANDS_MISSING[*]}.")
+  fi
+  AUTOMATION_CHECKS+=("MISS:Agent Roster & Permission Boundaries:Agent roster incomplete or invalid.")
+fi
+
 # --- Output ---
 
 if [ ${#ERRORS[@]} -eq 0 ]; then

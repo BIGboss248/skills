@@ -52,15 +52,17 @@ export interface [ComponentName]Props {
 
 ---
 
-## 5. TDD Unit Test Plan & Edge Case Test Matrix
+## 5. Test Plan (owned by `nextjs-adversarial-qa`)
 
-### 5.1 Baseline Unit Tests
-- **Default Rendering**: Verify component renders translated strings and semantic ARIA landmarks.
-- **Interactive Callbacks**: Simulate user events on Client leaf components and assert callback invocations (`@testing-library/user-event`).
-- **Suspense Skeleton**: Assert skeleton renders with matching layout geometry.
-- **RTL / BiDi Orientation**: Assert logical classes (`dir="rtl"`) and layout behavior in RTL direction.
+> Do not author test code in this plan. Invoke the QA skill in `baseline` mode; it produces `test-plan.md` with the coverage matrix and `[ComponentName].test.tsx`. Mirror the test IDs below.
 
-### 5.2 TDD Edge Case Test Matrix
+### 5.1 Baseline Coverage (QA baseline mode)
+- **Default Rendering**: Translated strings and semantic ARIA landmarks.
+- **Interactive Callbacks**: `@testing-library/user-event` assertions on Client leaves.
+- **Suspense Skeleton**: Matching layout geometry.
+- **RTL / BiDi Orientation**: `dir="rtl"` behavior for RTL locales.
+
+### 5.2 TDD Edge Case Test Matrix (QA adversarial mode)
 | # | Edge Case Scenario | Test Type | Input / State Condition | Expected Assertion / Behavior |
 | :- | :----------------- | :-------- | :---------------------- | :---------------------------- |
 | 1 | **Empty Collection / No Data** | Unit | `items = []` or `data = null` | Renders dedicated empty-state fallback without crashing |
@@ -75,11 +77,11 @@ export interface [ComponentName]Props {
 
 ## 6. Verification Gate
 
-- Run targeted test suite:
+- Companion files and i18n:
   ```pwsh
   pwsh .agents/skills/nextjs-component-dev/scripts/verify-dev.ps1 -ComponentPath <target_component_dir>
   ```
-- Run targeted unit & edge test execution:
-  ```bash
-  pnpm test -- <target_component_dir>/[ComponentName].test.tsx <target_component_dir>/[ComponentName].edge.test.tsx
+- Targeted suites (baseline + adversarial + Playwright):
+  ```pwsh
+  pwsh .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.ps1 -TargetPath <target_component_dir> -Mode all
   ```

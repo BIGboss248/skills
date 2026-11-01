@@ -1,106 +1,115 @@
-param (
-    [Parameter(Mandatory = $true, Position = 0)]
+<#
+.SYNOPSIS
+    End-to-end verification for the Next.js component-creation pipeline.
+
+.DESCRIPTION
+    Runs the phase gates in order: dev companions/i18n, Storybook, then the QA
+    suites (baseline + adversarial + Playwright). Stops at the first failure and
+    returns its exit code.
+
+.PARAMETER ComponentPath
+    Target component directory.
+
+.PARAMETER ComponentName
+    Optional explicit component name.
+
+.PARAMETER TargetKind
+    Verify a component (default) or a page route.
+
+.PARAMETER SkipStorybook
+    Skip the Storybook smoke/build gate (when stories are out of scope).
+
+.PARAMETER SkipTests
+    Skip the QA suite gate.
+
+.PARAMETER Help
+    Show this help text.
+
+.EXAMPLE
+    pwsh verify-component-create.ps1 -ComponentPath components/home/Hero
+
+.EXAMPLE
+    pwsh verify-component-create.ps1 -ComponentPath components/home/Hero -SkipStorybook
+
+.EXAMPLE
+    pwsh verify-component-create.ps1 -ComponentPath app/[locale]/about -TargetKind page
+#>
+param(
+    [Parameter(Position = 0)]
     [string]$ComponentPath,
 
-    [Parameter(Mandatory = $false)]
     [string]$ComponentName,
 
-    [Parameter(Mandatory = $false)]
-    [switch]$SkipTests
+    [ValidateSet("component", "page")]
+    [string]$TargetKind = "component",
+
+    [switch]$SkipStorybook,
+
+    [switch]$SkipTests,
+
+    [switch]$Help
 )
 
 $ErrorActionPreference = "Stop"
 
-if (-not (Test-Path $ComponentPath)) {
+if ($Help -or -not $ComponentPath) {
+    Get-Help $MyInvocation.MyCommand.Path -Detailed
+    if (-not $ComponentPath -and -not $Help) { exit 2 }
+    exit 0
+}
+
+if (-not (Test-Path -LiteralPath $ComponentPath)) {
     Write-Host "[FAIL] Path not found: $ComponentPath" -ForegroundColor Red
-    exit 1
+    exit 2
 }
 
-$resolvedItem = Get-Item $ComponentPath
+$skillsRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 
-if ($resolvedItem.PSIsContainer) {
-    $resolvedDir = $resolvedItem.FullName
-    if ($ComponentName) {
-        $compName = $ComponentName
-    } else {
-        $compName = $resolvedItem.Name
+function Invoke-Gate {
+    param([string]$Label, [scriptblock]$Action)
+
+    Write-Host "[GATE] $Label" -ForegroundColor Cyan
+    & $Action
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "[FAIL] Gate failed: $Label" -ForegroundColor Red
+        exit $LASTEXITCODE
+    }
+    Write-Host "[PASS] Gate passed: $Label" -ForegroundColor Green
+}
+
+$devArgs = @{ ComponentPath = $ComponentPath }
+if ($ComponentName) { $devArgs.ComponentName = $ComponentName }
+
+if ($TargetKind -eq "page") {
+    Invoke-Gate -Label "Phase 2 - page infrastructure, metadata, and i18n" -Action {
+        & (Join-Path $skillsRoot "nextjs-page-dev/scripts/verify-page.ps1") -RoutePath $ComponentPath
     }
 } else {
-    $resolvedDir = $resolvedItem.DirectoryName
-    $compName = [System.IO.Path]::GetFileNameWithoutExtension($resolvedItem.Name)
-}
-
-$componentFile = Join-Path $resolvedDir "$compName.tsx"
-$skeletonFile = Join-Path $resolvedDir "${compName}Skeleton.tsx"
-$indexFile = Join-Path $resolvedDir "index.ts"
-$testFile = Join-Path $resolvedDir "$compName.test.tsx"
-$edgeTestFile = Join-Path $resolvedDir "$compName.edge.test.tsx"
-
-$missing = @()
-if (-not (Test-Path $componentFile)) { $missing += "$compName.tsx" }
-if (-not (Test-Path $skeletonFile))  { $missing += "${compName}Skeleton.tsx" }
-if (-not (Test-Path $indexFile))     { $missing += "index.ts" }
-if (-not (Test-Path $testFile))      { $missing += "$compName.test.tsx" }
-if (-not (Test-Path $edgeTestFile))  { $missing += "$compName.edge.test.tsx" }
-
-if ($missing.Count -gt 0) {
-    Write-Host "[FAIL] Missing component artifacts for $compName in $($resolvedDir):" -ForegroundColor Red
-    foreach ($m in $missing) {
-        Write-Host "  - Missing: $m" -ForegroundColor Red
-    }
-    exit 1
-}
-
-Write-Host "[PASS] All component files verified: $compName.tsx, ${compName}Skeleton.tsx, index.ts, $compName.test.tsx, $compName.edge.test.tsx" -ForegroundColor Green
-
-# Verify zero in-file i18n placeholders / mock translation dictionaries
-if (Test-Path $componentFile) {
-    $content = Get-Content -Path $componentFile -Raw
-    if ($content -match "const\s+DEFAULT_CONTENT\s*=" -or $content -match "const\s+DEFAULT_TRANSLATIONS\s*=") {
-        Write-Host "[FAIL] In-file i18n placeholder dictionary detected in $compName.tsx (e.g., DEFAULT_CONTENT). Extract all strings to messages/[locale].json and consume via next-intl." -ForegroundColor Red
-        exit 1
+    Invoke-Gate -Label "Phase 2 - dev companions and i18n" -Action {
+        & (Join-Path $skillsRoot "nextjs-component-dev/scripts/verify-dev.ps1") @devArgs
     }
 }
 
-# Verify dictionary directory existence
-$dictDir = "messages"
-if (Test-Path "docs/project.json") {
-    try {
-        $projJson = Get-Content -Path "docs/project.json" -Raw | ConvertFrom-Json
-        if ($projJson.project_context_and_metadata.dictionaries_dir) {
-            $dictDir = $projJson.project_context_and_metadata.dictionaries_dir
-        }
-    } catch {}
-}
-
-if (-not (Test-Path $dictDir)) {
-    Write-Host "[WARN] Translation dictionary directory '$dictDir' not found." -ForegroundColor Yellow
+if ($TargetKind -eq "page") {
+    Write-Host "[SKIP] Storybook gate (not applicable to pages)" -ForegroundColor Yellow
+} elseif (-not $SkipStorybook) {
+    $storyArgs = @{ ComponentPath = $ComponentPath }
+    if ($ComponentName) { $storyArgs.ComponentName = $ComponentName }
+    Invoke-Gate -Label "Phase 3 - Storybook smoke and build" -Action {
+        & (Join-Path $skillsRoot "nextjs-storybook-story/scripts/verify-storybook.ps1") @storyArgs
+    }
 } else {
-    Write-Host "[PASS] Translation dictionary directory verified: $dictDir" -ForegroundColor Green
+    Write-Host "[SKIP] Storybook gate (SkipStorybook)" -ForegroundColor Yellow
 }
 
 if (-not $SkipTests) {
-    # Detect package manager
-    $pkgManager = "pnpm"
-    if (Test-Path "pnpm-lock.yaml") { $pkgManager = "pnpm" }
-    elseif (Test-Path "bun.lockb") { $pkgManager = "bun" }
-    elseif (Test-Path "package-lock.json") { $pkgManager = "npm" }
-    elseif (Test-Path "yarn.lock") { $pkgManager = "yarn" }
-
-    Write-Host "[INFO] Executing targeted unit & adversarial test suites via $pkgManager..." -ForegroundColor Cyan
-
-    $testCmd = "$pkgManager test -- `"$testFile`" `"$edgeTestFile`""
-    Write-Host "Running: $testCmd" -ForegroundColor DarkGray
-
-    Invoke-Expression $testCmd
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "[FAIL] Unit/edge tests failed for $compName." -ForegroundColor Red
-        exit $LASTEXITCODE
+    $qaMode = if ($TargetKind -eq "page") { "page" } else { "all" }
+    Invoke-Gate -Label "Phase 4 - QA suites ($qaMode)" -Action {
+        & (Join-Path $skillsRoot "nextjs-adversarial-qa/scripts/verify-qa.ps1") -TargetPath $ComponentPath -Mode $qaMode
     }
-
-    Write-Host "[SUCCESS] All unit and adversarial tests passed for $compName." -ForegroundColor Green
+} else {
+    Write-Host "[SKIP] QA suite gate (SkipTests)" -ForegroundColor Yellow
 }
 
-Write-Host "[SUCCESS] nextjs-component-create verification passed for $compName." -ForegroundColor Green
+Write-Host "[SUCCESS] $TargetKind creation verification passed for: $ComponentPath" -ForegroundColor Green
 exit 0
-

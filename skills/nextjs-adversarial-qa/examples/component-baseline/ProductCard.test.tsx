@@ -1,18 +1,23 @@
-import { screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render } from "@testing-library/react";
 import { ProductCard, ProductCardSkeleton } from "./ProductCard";
 import { productCache } from "./product-cache";
 
+/**
+ * Renders a query-driven component with a seeded client.
+ *
+ * @param ui - Component tree under test.
+ * @param client - Query client with pre-populated cache.
+ */
 function renderWithClient(ui: React.ReactElement, client: QueryClient) {
   return render(
     <QueryClientProvider client={client}>{ui}</QueryClientProvider>,
   );
 }
 
-describe("ProductCard (TDD with useSuspenseQuery)", () => {
-  it("renders cached product data when available", () => {
+describe("ProductCard (baseline, useSuspenseQuery)", () => {
+  it("renders cached product data", () => {
     const testClient = new QueryClient({
       defaultOptions: { queries: { retry: false, gcTime: Infinity } },
     });
@@ -37,8 +42,9 @@ describe("ProductCard (TDD with useSuspenseQuery)", () => {
     expect(screen.getByText("$299")).toBeInTheDocument();
   });
 
-  it("renders Skeleton matching component dimensions during fallback", () => {
+  it("renders the skeleton matching component dimensions", () => {
     const { container } = render(<ProductCardSkeleton />);
+
     expect(container.firstChild).toHaveClass("animate-pulse");
   });
 });

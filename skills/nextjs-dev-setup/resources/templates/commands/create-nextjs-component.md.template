@@ -1,0 +1,19 @@
+---
+description: Create or backfill a Next.js component through the orchestrator pipeline
+agent: nextjs-orchestrator
+---
+
+Run the `nextjs-component-create` skill end to end for this target:
+
+$ARGUMENTS
+
+Component track only:
+
+1. Classify `scratch` or `companion_backfill`; resolve paths from `docs/project.json`.
+2. Gate on `design-spec.md` with §7 edge cases.
+3. Delegate the baseline suite to `nextjs-test-author`.
+4. Delegate implementation to `nextjs-dev`.
+5. Delegate the adversarial edge suite to `nextjs-qa-auditor`.
+6. Repair loop: failing assertions go to `nextjs-dev`, never to a test agent.
+7. Run `verify-component-create` plus the write audit.
+8. Tick `docs/plan/05-pages-and-components.md` yourself and return the execution report.

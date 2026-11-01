@@ -1,57 +1,181 @@
 ---
 name: nextjs-adversarial-qa
-description: Workflow for spawning an independent subagent to conduct unbiased code reviews and inject adversarial edge-case tests ([ComponentName].edge.test.tsx).
+description: >-
+  Author and adversarially audit Jest/RTL and Playwright suites for Next.js components and pages. Triggers on "/nextjs-adversarial-qa", "write tests", "audit tests", or "repair failing suite".
 metadata:
   author: BIGboss248
-  version: "1.0"
+  version: "3.0"
 ---
 
-# Next.js Adversarial QA & Edge-Case Injection (`nextjs-adversarial-qa`)
+# Next.js Test Authoring & Adversarial QA (`nextjs-adversarial-qa`)
 
-Specialized workflow for eliminating author confirmation bias by delegating code review and edge-case testing to an independent adversarial auditor subagent.
+Single source of truth for planning, authoring, executing, and hardening Next.js App Router test suites for **components and pages**. Work is split across two OpenCode agents with hard write boundaries; this skill holds the material for both.
 
-> [!TIP]
-> **Reference Document:**
-> - Common Pitfalls & Anti-Patterns: [`references/pitfalls.md`](./references/pitfalls.md)
-
----
-
-## Architectural Rules & Standards
-
-### 1. The Unbiased Auditor Principle
-* The primary agent who wrote the component MUST NOT self-certify edge cases.
-* You MUST spawn an independent subagent using `invoke_subagent` to audit the code and inject adversarial assertions.
-
-### 2. Adversarial Edge-Case Scope (`[ComponentName].edge.test.tsx`)
-The subagent MUST write `[ComponentName].edge.test.tsx` targeting scenarios developers frequently overlook:
-* **Boundary Values:** Empty strings, null/undefined inputs, extremely long strings, Unicode & Persian RTL glyphs (`"سلام دنیا"`).
-* **Prop Permutations:** Unhandled combinations of optional flags.
-* **Network & Error States:** Async rejection, malformed payloads, slow streams.
-* **Deep Accessibility & Motion:** Keyboard navigation (`Enter`, `Space`, `Tab`, `Escape`), `aria-expanded`, `aria-busy`, `aria-live`, focus trapping, and `prefers-reduced-motion`.
-* **Stress & Lifecycle:** Rapid re-renders, unmount cleanup, timer teardown.
-
-### 3. The Immutable Adversarial Tests Principle
-* **Modifying or Softening Tests is Strictly FORBIDDEN:** The developer is NOT permitted to delete or weaken assertions in `[ComponentName].edge.test.tsx`.
-* **Fix the Code, Not the Tests:** If an adversarial test fails, modify the component (`[ComponentName].tsx`) or story (`[ComponentName].stories.tsx`) to properly handle the edge case.
+> [!IMPORTANT]
+> **Material is partitioned by role.** Each agent reads only its own subtree. Shared rules live in exactly one place so the two roles cannot drift.
+> - **Shared:** [`references/shared/`](./references/shared/) — strategy, E2E mechanics, pitfalls, protocol, schemas
+> - **Test Author:** [`references/authoring/`](./references/authoring/) + [`templates/authoring/`](./resources/templates/authoring/)
+> - **QA Auditor:** [`references/adversarial/`](./references/adversarial/) + [`templates/adversarial/`](./resources/templates/adversarial/)
+> - **Prompts / payloads:** [`resources/prompts/`](./resources/prompts/)
+> - **Verification:** [`scripts/verify-qa.ps1`](./scripts/verify-qa.ps1) / [`.sh`](./scripts/verify-qa.sh)
 
 ---
 
-## Workflow Steps
+## Roles & Write Boundaries
 
-- [ ] **Step 1: Spawn Adversarial Auditor Subagent**
-  - Call `invoke_subagent` with:
-    * `TypeName`: `"self"`
-    * `Role`: `"Adversarial Code & QA Auditor"`
-    * `Model`: `"inherit"`
-    * `Prompt`: Instruct the auditor to inspect `[ComponentName].tsx`, `[ComponentName]Skeleton.tsx`, `[ComponentName].test.tsx`, and `[ComponentName].stories.tsx`, then generate `[ComponentName].edge.test.tsx` in the component directory.
+| Role | Agent | Modes | May write | Must never write |
+| :--- | :--- | :--- | :--- | :--- |
+| **Test Author** | `nextjs-test-author` | `baseline`, `page` | `test-plan.md`, `*.test.ts(x)`, `tests/e2e/pages/**` | components, pages, dictionaries, runner configs, `package.json` |
+| **QA Auditor** | `nextjs-qa-auditor` | `adversarial`, `audit` | `*.edge.test.tsx`, `tests/e2e/components/**`, QA report | components, pages, baseline tests, runner configs |
+| **Orchestrator** | `nextjs-orchestrator` | — | delegates, runs gates, ticks plan | test or implementation code |
 
-- [ ] **Step 2: Auditor Injects `[ComponentName].edge.test.tsx`**
-  - Auditor writes edge-case assertions and completes review.
+`repair` is not a test role: the **dev agent** fixes implementation and the **auditor** re-runs. A test agent that reports `code_fixes_required` is behaving correctly.
 
-- [ ] **Step 3: Execute Adversarial Tests & Auto-Repair**
-  - Run the edge-case test suite:
-    ```bash
-    pnpm test -- <target_component_dir>/[ComponentName].edge.test.tsx
-    ```
-  - If any test fails, patch the component implementation until all edge tests pass with 0 errors.
+---
 
+## Operating Modes
+
+| Mode | Agent | Invoked when | Deliverables |
+| :--- | :--- | :--- | :--- |
+| `baseline` | `nextjs-test-author` | Spec approved, **before** JSX (TDD gate) | `test-plan.md` + `[ComponentName].test.tsx` |
+| `page` | `nextjs-test-author` | Page spec approved and route implemented | `tests/e2e/pages/<route>.spec.ts` |
+| `adversarial` | `nextjs-qa-auditor` | Implementation and baseline complete | `[ComponentName].edge.test.tsx` (immutable) + `tests/e2e/components/<page>/[ComponentName].spec.ts` |
+| `audit` | `nextjs-qa-auditor` | Existing suite review | Coverage-gap report against the spec, no rewrites |
+| `repair` | orchestrator-loop | Any suite fails | dev fixes code → auditor re-runs until exit `0` |
+
+Never invent a mode. Infer from artifacts: no test file → `baseline`; test file but no edge file → `adversarial`; route exists but no page spec → `page`.
+
+---
+
+## Required Inputs
+
+1. **`docs/project.json`** — `package_manager`, `new_component_dir`, `dictionaries_dir`, `supported_languages`, test scripts, agent roster.
+2. **Specification** — component `design-spec.md` §7 *Edge Cases & Boundary States*, or `page-spec.md` §7 for pages.
+3. **Implementation plan** — `implementation_plan.md` §5 (TDD matrix) when present.
+4. **Target source** — `[ComponentName].tsx`, `[ComponentName]Skeleton.tsx`, `page.tsx`, `loading.tsx`, `error.tsx`, `messages/[locale].json`.
+5. **Existing suite** — to avoid duplicate coverage.
+
+If the spec is missing, stop and return `BLOCKED: missing specification` to the orchestrator. Never guess requirements.
+
+---
+
+## Architectural Rules
+
+1. **Unbiased Auditor Principle** — the agent that wrote the component or page must not certify its edge cases, and the author of the baseline suite must not author the edge suite.
+2. **Spec Traceability** — every §7 edge case maps to a test ID (`BND-1`, `PROP-2`, `PAGE-4`). Unmapped spec rows are a defect.
+3. **Immutable Adversarial Tests** — deleting, skipping, or weakening `*.edge.test.tsx` is forbidden; only an explicit user decision may change one, and the change is logged in the QA report.
+4. **Baseline Tests Are Mutable With a Reason** — `nextjs-test-author` may revise a baseline test when the spec changed or the assertion was wrong, recording the reason in `test-plan.md`. It may never weaken coverage to make a failing implementation pass.
+5. **Fix the Code, Not the Tests** — a failing assertion means the implementation is wrong until proven otherwise.
+6. **Targeted Execution** — run only the files under test. Never the full suite during iteration.
+7. **Zero Placeholder Tests** — no `it.skip`, `test.fixme`, `test.only`, empty bodies, or assertions that cannot fail.
+8. **Real Providers** — wrap with the real `NextIntlClientProvider` (dictionary messages) and `QueryClientProvider`. Mocking translations hides i18n defects.
+9. **Deterministic Async** — `userEvent.setup()`, `findBy*`/`waitFor`, fake timers, and teardown of subscriptions.
+
+---
+
+## Workflow
+
+- [ ] **Step 0: Load Context & Detect Stack** (orchestrator)
+  - Read `docs/project.json`, resolve package manager and test scripts, locate spec and targets.
+
+- [ ] **Step 1: Build the Test Plan** (`nextjs-test-author`)
+  - Scaffold from [`test-plan.template.md`](./resources/templates/authoring/test-plan.template.md).
+  - Enumerate every spec edge case with an ID, layer, input, and expected assertion.
+  - Select layers using [`test-strategy-matrix.md`](./references/shared/test-strategy-matrix.md).
+
+- [ ] **Step 2: Author the Baseline / Page Suite** (`nextjs-test-author`)
+  - Read [`unit-testing-standards.md`](./references/authoring/unit-testing-standards.md) or [`page-testing-standards.md`](./references/authoring/page-testing-standards.md).
+  - Write files at exactly the paths in the payload; run only those files.
+
+- [ ] **Step 3: Baseline Gate** (orchestrator)
+  - Green baseline before implementation proceeds (TDD gate).
+
+- [ ] **Step 4: Adversarial Audit** (`nextjs-qa-auditor`)
+  - Read [`adversarial-test-matrix.md`](./references/adversarial/adversarial-test-matrix.md).
+  - Diff baseline coverage against spec §7, then write the immutable edge suite and component E2E spec.
+  - Return `code_fixes_required[]`; never touch implementation.
+
+- [ ] **Step 5: Execute & Repair** (orchestrator loop)
+  - Run edge + page suites through `verify-qa`.
+  - On failure, route `code_fixes_required` to the dev agent, then re-run.
+  - Re-run until exit code `0`. Consult [`pitfalls.md`](./references/shared/pitfalls.md) before blaming a test.
+
+- [ ] **Step 6: Report & Handoff**
+  - Fill [`qa-report.template.md`](./resources/templates/adversarial/qa-report.template.md) and return it as the final message. Do not write the report to disk — the auditor has no edit permission outside its test artifacts.
+  - Return the report, test file paths, and exact commands to the orchestrator.
+
+---
+
+## Test Layer Matrix (Summary)
+
+| Artifact | Suite | Path | Runner |
+| :--- | :--- | :--- | :--- |
+| Component props/state/a11y | Jest + RTL | `<component_dir>/[ComponentName].test.tsx` | `<pm> test` |
+| Component edge cases | Jest + RTL | `<component_dir>/[ComponentName].edge.test.tsx` | `<pm> test` |
+| Component hydration/visual/instant | Playwright | `tests/e2e/components/<page>/<ComponentName>.spec.ts` | `<pm> test:e2e` |
+| Page metadata/JSON-LD/routes/boundaries | Playwright | `tests/e2e/pages/<route>.spec.ts` | `<pm> test:e2e` |
+| Async RSC output | Playwright (only option) | same as above | `<pm> test:e2e` |
+
+---
+
+## Verification & Self-Check
+
+```bash
+# Component (baseline + adversarial + Playwright)
+pwsh .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.ps1 -TargetPath <component_dir> -Mode all
+
+# Page suite
+pwsh .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.ps1 -TargetPath <route_dir> -Mode page
+
+# Linux / macOS
+bash .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.sh <component_dir> all
+bash .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.sh <route_dir> page
+```
+
+- [ ] All targeted suites exit `0` with zero skipped tests.
+- [ ] Every `test-plan.md` row has a status of `PASS`.
+- [ ] `*.edge.test.tsx` exists and was authored by `nextjs-qa-auditor`.
+- [ ] No `test.only`, `it.skip`, or `test.fixme` in any created file.
+- [ ] No hardcoded English copy asserted in place of dictionary values.
+- [ ] Page suite asserts metadata, JSON-LD, locale routing, and error boundary.
+- [ ] Every baseline revision is logged with a reason.
+
+---
+
+## Edge Cases & Known AI Pitfalls
+
+| Pitfall | Correct Behavior |
+| :--- | :--- |
+| Testing async RSC directly in jsdom | Assert through Playwright; Jest cannot await server components |
+| Mocking `useTranslations` | Wrap with `NextIntlClientProvider` and real dictionary messages |
+| `fireEvent` instead of `userEvent` | Use `@testing-library/user-event` |
+| Snapshot-only assertions | Assert roles, text, ARIA state, and geometry classes |
+| Co-located `.spec.tsx` | Put Playwright specs under `tests/e2e/` |
+| Asserting implementation details | Assert user-visible behavior and the accessibility contract |
+| Fixed `setTimeout` waits | Use `findBy*`, `waitFor`, or fake timers |
+| Weakening an edge test to pass CI | Fix the component; edge tests are immutable |
+| Test agent editing the component "to unblock" | Forbidden by permission; return `code_fixes_required` |
+
+Full catalogue: [`references/shared/pitfalls.md`](./references/shared/pitfalls.md).
+
+---
+
+## Reference Index
+
+**Shared**
+- [Test Strategy Matrix](./references/shared/test-strategy-matrix.md) — layer selection and gates.
+- [Playwright E2E Standards](./references/shared/playwright-e2e-standards.md) — hydration, instant navigation, visual, network.
+- [Subagent & Agent Protocol](./references/shared/subagent-test-author-protocol.md) — role contract and return payloads.
+- [Test Plan & Report Schema](./references/shared/test-plan-and-report-schema.md) — output contract.
+- [Pitfalls](./references/shared/pitfalls.md) — anti-patterns and fixes.
+
+**Test Author**
+- [Unit Testing Standards](./references/authoring/unit-testing-standards.md) — Jest + RTL rules.
+- [Page Testing Standards](./references/authoring/page-testing-standards.md) — metadata, JSON-LD, routing, boundaries.
+
+**QA Auditor**
+- [Adversarial Test Matrix](./references/adversarial/adversarial-test-matrix.md) — edge-case taxonomy.
+
+**Prompts**
+- [Test Author payload](./resources/prompts/authoring/test-author-subagent.md)
+- [Adversarial Auditor payload](./resources/prompts/adversarial/adversarial-auditor-subagent.md)

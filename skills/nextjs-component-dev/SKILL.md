@@ -1,31 +1,32 @@
 ---
 name: nextjs-component-dev
 description: >-
-  Build Next.js App Router React components with Suspense skeletons, semantic OKLCH tokens, next-intl dictionaries, Jest + RTL unit tests, Playwright visual/hydration checks, and Tailwind logical styling. MANDATORY SKILL: MUST ALWAYS be activated, read, and strictly followed every time the agent creates, scaffolds, or implements any new React/Next.js component, UI section, card, widget, or layout element. Triggers on "/nextjs-component-dev", "create component", "new component", "build component", "develop component", or any component creation task.
+  Build Next.js App Router React components with Suspense skeletons, semantic OKLCH tokens, next-intl dictionaries, and Tailwind logical styling; test authoring is delegated to nextjs-adversarial-qa. MANDATORY SKILL: activate for every new component, UI section, card, widget, or layout element. Triggers on "/nextjs-component-dev", "create component", "new component", "build component", "develop component".
 metadata:
   author: BIGboss248
-  version: "1.7"
+  version: "1.8"
 ---
 
 # Next.js Component & Skeleton Development (`nextjs-component-dev`)
 
-Specialized workflow for creating production-ready React Server Components (RSC) and Client Components with Suspense skeletons, dual-layer TDD testing (Jest + RTL unit tests and Playwright integration/hydration/visual checks), next-intl dictionary-backed translations, semantic theme tokens, and live runtime diagnostics via `next-devtools` MCP.
+Specialized workflow for creating production-ready React Server Components (RSC) and Client Components with Suspense skeletons, next-intl dictionary-backed translations, semantic theme tokens, and live runtime diagnostics via `next-devtools` MCP. All test authoring and execution are delegated to `nextjs-adversarial-qa`.
 
 > [!CRITICAL]
-> **MANDATORY COMPONENT CREATION INVARIANT:** Whenever you create any new React or Next.js component (whether requested directly by the user, created as part of a page build, or executed from `docs/plan/`), you **MUST** strictly follow every architectural standard and workflow step in this skill. Never create ad-hoc `.tsx` component files without executing this workflow (Next.js local docs lookup, `implementation_plan.md`, `messages/[locale].json` dictionary sync, TDD `[ComponentName].test.tsx`, `[ComponentName]Skeleton.tsx`, `index.ts`, and `verify-dev` verification).
+> **MANDATORY COMPONENT CREATION INVARIANT:** Whenever you create any new React or Next.js component (whether requested directly by the user, created as part of a page build, or executed from `docs/plan/`), you **MUST** strictly follow every architectural standard and workflow step in this skill. Never create ad-hoc `.tsx` component files without executing this workflow (Next.js local docs lookup, `implementation_plan.md`, `messages/[locale].json` dictionary sync, QA baseline `[ComponentName].test.tsx`, `[ComponentName]Skeleton.tsx`, `index.ts`, and `verify-dev` verification).
 
 > [!TIP]
 > **Modular Assets & Templates:**
 >
 > - Next.js Docs Search & Context: [`references/nextjs-docs-lookup.md`](./references/nextjs-docs-lookup.md)
 > - Forms & Server Actions Guide: [references/form-server-actions.md](./references/form-server-actions.md)
-> - Testing Architecture & Verification: [`references/testing-architecture-guide.md`](./references/testing-architecture-guide.md)
+> - Test Authoring & Adversarial QA (delegated): [`../nextjs-adversarial-qa/SKILL.md`](../nextjs-adversarial-qa/SKILL.md)
 > - Storybook Standards & Separation: [`references/storybook-reference.md`](./references/storybook-reference.md)
 > - Instant Navigation & Prefetching: [`references/instant-navigation-and-prefetching.md`](./references/instant-navigation-and-prefetching.md)
 > - Next DevTools Debugging Guide: [`references/next-devtools-debugging.md`](./references/next-devtools-debugging.md)
 > - Caching & Revalidation: [`references/caching-and-revalidation.md`](./references/caching-and-revalidation.md)
 > - RSC, State Boundaries & Lazy Loading: [`references/rsc-and-state-boundaries.md`](./references/rsc-and-state-boundaries.md)
-> - Code Templates: [`resources/templates/`](./resources/templates/) ([Component](./resources/templates/component.template.tsx), [Form Component](./resources/templates/form-component.template.tsx), [Skeleton](./resources/templates/skeleton.template.tsx), [Link Status Button](./resources/templates/link-status-button.template.tsx), [Jest Unit Test](./resources/templates/unit-test.template.tsx), [Playwright Spec](./resources/templates/e2e-spec.template.ts))
+> - Code Templates: [`resources/templates/`](./resources/templates/) ([Component](./resources/templates/component.template.tsx), [Form Component](./resources/templates/form-component.template.tsx), [Skeleton](./resources/templates/skeleton.template.tsx), [Link Status Button](./resources/templates/link-status-button.template.tsx))
+> - Test Templates (owned by QA): [`../nextjs-adversarial-qa/resources/templates/`](../nextjs-adversarial-qa/resources/templates/)
 > - Reference Implementations: [`examples/`](./examples/)
 > - Verification Scripts: [`scripts/verify-dev.ps1`](./scripts/verify-dev.ps1) (Windows) / [`scripts/verify-dev.sh`](./scripts/verify-dev.sh) (Linux)
 
@@ -91,22 +92,13 @@ Specialized workflow for creating production-ready React Server Components (RSC)
 - **Streamed Components:** Use `useSuspenseQuery` inside `<Suspense fallback={<[ComponentName]Skeleton />}>`.
 - **Optimistic Mutations:** Use `useMutation` with `onMutate` cache snapshots and `onError` rollbacks; call Server Actions with `updateTag(cache.tag)`.
 
-### 8. Dual-Layer Testing Division of Labor (Jest vs. Playwright)
+### 8. Test Delegation (`nextjs-adversarial-qa`)
 
-- **Jest + RTL (`[ComponentName].test.tsx`):**
-  - Fast feedback loop in `jsdom`.
-  - Prop permutations, conditional UI elements, and empty/null states.
-  - User interactions via `@testing-library/user-event` (never `fireEvent`).
-  - Next.js routing mocks (`useRouter`, `usePathname`, `useSearchParams` from `next/navigation`).
-  - `next-intl` dictionary interpolation and pluralization checks inside `NextIntlClientProvider`.
-  - Accessible role queries (`screen.getByRole`) and automated a11y checks (`jest-axe`).
-- **Playwright (`[ComponentName].spec.ts` or page-level specs):**
-  - Real browser execution (Chromium/WebKit/Firefox).
-  - **Instant Shell Assertions (`@next/playwright`):** Use `instant(page, ...)` helper to assert that static shells and prefetched App Shells render immediately before dynamic server streaming resolves.
-  - **Zero-Hydration Mismatches:** Listen to browser console events (`page.on('console')`) to detect and fail tests on React SSR hydration warnings.
-  - **Visual & BiDi Regression:** Use `expect(page).toHaveScreenshot()` across themes (light vs. dark OKLCH variables) and text directions (`dir="ltr"` vs. `dir="rtl"`).
-  - **Network Resilience:** Use `page.route()` to test slow network responses (verifying Suspense skeletons match geometry to prevent CLS) and 500 error boundaries.
-- **Detailed Testing Standards:** Consult [`references/testing-architecture-guide.md`](./references/testing-architecture-guide.md).
+- **No test authoring in this skill.** Jest + RTL and Playwright standards, templates, and execution live exclusively in [`nextjs-adversarial-qa`](../nextjs-adversarial-qa/SKILL.md).
+- **Agent boundaries:** tests are written by `nextjs-test-author` and `nextjs-qa-auditor`. A dev agent cannot edit `*.test.ts(x)`, `*.edge.test.tsx`, `tests/e2e/**`, or `test-plan.md`; permissions enforce it. Report a failing assertion instead of changing it.
+- **TDD gate:** Invoke QA in `baseline` mode after plan approval and before writing JSX. The gate is a green baseline suite.
+- **Handoff:** After implementation, invoke QA in `adversarial` mode; the independent auditor owns `[ComponentName].edge.test.tsx`.
+- **Repair:** If a suite fails, fix the component — never the assertions. Route `code_fixes_required[]` items back through implementation.
 
 ---
 
@@ -122,11 +114,8 @@ The implementation plan must cover:
 3. **TypeScript Contracts**: Prop interfaces and types with strict English TSDoc annotations.
 4. **Dictionary Strategy**: Explicit translation namespaces and keys to add to `messages/[locale].json` across all `supported_languages` in `docs/project.json` (zero hardcoded strings or in-file mock dictionaries).
 5. **Theme Tokens & Styling**: Identified semantic OKLCH CSS variables and logical layout classes.
-6. **Testing & Diagnostics Strategy**:
-   - **Jest Unit Tests (`[ComponentName].test.tsx`)**: Mock configurations (`next/navigation`), prop variations, callback assertions, `NextIntlClientProvider` integration, and a11y role queries.
-   - **Playwright Integration Scenarios (`[ComponentName].spec.ts`)**: Visual snapshot targets (light/dark theme tokens, LTR vs. RTL logical layouts), network throttling/skeleton geometry checks, and hydration verification listeners.
-   - **Next DevTools Diagnostics**: Runtime error and compilation checks via `next-devtools`.
-7. **Verification Gate**: Exact verification commands to run (`verify-dev.ps1`, targeted unit tests, and Playwright e2e specs).
+6. **Testing Strategy (delegated to `nextjs-adversarial-qa`)**: Reference the QA `test-plan.md` path and planned test files. Do not enumerate test cases here; the QA skill owns the coverage matrix.
+7. **Verification Gate**: `verify-dev.ps1`/`.sh` for companion files and i18n, then `verify-qa.ps1`/`.sh` for targeted suites.
 
 ---
 
@@ -151,11 +140,11 @@ The implementation plan must cover:
   - Define prop interfaces with strict **English TSDoc** annotations (`@param`, `@defaultValue`, `@returns`).
   - If there are more than one supported language, component must fetch the translation first and if failed use fallbacks.
 
-- [ ] **Step 3: TDD Baseline Unit Tests (`[ComponentName].test.tsx` via Jest + RTL)**
-  - Write `[ComponentName].test.tsx` BEFORE implementing the component.
-  - Mock `next/navigation` hooks (`useRouter`, `usePathname`, `useSearchParams`).
-  - Wrap rendered components in `NextIntlClientProvider` supplying the dictionary `messages` and active `locale`.
-  - Test directional attributes (`dir="rtl"` vs. `dir="ltr"`), default props, interactive callbacks (`@testing-library/user-event`), Suspense skeleton fallbacks, and semantic ARIA roles.
+- [ ] **Step 3: TDD Baseline Tests (Delegated to `nextjs-test-author`, `baseline` mode)**
+  - Spawn the `nextjs-test-author` agent with the approved `implementation_plan.md` and design spec §7.
+  - It produces `test-plan.md` and `[ComponentName].test.tsx` BEFORE the component is implemented.
+  - Do not author test code here; consult [`../nextjs-adversarial-qa/SKILL.md`](../nextjs-adversarial-qa/SKILL.md).
+  - Gate: baseline suite green (or expected-red before implementation) before Step 4.
 
 - [ ] **Step 4: Component & Skeleton Implementation**
   - Create primary component `[ComponentName].tsx` (RSC or Client Component) consuming translations via `next-intl` (`getTranslations` or `useTranslations`) with zero hardcoded placeholders or in-file mock dictionary objects. For heavy or conditionally rendered interactive leaves, wrap via `next/dynamic` with `loading: () => <[ComponentName]Skeleton />` (or `{ ssr: false }` for browser-only APIs). When building interactive cards or dense feed items with links, pair with `useLinkStatus` for contextual click feedback.
@@ -164,25 +153,16 @@ The implementation plan must cover:
 
 - [ ] **Step 5: Runtime Diagnostics & Verification Gate**
   - **Next DevTools Runtime Inspection & Navigation Inspector:** Use `next-devtools` MCP server (`nextjs_call`) to check for compilation errors, runtime exceptions, hydration issues, or broken routes. Use Navigation Inspector ("Pause on navigations") to verify the static shell and App Shell render instantly with granular fallbacks.
-  - **Targeted Unit Test Execution:** Run verification script to check companion files, dictionary compliance, and execute unit tests:
-    - **Windows (PowerShell):**
-      ```pwsh
-      pwsh .agents/skills/nextjs-component-dev/scripts/verify-dev.ps1 -ComponentPath <target_component_dir>
-      ```
-    - **Linux / macOS (Bash):**
-      ```bash
-      bash .agents/skills/nextjs-component-dev/scripts/verify-dev.sh <target_component_dir>
-      ```
-  - **Playwright Instant Navigation & Hydration Check:** Run targeted Playwright component/integration spec:
-    ```bash
-    pnpm test:e2e [ComponentName]
-    ```
-  - Validate that `instant()` tests pass for hard page load and client navigation, visual snapshots pass across themes, and console listeners register 0 hydration mismatch errors.
-  - Fix any syntax errors, missing dictionary keys, visual discrepancies, or test regressions until all assertions pass.
+  - **Companion & i18n Verification:** Run `verify-dev.ps1`/`.sh` (file presence + dictionary compliance; it no longer executes tests):
+    - **Windows (PowerShell):** `pwsh .agents/skills/nextjs-component-dev/scripts/verify-dev.ps1 -ComponentPath <target_component_dir>`
+    - **Linux / macOS (Bash):** `bash .agents/skills/nextjs-component-dev/scripts/verify-dev.sh <target_component_dir>`
+  - **Test Execution (QA):** Run `verify-qa.ps1`/`.sh` from `nextjs-adversarial-qa` to execute baseline, adversarial, and Playwright suites.
+  - Fix syntax errors, missing dictionary keys, or implementation defects until all suites pass.
 
 - [ ] **Step 6: Implementation Plan Checklist Synchronization**
-  - Check off the completed component item (`- [x]`) in `docs/plan/05-pages-and-components.md`.
-  - If all sub-components and page infrastructure tasks for the parent page are completed, check off the parent page item (`- [x]`).
+  - When orchestrated, the orchestrator checks off the completed component item (`- [x]`) in `docs/plan/05-pages-and-components.md`.
+  - If all sub-components and page infrastructure tasks for the parent page are completed, the orchestrator checks off the parent page item (`- [x]`).
+  - When invoked directly without the orchestrator, perform this step yourself.
 
 ---
 
@@ -192,5 +172,5 @@ The implementation plan must cover:
 - **Zero In-File i18n Fallbacks:** Never hardcode dictionary objects or fallbacks (`const DEFAULT_CONTENT = {...}`) in TSX files. All text must come from `messages/[locale].json`.
 - **Hydration Warning Detection & Browser APIs:** Never access browser-only globals (`window`, `localStorage`) during SSR. Use `dynamic(() => import('./Widget'), { ssr: false, loading: () => <WidgetSkeleton /> })` instead of double-rendering `useEffect(mounted)` flags to eliminate hydration crashes cleanly.
 - **Strict Logical Styling (BiDi):** Never use physical directions (`ml-`, `mr-`, `pl-`, `pr-`, `left-`, `right-`). Always use logical alternatives (`ms-`, `pe-`, `ps-`, `me-`, `start`, `end`).
-- **Targeted Test Execution:** Always run tests targeting specific component files to conserve tokens and reduce execution time (do not run full project test suites during component iterations).
+- **Targeted Test Execution:** Run only the specific test files via `nextjs-adversarial-qa/scripts/verify-qa` to conserve tokens and time (never the full suite during iterations).
 - **Storybook Story Separation:** Do not author `.stories.tsx` or run Storybook builds during standard component development unless the `nextjs-storybook-story` skill is specifically requested. Consult [`references/storybook-reference.md`](./references/storybook-reference.md).

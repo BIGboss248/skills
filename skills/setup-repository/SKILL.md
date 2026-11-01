@@ -6,7 +6,7 @@ description: >-
   repo, or initialize repository.
 metadata:
   author: BIGboss248
-  version: "2.7"
+  version: "2.8"
 ---
 
 # Setup Repository (Feature-Driven)
@@ -46,10 +46,11 @@ Use [feature-selection-interview.md](./resources/templates/feature-selection-int
 | F7 | GitHub Issues & triage infrastructure (enable issues, issue forms, PR template, labels) | on | F6, F2 for the logging contract |
 | F8 | Release Please (config, manifest, workflow) | on | F6 for effect |
 | F9 | Branch protection | off | existing CI check |
+| F10 | Code review gate (`reviewer` subagent + report standard) | on | F2 |
 
 ### 1.3 Ask in adaptive rounds
 
-1. **Preset** — Minimal (`F1, F2`), Standard (`F1, F2, F4, F6, F7, F8`, plus `F3` when installed), Full (all except `F9` unless a CI check exists), or Custom.
+1. **Preset** — Minimal (`F1, F2`), Standard (`F1, F2, F4, F6, F7, F8, F10`, plus `F3` when installed), Full (all except `F9` unless a CI check exists), or Custom.
 2. **Adjustments** — multi-select overrides; record every add/remove.
 3. **Per-feature options** — only for enabled features; each runbook lists its own questions.
 
@@ -62,7 +63,7 @@ Use [feature-selection-interview.md](./resources/templates/feature-selection-int
 
 ## Phase 2 — Execute Enabled Features
 
-Run in dependency order: **F1 → F2 → F3 → F4 → F5 → F6 → F7 → F8 → F9**.
+Run in dependency order: **F1 → F2 → F3 → F4 → F5 → F6 → F7 → F8 → F9 → F10**.
 
 For each enabled feature:
 
@@ -81,6 +82,7 @@ For each enabled feature:
 | F7 GitHub Issues & triage | [07-triage-templates.md](./references/features/07-triage-templates.md) |
 | F8 Release Please | [08-release-please.md](./references/features/08-release-please.md) |
 | F9 Branch protection | [09-branch-protection.md](./references/features/09-branch-protection.md) |
+| F10 Code review gate | [10-code-review.md](./references/features/10-code-review.md) |
 
 Do not touch files owned only by disabled features — not even to "prepare" them.
 
@@ -110,3 +112,4 @@ Produce the report defined at the end of the interview template. It must include
 - **F3 watchers** — `auto_watch=true` causes editor stutter; keep it off and index on demand.
 - **F3 MCP selection** — never enable every server silently; ask with a recommendation from [mcp-server-catalog.md](./references/mcp-server-catalog.md) and register only the accepted set.
 - **Scope drift** — if the user adds or removes a feature mid-run, reopen Phase 1 and update the record.
+- **F10 permission order** — the reviewer's blanket `*` deny comes first, the narrow allows next, and the specific denies (redirects, `.env`, `--output`) last, because **last match wins**. Moving a deny before an allow silently re-grants edits or arbitrary shell. Never add the report standard to `instructions`.

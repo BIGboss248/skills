@@ -1,83 +1,91 @@
 #!/usr/bin/env bash
-set -e
+set -u
 
-COMPONENT_PATH="$1"
-COMPONENT_NAME="$2"
-SKIP_TESTS=false
+usage() {
+    cat <<'EOF'
+Usage: bash verify-component-create.sh <TargetPath> [component|page] [--skip-storybook] [--skip-tests] [--help]
 
-if [ "$3" == "--skip-tests" ] || [ "$2" == "--skip-tests" ]; then
-  SKIP_TESTS=true
+End-to-end verification for the Next.js creation pipeline.
+
+Runs the phase gates in order: component infrastructure or page route files,
+Storybook (components only), then QA suites (baseline + adversarial + Playwright,
+or the page suite). Stops at the first failure.
+
+Exit codes: 0 success, 1 gate failure, 2 usage error.
+EOF
+}
+
+if [ $# -eq 0 ]; then
+    usage
+    exit 2
 fi
 
+COMPONENT_PATH=""
+TARGET_KIND="component"
+SKIP_STORYBOOK=0
+SKIP_TESTS=0
+
+for arg in "$@"; do
+    case "$arg" in
+        --help|-h) usage; exit 0 ;;
+        --skip-storybook) SKIP_STORYBOOK=1 ;;
+        --skip-tests) SKIP_TESTS=1 ;;
+        component|page) TARGET_KIND="$arg" ;;
+        *) if [ -z "$COMPONENT_PATH" ]; then COMPONENT_PATH="$arg"; fi ;;
+    esac
+done
+
 if [ -z "$COMPONENT_PATH" ]; then
-  echo "Usage: ./verify-component-create.sh <ComponentPath> [ComponentName] [--skip-tests]"
-  exit 1
+    usage
+    exit 2
 fi
 
 if [ ! -e "$COMPONENT_PATH" ]; then
-  echo -e "\033[31m[FAIL] Path not found: $COMPONENT_PATH\033[0m"
-  exit 1
+    echo "[FAIL] Path not found: $COMPONENT_PATH"
+    exit 2
 fi
 
-if [ -d "$COMPONENT_PATH" ]; then
-  RESOLVED_DIR="$COMPONENT_PATH"
-  if [ -n "$COMPONENT_NAME" ] && [ "$COMPONENT_NAME" != "--skip-tests" ]; then
-    COMP_NAME="$COMPONENT_NAME"
-  else
-    COMP_NAME=$(basename "$COMPONENT_PATH")
-  fi
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SKILLS_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+run_gate() {
+    local label="$1"
+    shift
+    echo "[GATE] $label"
+    "$@"
+    local code=$?
+    if [ $code -ne 0 ]; then
+        echo "[FAIL] Gate failed: $label"
+        exit $code
+    fi
+    echo "[PASS] Gate passed: $label"
+}
+
+if [ "$TARGET_KIND" = "page" ]; then
+    run_gate "Phase 2 - page infrastructure, metadata, and i18n" \
+        bash "$SKILLS_ROOT/nextjs-page-dev/scripts/verify-page.sh" "$COMPONENT_PATH"
 else
-  RESOLVED_DIR=$(dirname "$COMPONENT_PATH")
-  COMP_NAME=$(basename "$COMPONENT_PATH" | cut -f 1 -d '.')
+    run_gate "Phase 2 - dev companions and i18n" \
+        bash "$SKILLS_ROOT/nextjs-component-dev/scripts/verify-dev.sh" "$COMPONENT_PATH"
 fi
 
-COMPONENT_FILE="$RESOLVED_DIR/$COMP_NAME.tsx"
-SKELETON_FILE="$RESOLVED_DIR/${COMP_NAME}Skeleton.tsx"
-INDEX_FILE="$RESOLVED_DIR/index.ts"
-TEST_FILE="$RESOLVED_DIR/$COMP_NAME.test.tsx"
-EDGE_TEST_FILE="$RESOLVED_DIR/$COMP_NAME.edge.test.tsx"
-
-MISSING=()
-[ ! -f "$COMPONENT_FILE" ] && MISSING+=("$COMP_NAME.tsx")
-[ ! -f "$SKELETON_FILE" ] && MISSING+=("${COMP_NAME}Skeleton.tsx")
-[ ! -f "$INDEX_FILE" ] && MISSING+=("index.ts")
-[ ! -f "$TEST_FILE" ] && MISSING+=("$COMP_NAME.test.tsx")
-[ ! -f "$EDGE_TEST_FILE" ] && MISSING+=("$COMP_NAME.edge.test.tsx")
-
-if [ ${#MISSING[@]} -gt 0 ]; then
-  echo -e "\033[31m[FAIL] Missing component artifacts for $COMP_NAME in $RESOLVED_DIR:\033[0m"
-  for m in "${MISSING[@]}"; do
-    echo -e "\033[31m  - Missing: $m\033[0m"
-  done
-  exit 1
+if [ "$TARGET_KIND" = "page" ]; then
+    echo "[SKIP] Storybook gate (not applicable to pages)"
+elif [ "$SKIP_STORYBOOK" -eq 0 ]; then
+    run_gate "Phase 3 - Storybook smoke and build" \
+        bash "$SKILLS_ROOT/nextjs-storybook-story/scripts/verify-storybook.sh" "$COMPONENT_PATH"
+else
+    echo "[SKIP] Storybook gate (--skip-storybook)"
 fi
 
-echo -e "\033[32m[PASS] All component files verified: $COMP_NAME.tsx, ${COMP_NAME}Skeleton.tsx, index.ts, $COMP_NAME.test.tsx, $COMP_NAME.edge.test.tsx\033[0m"
-
-# Verify zero in-file mock dictionaries
-if [ -f "$COMPONENT_FILE" ]; then
-  if grep -q "const DEFAULT_CONTENT" "$COMPONENT_FILE" || grep -q "const DEFAULT_TRANSLATIONS" "$COMPONENT_FILE"; then
-    echo -e "\033[31m[FAIL] In-file i18n placeholder dictionary detected in $COMP_NAME.tsx. Extract all strings to messages/[locale].json.\033[0m"
-    exit 1
-  fi
+if [ "$SKIP_TESTS" -eq 0 ]; then
+    QA_MODE="all"
+    [ "$TARGET_KIND" = "page" ] && QA_MODE="page"
+    run_gate "Phase 4 - QA suites ($QA_MODE)" \
+        bash "$SKILLS_ROOT/nextjs-adversarial-qa/scripts/verify-qa.sh" "$COMPONENT_PATH" "$QA_MODE"
+else
+    echo "[SKIP] QA suite gate (--skip-tests)"
 fi
 
-# Detect package manager
-PKG_MGR="pnpm"
-[ -f "bun.lockb" ] && PKG_MGR="bun"
-[ -f "package-lock.json" ] && PKG_MGR="npm"
-[ -f "yarn.lock" ] && PKG_MGR="yarn"
-
-if [ "$SKIP_TESTS" = false ]; then
-  echo -e "\033[36m[INFO] Executing targeted unit & adversarial test suites via $PKG_MGR...\033[0m"
-  $PKG_MGR test -- "$TEST_FILE" "$EDGE_TEST_FILE"
-  if [ $? -ne 0 ]; then
-    echo -e "\033[31m[FAIL] Unit/edge tests failed for $COMP_NAME.\033[0m"
-    exit 1
-  fi
-  echo -e "\033[32m[SUCCESS] All unit and adversarial tests passed for $COMP_NAME.\033[0m"
-fi
-
-echo -e "\033[32m[SUCCESS] nextjs-component-create verification passed for $COMP_NAME.\033[0m"
+echo "[SUCCESS] $TARGET_KIND creation verification passed for: $COMPONENT_PATH"
 exit 0
-

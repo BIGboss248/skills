@@ -31,11 +31,12 @@ Existing files:   <AGENTS.md, docs/project.json, .github/, Dockerfile, .husky/ �
 | F7 | GitHub Issues & triage infrastructure (enable issues, issue forms, PR template, labels) | on | F6, F2 for the logging contract |
 | F8 | Release Please (config, manifest, workflow) | on | F6 for effect |
 | F9 | Branch protection | off | existing CI check |
+| F10 | Code review gate (`reviewer` subagent + report standard) | on | F2 |
 
 ## 3. Round 1 — Preset
 
 > Which preset should I use?
-> **Minimal** (F1, F2) · **Standard** (F1, F2, F4, F6, F7, F8, plus F3 when installed) · **Full** (all except F9 unless a CI check exists) · **Custom**
+> **Minimal** (F1, F2) · **Standard** (F1, F2, F4, F6, F7, F8, F10, plus F3 when installed) · **Full** (all except F9 unless a CI check exists) · **Custom**
 
 ## 4. Round 2 — Adjustments
 
@@ -47,6 +48,7 @@ Resolve every removal of a dependency:
 - F7 without F6 → templates only; labels skipped.
 - F8 without F6 → files created, no release PR until a remote exists.
 - F9 without a CI check → recommend deferring and record the reason.
+- F10 without F2 → the reviewer still runs, but it cannot cite the engineering standards; record the degraded mode.
 
 ## 5. Round 3 — Per-feature options (enabled only)
 
@@ -59,6 +61,7 @@ Ask only the questions for enabled features; each runbook lists them. Examples:
 - **F7**: enable GitHub Issues on the remote? bug form only, or bug + feature + PR template? provision labels? contact links?
 - **F8**: release type, initial version, package name, changelog path.
 - **F9**: team or solo; which CI check name; require reviews?
+- **F10**: install `/review`? which base branch do reviews compare against? archive reports under `docs/reviews/`?
 
 ## 6. Confirmation
 
@@ -76,6 +79,7 @@ Ask only the questions for enabled features; each runbook lists them. Examples:
 | F7 Triage infrastructure | ENABLED |
 | F8 Release Please | ENABLED |
 | F9 Branch protection | DISABLED (no CI check yet) |
+| F10 Code review gate | ENABLED |
 
 Preset: Standard
 Degraded: none
@@ -98,6 +102,7 @@ Proceed with these features? (yes / adjust)
 | F7 GitHub Issues & triage | `.github/ISSUE_TEMPLATE/*`, `PULL_REQUEST_TEMPLATE.md`, labels, issue-logging contract | … | … |
 | F8 Release Please | `release-please-config.json`, manifest, workflow | … | … |
 | F9 Branch protection | branch rules / recorded deferral | … | … |
+| F10 Code review gate | `.opencode/agents/reviewer.md`, `.agents/rules/code-review-report.md`, `.opencode/commands/review.md`, `AGENTS.md` | … | base branch: … |
 
 Preset: <preset>
 Verification: <commands and result per enabled feature>

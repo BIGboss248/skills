@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { FeatureCard, FeatureCardSkeleton } from "./FeatureCard";
 
-describe("FeatureCard (TDD)", () => {
+describe("FeatureCard (baseline)", () => {
   const mockMessages = {
     feature_card: {
       read_more: "ادامه مطلب",
@@ -17,8 +17,8 @@ describe("FeatureCard (TDD)", () => {
     locale: "fa",
   };
 
-  it("renders card title and description correctly", async () => {
-    // Note: For RSC components in unit tests, render the resolved JSX wrapped in NextIntlClientProvider
+  it("renders the card title and description", async () => {
+    // Synchronous RSC: await the component, then render the resolved JSX.
     const jsx = await FeatureCard(mockProps);
     render(
       <NextIntlClientProvider locale="fa" messages={mockMessages}>
@@ -34,7 +34,7 @@ describe("FeatureCard (TDD)", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders localized link attribute and dictionary text", async () => {
+  it("renders the localized link and dictionary text", async () => {
     const jsx = await FeatureCard(mockProps);
     render(
       <NextIntlClientProvider locale="fa" messages={mockMessages}>
@@ -46,8 +46,9 @@ describe("FeatureCard (TDD)", () => {
     expect(link).toHaveAttribute("href", "/fa/features/nextjs");
   });
 
-  it("renders Skeleton fallback matching layout", () => {
+  it("renders the skeleton with matching layout", () => {
     const { container } = render(<FeatureCardSkeleton />);
+
     expect(container.firstChild).toHaveClass("animate-pulse");
   });
 });

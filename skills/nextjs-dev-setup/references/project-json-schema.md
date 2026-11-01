@@ -1,6 +1,6 @@
 # Project Configuration Schema Specification (`docs/project.json`)
 
-The `docs/project.json` file is the mandatory single source of truth for component creation, package manager, styling rules, animation engines, testing suites, and internationalization across all agent skills (such as `nextjs-component-dev` / `nextjs-create-component`).
+The `docs/project.json` file is the mandatory single source of truth for component creation, package manager, styling rules, animation engines, testing suites, and internationalization across all agent skills (such as `nextjs-component-dev` / `nextjs-component-create`).
 
 ---
 
@@ -17,6 +17,35 @@ The `docs/project.json` file is the mandatory single source of truth for compone
 | `supported_languages`     | `Array<LocaleObject>` | List of supported locales with direction, currency, and calendar metadata.  | Discovered from `docs/adr/`, `docs/project-plan.md`, or `CONTEXT.md`.                                    |
 | `dictionaries_dir`        | `string`              | Relative directory path for i18n translation message catalogs.              | Defaults to `"messages"` (or `"src/messages"` / `"dictionaries"`).                                       |
 | `dictionary_file_pattern` | `string`              | Filename naming pattern for locale translation JSON files.                  | Defaults to `"[locale].json"`.                                                                           |
+| `agents`                  | `object`              | Agent roster installed by Stage 1.5 (orchestrator + three role agents).     | Written by `nextjs-dev-setup`; records paths, model overrides, and `enabled` flags.                      |
+
+### 1.1 Agent Roster Object (`agents`)
+
+```json
+{
+  "roster": "three-role",
+  "orchestrator": {
+    "agent": "nextjs-orchestrator",
+    "path": ".opencode/agents/nextjs-orchestrator.md",
+    "model": null,
+    "enabled": true
+  },
+  "roles": [
+    { "role": "implementation", "agent": "nextjs-dev", "path": ".opencode/agents/nextjs-dev.md", "model": null, "enabled": true },
+    { "role": "test-author", "agent": "nextjs-test-author", "path": ".opencode/agents/nextjs-test-author.md", "model": null, "enabled": true },
+    { "role": "qa-auditor", "agent": "nextjs-qa-auditor", "path": ".opencode/agents/nextjs-qa-auditor.md", "model": null, "enabled": true }
+  ],
+  "boundaries_rule": ".agents/rules/agent-boundaries.md",
+  "commands": [
+    ".opencode/commands/create-nextjs-component.md",
+    ".opencode/commands/create-nextjs-page.md"
+  ]
+}
+```
+
+- `roster`: `"three-role"` only. A two-role repository is out of contract because it loses the independent auditor.
+- `model`: `null` inherits the primary agent's model; otherwise a `provider/model` string.
+- `enabled: false` means the file stays on disk but the orchestrator must not delegate to it.
 
 ---
 

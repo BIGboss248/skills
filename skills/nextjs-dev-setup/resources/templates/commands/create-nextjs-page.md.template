@@ -1,0 +1,19 @@
+---
+description: Create a Next.js App Router page and its section components through the orchestrator pipeline
+agent: nextjs-orchestrator
+---
+
+Run the `nextjs-component-create` skill end to end in page mode for this target:
+
+$ARGUMENTS
+
+Page track:
+
+1. Resolve the route, locales, and component directory from `docs/project.json` and `lib/routes.ts`.
+2. Gate on `page-spec.md` with §7 page edge cases (metadata, JSON-LD, boundaries, locale routing).
+3. Delegate the page suite to `nextjs-test-author` (`page` mode).
+4. Delegate page implementation to `nextjs-dev`, routing each new section component through the component track.
+5. Delegate the adversarial audit to `nextjs-qa-auditor`.
+6. Repair loop: failing assertions go to `nextjs-dev`, never to a test agent.
+7. Run `verify-page`, `verify-component-create -TargetKind page`, plus the write audit.
+8. Tick `docs/plan/05-pages-and-components.md` yourself and return the execution report.

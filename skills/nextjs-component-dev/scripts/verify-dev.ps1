@@ -49,6 +49,9 @@ if ($missing.Count -gt 0) {
 
 Write-Host "[PASS] Files present: $compName.tsx, ${compName}Skeleton.tsx, $(Split-Path $testFile -Leaf)" -ForegroundColor Green
 
+# Test authoring and execution are owned by nextjs-adversarial-qa.
+Write-Host "[INFO] Test execution is delegated. Run nextjs-adversarial-qa/scripts/verify-qa.ps1 -TargetPath `"$resolvedDir`" -Mode all" -ForegroundColor Cyan
+
 # Verify zero in-file i18n placeholders / mock translation dictionaries
 if (Test-Path $componentFile) {
     $content = Get-Content -Path $componentFile -Raw
@@ -73,24 +76,6 @@ if (-not (Test-Path $dictDir)) {
     Write-Host "[WARN] Translation dictionary directory '$dictDir' not found." -ForegroundColor Yellow
 } else {
     Write-Host "[PASS] Translation dictionary directory verified: $dictDir" -ForegroundColor Green
-}
-
-# Detect package manager
-$pkgManager = "pnpm"
-if (Test-Path "pnpm-lock.yaml") { $pkgManager = "pnpm" }
-elseif (Test-Path "bun.lockb") { $pkgManager = "bun" }
-elseif (Test-Path "package-lock.json") { $pkgManager = "npm" }
-elseif (Test-Path "yarn.lock") { $pkgManager = "yarn" }
-
-Write-Host "[INFO] Executing unit test suite via $pkgManager..." -ForegroundColor Cyan
-
-$testCmd = "$pkgManager test -- `"$testFile`""
-Write-Host "Running: $testCmd" -ForegroundColor DarkGray
-
-Invoke-Expression $testCmd
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "[FAIL] Unit tests failed for $compName." -ForegroundColor Red
-    exit $LASTEXITCODE
 }
 
 Write-Host "[SUCCESS] Dev verification passed for $compName." -ForegroundColor Green
