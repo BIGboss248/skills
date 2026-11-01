@@ -31,6 +31,23 @@ this repository.
   defer it to the end of the task.
 - Keep rules imperative and concrete: `Always …` / `Never … - because …`.
 
+## Engineering standards (`.agents/rules/engineering-standards.md`)
+
+All non-trivial work follows the algorithm-first, functional-programming
+baseline installed at `.agents/rules/engineering-standards.md`. Read it before
+planning a feature or a fix. The non-negotiables:
+
+- State the algorithm and its edge cases before writing the code.
+- Put business logic in pure, deterministic functions; keep I/O, network,
+  filesystem access, and state mutation in a thin imperative shell.
+- Keep functions small, explicitly typed, and free of hidden dependencies,
+  shared mutable state, and mutation of arguments.
+- A bug fix ships with a regression test; run the documented test gate and
+  report the real command output — never claim a pass without executing it.
+- Make the smallest change that satisfies the task: no unrelated refactoring
+  and no speculative abstractions.
+- Close with the completion report defined in §9 of the standard.
+
 ## Issue logging (`github-triage`)
 
 Applies when GitHub Issues are enabled (feature F7 of the repository setup).

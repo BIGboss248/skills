@@ -6,7 +6,7 @@ description: >-
   repo, or initialize repository.
 metadata:
   author: BIGboss248
-  version: "2.6"
+  version: "2.7"
 ---
 
 # Setup Repository (Feature-Driven)
@@ -38,7 +38,7 @@ Use [feature-selection-interview.md](./resources/templates/feature-selection-int
 | ID | Feature | Default | Depends on |
 | :--- | :--- | :--- | :--- |
 | F1 | Project metadata (`docs/project.json`) | on | — |
-| F2 | Agent contract (`AGENTS.md` + `.agents/autofix.json`) | on | — |
+| F2 | Agent contract (`AGENTS.md`, `.agents/autofix.json`, engineering standards) | on | — |
 | F3 | MCP servers (ask + recommend) & Codebase Memory | on if installed | binary/MCP |
 | F4 | Git hooks (Husky + Commitlint + guarded pre-push) | on | Node project |
 | F5 | Production Docker (Dockerfile, compose, `.dockerignore`) | off | lockfile |
