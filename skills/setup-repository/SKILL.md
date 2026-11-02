@@ -6,7 +6,7 @@ description: >-
   repo, or initialize repository.
 metadata:
   author: BIGboss248
-  version: "2.8"
+  version: "2.9"
 ---
 
 # Setup Repository (Feature-Driven)
@@ -47,10 +47,11 @@ Use [feature-selection-interview.md](./resources/templates/feature-selection-int
 | F8 | Release Please (config, manifest, workflow) | on | F6 for effect |
 | F9 | Branch protection | off | existing CI check |
 | F10 | Code review gate (`reviewer` subagent + report standard) | on | F2 |
+| F11 | Next.js internationalization (`next-intl`, locale routing, dictionaries) | off | Next.js App Router project, F1 |
 
 ### 1.3 Ask in adaptive rounds
 
-1. **Preset** — Minimal (`F1, F2`), Standard (`F1, F2, F4, F6, F7, F8, F10`, plus `F3` when installed), Full (all except `F9` unless a CI check exists), or Custom.
+1. **Preset** — Minimal (`F1, F2`), Standard (`F1, F2, F4, F6, F7, F8, F10`, plus `F3` when installed), Full (all except `F9` unless a CI check exists, plus `F11` for Next.js App Router projects), or Custom.
 2. **Adjustments** — multi-select overrides; record every add/remove.
 3. **Per-feature options** — only for enabled features; each runbook lists its own questions.
 
@@ -63,7 +64,7 @@ Use [feature-selection-interview.md](./resources/templates/feature-selection-int
 
 ## Phase 2 — Execute Enabled Features
 
-Run in dependency order: **F1 → F2 → F3 → F4 → F5 → F6 → F7 → F8 → F9 → F10**.
+Run in dependency order: **F1 → F2 → F3 → F4 → F5 → F6 → F7 → F8 → F9 → F10 → F11**.
 
 For each enabled feature:
 
@@ -83,6 +84,7 @@ For each enabled feature:
 | F8 Release Please | [08-release-please.md](./references/features/08-release-please.md) |
 | F9 Branch protection | [09-branch-protection.md](./references/features/09-branch-protection.md) |
 | F10 Code review gate | [10-code-review.md](./references/features/10-code-review.md) |
+| F11 Next.js i18n | [11-nextjs-i18n.md](./references/features/11-nextjs-i18n.md) |
 
 Do not touch files owned only by disabled features — not even to "prepare" them.
 
@@ -113,3 +115,8 @@ Produce the report defined at the end of the interview template. It must include
 - **F3 MCP selection** — never enable every server silently; ask with a recommendation from [mcp-server-catalog.md](./references/mcp-server-catalog.md) and register only the accepted set.
 - **Scope drift** — if the user adds or removes a feature mid-run, reopen Phase 1 and update the record.
 - **F10 permission order** — the reviewer's blanket `*` deny comes first, the narrow allows next, and the specific denies (redirects, `.env`, `--output`) last, because **last match wins**. Moving a deny before an allow silently re-grants edits or arbitrary shell. Never add the report standard to `instructions`.
+- **F11 double scaffolding** — `nextjs-dev-setup` feature N4 already scaffolds `next-intl`. When it ran first, verify the result and report `[UNTOUCHED]`; never rewrite `i18n/*`, the locale layout, or the interceptor on a working setup.
+- **F11 interceptor** — Next.js 16+ uses `proxy.ts`, Next.js <=15 uses `middleware.ts`. Keeping both applies the locale redirect twice; delete the other file and merge custom logic into one handler.
+- **F11 document shell** — `<html>`/`<body>` live only in `app/[locale]/layout.tsx`. Leaving them in `app/layout.tsx` as well nests document elements and breaks `lang`/`dir`.
+- **F11 dictionary drift** — a locale added to `routing.ts` without a matching `messages/<locale>.json`, or with missing keys, fails the verifier and the build; scaffold every locale in the same step.
+- **Repo-vs-app overlap** — `nextjs-dev-setup` features `N1/N4/N10/N11/N12` overlap with `F1/F11/F3/F5/F4/F7/F8`. Detect existing app-level setup first; verify and report `[UNTOUCHED]` instead of re-scaffolding the same files.

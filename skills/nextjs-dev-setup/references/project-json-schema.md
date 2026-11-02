@@ -17,7 +17,8 @@ The `docs/project.json` file is the mandatory single source of truth for compone
 | `supported_languages`     | `Array<LocaleObject>` | List of supported locales with direction, currency, and calendar metadata.  | Discovered from `docs/adr/`, `docs/project-plan.md`, or `CONTEXT.md`.                                    |
 | `dictionaries_dir`        | `string`              | Relative directory path for i18n translation message catalogs.              | Defaults to `"messages"` (or `"src/messages"` / `"dictionaries"`).                                       |
 | `dictionary_file_pattern` | `string`              | Filename naming pattern for locale translation JSON files.                  | Defaults to `"[locale].json"`.                                                                           |
-| `agents`                  | `object`              | Agent roster installed by Stage 1.5 (orchestrator + three role agents).     | Written by `nextjs-dev-setup`; records paths, model overrides, and `enabled` flags.                      |
+| `agents`                  | `object`              | Agent roster installed by feature N9 (orchestrator + three role agents).   | Written by `nextjs-dev-setup`; records paths, model overrides, and `enabled` flags.                      |
+| `nextjs_setup_features`   | `object`              | Confirmed feature selection (preset, categories, enabled/disabled, notes).  | Written by `nextjs-dev-setup` Phase 1; mirrors `.agents/nextjs-setup-features.json`.                     |
 
 ### 1.1 Agent Roster Object (`agents`)
 
@@ -46,6 +47,28 @@ The `docs/project.json` file is the mandatory single source of truth for compone
 - `roster`: `"three-role"` only. A two-role repository is out of contract because it loses the independent auditor.
 - `model`: `null` inherits the primary agent's model; otherwise a `provider/model` string.
 - `enabled: false` means the file stays on disk but the orchestrator must not delegate to it.
+
+### 1.2 Feature Selection Object (`nextjs_setup_features`)
+
+```json
+{
+  "skill": "nextjs-dev-setup",
+  "preset": "standard",
+  "decided_at": "YYYY-MM-DD",
+  "categories": ["foundation", "testing", "agents", "delivery"],
+  "enabled": ["N1", "N2", "N3", "N4", "N5", "N6", "N8", "N9", "N10", "N12"],
+  "disabled": ["N7", "N11"],
+  "degraded": {},
+  "notes": {}
+}
+```
+
+- The canonical record is `.agents/nextjs-setup-features.json`; this block is the
+  copy other skills read.
+- `enabled` drives which audits `scripts/verify-project-config.*` runs; features
+  outside the list are reported as `SKIPPED`.
+- Dictionary keys (`dictionaries_dir`, `dictionary_file_pattern`) are required only
+  when `N4` is enabled; agent metadata only when `N9` is enabled.
 
 ---
 

@@ -32,11 +32,12 @@ Existing files:   <AGENTS.md, docs/project.json, .github/, Dockerfile, .husky/ �
 | F8 | Release Please (config, manifest, workflow) | on | F6 for effect |
 | F9 | Branch protection | off | existing CI check |
 | F10 | Code review gate (`reviewer` subagent + report standard) | on | F2 |
+| F11 | Next.js internationalization (`next-intl`, locale routing, dictionaries) | off | Next.js App Router project, F1 |
 
 ## 3. Round 1 — Preset
 
 > Which preset should I use?
-> **Minimal** (F1, F2) · **Standard** (F1, F2, F4, F6, F7, F8, F10, plus F3 when installed) · **Full** (all except F9 unless a CI check exists) · **Custom**
+> **Minimal** (F1, F2) · **Standard** (F1, F2, F4, F6, F7, F8, F10, plus F3 when installed) · **Full** (all except F9 unless a CI check exists, plus F11 for Next.js App Router projects) · **Custom**
 
 ## 4. Round 2 — Adjustments
 
@@ -49,6 +50,9 @@ Resolve every removal of a dependency:
 - F8 without F6 → files created, no release PR until a remote exists.
 - F9 without a CI check → recommend deferring and record the reason.
 - F10 without F2 → the reviewer still runs, but it cannot cite the engineering standards; record the degraded mode.
+- F11 without F1 → scaffold the infrastructure and record the locale/dictionary intent in `.agents/setup-features.json`; the `docs/project.json` keys are added when F1 is enabled.
+- F11 on a non-Next.js or Pages Router project → out of scope; report `[SKIPPED]`.
+- F11 after `nextjs-dev-setup` already scaffolded `next-intl` → verify only and report `[UNTOUCHED]`.
 
 ## 5. Round 3 — Per-feature options (enabled only)
 
@@ -62,6 +66,7 @@ Ask only the questions for enabled features; each runbook lists them. Examples:
 - **F8**: release type, initial version, package name, changelog path.
 - **F9**: team or solo; which CI check name; require reviews?
 - **F10**: install `/review`? which base branch do reviews compare against? archive reports under `docs/reviews/`?
+- **F11**: which locales and default locale; locale prefix `always` or `as-needed`; migrate existing routes into `app/[locale]/` now or later; which locales render right-to-left?
 
 ## 6. Confirmation
 
@@ -80,6 +85,7 @@ Ask only the questions for enabled features; each runbook lists them. Examples:
 | F8 Release Please | ENABLED |
 | F9 Branch protection | DISABLED (no CI check yet) |
 | F10 Code review gate | ENABLED |
+| F11 Next.js i18n | DISABLED (single locale) |
 
 Preset: Standard
 Degraded: none
@@ -103,6 +109,7 @@ Proceed with these features? (yes / adjust)
 | F8 Release Please | `release-please-config.json`, manifest, workflow | … | … |
 | F9 Branch protection | branch rules / recorded deferral | … | … |
 | F10 Code review gate | `.opencode/agents/reviewer.md`, `.agents/rules/code-review-report.md`, `.opencode/commands/review.md`, `AGENTS.md` | … | base branch: … |
+| F11 Next.js i18n | `i18n/routing.ts`, `i18n/request.ts`, `i18n/navigation.ts`, `proxy.ts`/`middleware.ts`, `app/[locale]/layout.tsx`, `messages/<locale>.json`, `global.d.ts`, `docs/project.json` | … | locales: … |
 
 Preset: <preset>
 Verification: <commands and result per enabled feature>

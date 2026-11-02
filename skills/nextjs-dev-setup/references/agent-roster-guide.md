@@ -1,6 +1,6 @@
 # Agent Roster & Permission Boundaries
 
-Guide for Stage 1.5 of `nextjs-dev-setup`. Installs the OpenCode agents that keep
+Guide for feature N9 of `nextjs-dev-setup`. Installs the OpenCode agents that keep
 implementation and test authorship in separate, permission-bounded contexts.
 
 ---

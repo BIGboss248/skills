@@ -1,6 +1,8 @@
 param(
     [string]$ConfigPath,
-    [switch]$Json
+    [string]$SelectionPath = ".agents/nextjs-setup-features.json",
+    [switch]$Json,
+    [switch]$AllFeatures
 )
 
 $ErrorActionPreference = "Continue"
@@ -37,6 +39,65 @@ function Resolve-ConfigPath {
 $targetConfigFile = Resolve-ConfigPath -Custom $ConfigPath
 $rootDir = (Get-Location).Path
 
+# --- Feature selection (.agents/nextjs-setup-features.json, fallback docs/project.json) ---
+function Resolve-SelectionPath {
+    param([string]$Custom)
+    if ($Custom -and (Test-Path -LiteralPath $Custom)) {
+        return (Resolve-Path -LiteralPath $Custom).Path
+    }
+    foreach ($candidate in @(".agents/nextjs-setup-features.json", "docs/project.json")) {
+        if (Test-Path -LiteralPath $candidate) {
+            return (Resolve-Path -LiteralPath $candidate).Path
+        }
+    }
+    return $null
+}
+
+$selectionFeatures = $null
+$selectionSource = $null
+if (-not $AllFeatures) {
+    $selectionFile = Resolve-SelectionPath -Custom $SelectionPath
+    if ($selectionFile) {
+        try {
+            $selectionData = Get-Content -LiteralPath $selectionFile -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ($selectionData.nextjs_setup_features) { $selectionData = $selectionData.nextjs_setup_features }
+            if ($selectionData.enabled) {
+                $selectionFeatures = @($selectionData.enabled)
+                $selectionSource = $selectionFile
+            }
+        } catch {
+            # Unreadable selection falls back to auditing every feature.
+        }
+    }
+}
+
+function Test-FeatureEnabled([string]$Id) {
+    if ($null -eq $selectionFeatures) { return $true }
+    return ($selectionFeatures -contains $Id)
+}
+
+function Get-CheckFeature([string]$Name) {
+    switch -Wildcard ($Name) {
+        "Commitlint Configuration" { return "N12" }
+        "Husky Git Hooks" { return "N12" }
+        "Release Please CI/CD" { return "N12" }
+        "GitHub Triage Infrastructure" { return "N12" }
+        "Jest Test Runner" { return "N5" }
+        "Playwright Test Runner" { return "N6" }
+        "Workspace MCP Server Integration" { return "N10" }
+        "Antigravity Global MCP Integration" { return "N10" }
+        "Codebase Memory Exclusions*" { return "N10" }
+        "Docker Containerization" { return "N11" }
+        "Agent-First Tailwind Linter*" { return "N8" }
+        "App Icons & PWA Web Manifest" { return "N3" }
+        "Next.js Internationalization*" { return "N4" }
+        "Next.js Core Dependency*" { return "N2" }
+        "Agent Instructions & Docs Notice*" { return "N2" }
+        "Agent Roster & Permission Boundaries" { return "N9" }
+        default { return $null }
+    }
+}
+
 $errors = [System.Collections.Generic.List[string]]::new()
 $warnings = [System.Collections.Generic.List[string]]::new()
 $pathChecks = [System.Collections.Generic.List[hashtable]]::new()
@@ -48,18 +109,22 @@ $parsedData = $null
 $meta = $null
 
 if (-not $fileExists) {
-    $errors.Add("Configuration file not found at: $targetConfigFile")
+    if (Test-FeatureEnabled "N1") {
+        $errors.Add("Configuration file not found at: $targetConfigFile")
+    }
 } else {
     try {
         $rawContent = Get-Content -Raw -Path $targetConfigFile -Encoding UTF8
         $parsedData = ConvertFrom-Json $rawContent
         $isValidJson = $true
     } catch {
-        $errors.Add("Invalid JSON syntax in '$targetConfigFile': $($_.Exception.Message)")
+        if (Test-FeatureEnabled "N1") {
+            $errors.Add("Invalid JSON syntax in '$targetConfigFile': $($_.Exception.Message)")
+        }
     }
 }
 
-if ($isValidJson -and $parsedData) {
+if ((Test-FeatureEnabled "N1") -and $isValidJson -and $parsedData) {
     if (-not ($parsedData.PSObject.Properties.Name -contains "project_context_and_metadata")) {
         $errors.Add("Missing required top-level key: 'project_context_and_metadata'")
     } else {
@@ -70,10 +135,11 @@ if ($isValidJson -and $parsedData) {
             "package_manager",
             "new_component_dir",
             "style_file_dir",
-            "component_library",
-            "dictionaries_dir",
-            "dictionary_file_pattern"
+            "component_library"
         )
+        if (Test-FeatureEnabled "N4") {
+            $requiredStrings += @("dictionaries_dir", "dictionary_file_pattern")
+        }
         foreach ($prop in $requiredStrings) {
             $val = $meta.$prop
             if ($null -eq $val -or "$val".Trim() -eq "") {
@@ -136,7 +202,7 @@ if ($isValidJson -and $parsedData) {
             }
         }
 
-        if ($meta.dictionaries_dir) {
+        if ((Test-FeatureEnabled "N4") -and $meta.dictionaries_dir) {
             $dictPath = Join-Path $rootDir $meta.dictionaries_dir
             $exists = (Test-Path $dictPath -PathType Container)
             $pathChecks.Add(@{ property = "dictionaries_dir"; expectedPath = $meta.dictionaries_dir; exists = $exists; type = "directory" })
@@ -510,12 +576,19 @@ foreach ($cmd in @(".opencode/commands/create-nextjs-component.md", ".opencode/c
 if ($missingAgents.Count -eq 0 -and $invalidAgents.Count -eq 0 -and (Test-Path $boundariesRule) -and $commandsMissing.Count -eq 0) {
     $automationChecks.Add(@{ name = "Agent Roster & Permission Boundaries"; status = "configured"; details = "Found 4 agents in .opencode/agents with enforced write boundaries, .agents/rules/agent-boundaries.md, and both command shortcuts." })
 } else {
-    if ($missingAgents.Count -gt 0) { $errors.Add("Missing agent file(s): $($missingAgents -join ', '). Run Stage 1.5 of nextjs-dev-setup.") }
-    if ($invalidAgents.Count -gt 0) { $errors.Add("Invalid agent configuration - $($invalidAgents -join ' | ')") }
-    if (-not (Test-Path $boundariesRule)) { $errors.Add("Missing .agents/rules/agent-boundaries.md.") }
-    if ($commandsMissing.Count -gt 0) { $warnings.Add("Missing command shortcut(s): $($commandsMissing -join ', ').") }
+    if (Test-FeatureEnabled "N9") {
+        if ($missingAgents.Count -gt 0) { $errors.Add("Missing agent file(s): $($missingAgents -join ', '). Enable N9 (agent roster) or remove it from the selection.") }
+        if ($invalidAgents.Count -gt 0) { $errors.Add("Invalid agent configuration - $($invalidAgents -join ' | ')") }
+        if (-not (Test-Path $boundariesRule)) { $errors.Add("Missing .agents/rules/agent-boundaries.md.") }
+        if ($commandsMissing.Count -gt 0) { $warnings.Add("Missing command shortcut(s): $($commandsMissing -join ', ').") }
+    }
     $automationChecks.Add(@{ name = "Agent Roster & Permission Boundaries"; status = "missing"; details = "Agent roster incomplete. Missing: $($missingAgents -join ', '); invalid: $($invalidAgents.Count); boundaries rule: $(Test-Path $boundariesRule)." })
 }
+
+# --- Apply the confirmed feature selection to the audits ---
+foreach ($chk in $automationChecks) { $chk["feature"] = Get-CheckFeature $chk.name }
+$skippedChecks = @($automationChecks | Where-Object { $_.feature -and -not (Test-FeatureEnabled $_.feature) })
+$automationChecks = @($automationChecks | Where-Object { -not ($_.feature -and -not (Test-FeatureEnabled $_.feature)) })
 
 $passed = ($errors.Count -eq 0)
 
@@ -530,6 +603,9 @@ if ($Json) {
         warnings = $warnings
         pathChecks = $pathChecks
         automationChecks = $automationChecks
+        selectionSource = $selectionSource
+        enabledFeatures = $selectionFeatures
+        skippedChecks = @($skippedChecks | ForEach-Object { $_.name })
     }
     $resultObj | ConvertTo-Json -Depth 5
     if (-not $passed) { exit 1 } else { exit 0 }
@@ -538,9 +614,17 @@ if ($Json) {
 Write-Host ""
 Write-Host "$Bold$Cyan=== Next.js Dev Setup & project.json Verification ===$Reset"
 Write-Host ""
-Write-Host "$BoldConfiguration File:$Reset $targetConfigFile"
-Write-Host "$BoldFile Exists:$Reset $(if ($fileExists) { "${Green}Yes${Reset}" } else { "${Red}No${Reset}" })"
-Write-Host "$BoldValid JSON:$Reset $(if ($isValidJson) { "${Green}Yes${Reset}" } else { "${Red}No${Reset}" })"
+Write-Host "${Bold}Configuration File:$Reset $targetConfigFile"
+Write-Host "${Bold}File Exists:$Reset $(if ($fileExists) { "${Green}Yes${Reset}" } else { "${Red}No${Reset}" })"
+Write-Host "${Bold}Valid JSON:$Reset $(if ($isValidJson) { "${Green}Yes${Reset}" } else { "${Red}No${Reset}" })"
+if ($selectionSource) {
+    Write-Host "${Bold}Feature Selection:$Reset $selectionSource"
+    Write-Host "${Bold}Enabled Features:$Reset $(if ($selectionFeatures) { $selectionFeatures -join ', ' } else { 'all (selection has no enabled list)' })"
+} elseif ($AllFeatures) {
+    Write-Host "${Bold}Feature Selection:$Reset disabled (-AllFeatures); auditing every feature"
+} else {
+    Write-Host "${Bold}Feature Selection:$Reset not found; auditing every feature"
+}
 Write-Host ""
 
 if ($meta) {
@@ -571,7 +655,7 @@ if ($pathChecks.Count -gt 0) {
 }
 
 if ($automationChecks.Count -gt 0) {
-    Write-Host "$Bold$Magenta▶ Git Hooks, Commit Standards & Release Automation:$Reset"
+    Write-Host "$Bold$Magenta▶ Feature Audits:$Reset"
     foreach ($chk in $automationChecks) {
         $tag = switch ($chk.status) {
             "configured" { "${Green}[OK]${Reset}" }
@@ -579,6 +663,14 @@ if ($automationChecks.Count -gt 0) {
             default      { "${Red}[MISSING]${Reset}" }
         }
         Write-Host "  $tag $Bold$($chk.name):$Reset $($chk.details)"
+    }
+    Write-Host ""
+}
+
+if ($skippedChecks.Count -gt 0) {
+    Write-Host "$Bold$Yellow▶ Not checked (feature disabled in this setup):$Reset"
+    foreach ($chk in $skippedChecks) {
+        Write-Host "  [SKIP] $($chk.name) ($($chk.feature))"
     }
     Write-Host ""
 }

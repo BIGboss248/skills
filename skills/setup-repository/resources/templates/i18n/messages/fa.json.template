@@ -1,0 +1,11 @@
+{
+  "metadata": {
+    "title": "برنامه Next.js",
+    "description": "برنامه دوزبانه Next.js با عملکرد بالا."
+  },
+  "common": {
+    "loading": "در حال بارگذاری...",
+    "error": "خطایی رخ داد",
+    "backToHome": "بازگشت به صفحه اصلی"
+  }
+}

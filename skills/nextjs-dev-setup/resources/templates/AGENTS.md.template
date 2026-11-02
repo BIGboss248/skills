@@ -74,7 +74,16 @@ Full contract: [`.agents/rules/agent-boundaries.md`](./.agents/rules/agent-bound
 
 ---
 
-## 4. Always-Active Lifecycle & Code Intelligence Skills
+## 4. Setup Feature Selection (`.agents/nextjs-setup-features.json`)
+
+Read the recorded selection before assuming a tool exists: a disabled feature is
+deliberate, not broken. `N1`–`N12` map to the runbooks under
+`nextjs-dev-setup/references/features/`. Do not add configuration for a disabled
+feature without enabling it in the selection first.
+
+---
+
+## 5. Always-Active Lifecycle & Code Intelligence Skills
 
 - **Self-Repair (`self-repair`)**: Always read [`.agents/skills/self-repair/SKILL.md`](./.agents/skills/self-repair/SKILL.md) and load [`.agents/autofix.json`](./.agents/autofix.json) at session start and before executing any task. Immediately record any new user correction or preference to `.agents/autofix.json`.
 - **Codebase Memory (`codebase-memory`)**: Always follow [`.agents/skills/codebase-memory/SKILL.md`](./.agents/skills/codebase-memory/SKILL.md) (`index_status` / `index_repository` first, then `search_graph`, `trace_path`, `get_code_snippet`) before searching or exploring the codebase.

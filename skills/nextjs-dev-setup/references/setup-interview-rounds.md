@@ -1,92 +1,114 @@
-# Interactive Multi-Round Setup Interview (Grilling Runbook)
+# Feature-Driven Setup Interview
 
-Conduct the developer setup interview in **progressive, adaptive rounds**. Do not dump a monolithic form. Stop and wait for the user to respond after each round before formulating the next round's questions.
+Conduct the setup interview in **progressive, adaptive rounds**. Stop and wait for
+the user after each round. Never dump a monolithic form, and never ask for facts
+that the repository already answers.
 
 ```mermaid
 flowchart LR
-    R1["Round 1: Target Scope & Tooling"] --> R2["Round 2: Reverse Proxy & Production Hosting"] --> R3["Round 3: CI/CD & Registry Automation"] --> R4["Round 4: Agent Roster & Models"]
+    R1["Round 1: Detected context & preset"] --> R2["Round 2: Categories & feature IDs"] --> R3["Round 3: Per-feature options"] --> R4["Round 4: Record & confirm"]
 ```
 
----
-
-## Round 1: Target Scope & Developer Tooling
-
-Probe the user to determine which architectural layers should be scaffolded and enabled in `docs/project.json`:
-
-1. **Framework Core & Agent Rules**:
-   - Always install the latest release of Next.js (`<pkg_mgr> add next@latest react@latest react-dom@latest`).
-   - Scaffold or update root `AGENTS.md` (or `agent.md`) with the mandatory notice alerting AI agents that their pre-trained context is outdated and mandating local documentation lookup in `node_modules\next\dist\docs`.
-2. **Testing Suites**:
-   - Unit Testing (Jest + React Testing Library)?
-   - E2E & Instant Navigation Testing (Playwright)?
-   - Component Workshop (Storybook CSF3 + Accessibility addon)?
-2. **Internationalization & Locales (`next-intl`)**:
-   - Supported languages, default locale, and directionality (e.g. English `en` [LTR], Persian `fa` [RTL])? *Auto-discovered from `docs/adr/`, `CONTEXT.md`, or `docs/plan.md` per Zero-Interruption Rule.*
-3. **AI & Code Intelligence MCP Servers**:
-   - Next.js Dev Server (`next-devtools`)?
-   - Playwright MCP for browser automation?
-   - Storybook MCP for visual story inspection?
-   - Codebase Memory Graph MCP (`codebase-memory-mcp` with `auto_watch=false`)?
-4. **Styling & Design Tokens**:
-   - Enforce `@shadcn/lint` and ESLint flat config design token verification?
+The menu, presets, and confirmation/report blocks live in
+[feature-selection-interview.md](../resources/templates/feature-selection-interview.md).
+This document holds the detailed question sets.
 
 ---
 
-## Round 2: Reverse Proxy & Production Hosting Strategy
+## Round 1 — Detected context & preset
 
-Probe the user on the production deployment topology, domain routing, and reverse proxy layer:
+Report the detected stack, package manager, source layout, MCP servers, `gh`
+state, Docker availability, and existing setup files. Then ask only:
 
-1. **Hosting & Reverse Proxy Selection**:
-   - **Traefik via Docker Compose**: Automated container discovery using dynamic Compose labels reading from environment variables (`${DOMAIN_NAME}`, `${TRAEFIK_ENTRYPOINT}`, `${TRAEFIK_CERTRESOLVER}`) with anti-buffering middleware.
-   - **Nginx via Host System**: Static site configuration in `/etc/nginx/sites-available/<domain>` using Certbot SSL certificates.
-   - **Standalone Node / Direct Port**: Running directly on host port without reverse proxy labels.
-2. **Domain & Environment Variable Settings**:
-   - What is the production domain / base URL (e.g. `https://example.com`)?
-   - What environment variables will configure Traefik / container runtime (`DOMAIN_NAME`, `PORT`, `CONTAINER_NAME`)?
-   - What is the Certbot domain path for SSL certificates (e.g. `/etc/letsencrypt/live/example.com/`)?
-3. **Server Action & Anti-Buffering Safeguards**:
-   - Confirm allowed origins for Server Actions (`example.com`, `*.example.com`, `localhost:3000`).
-   - Confirm reverse proxy anti-buffering (`X-Accel-Buffering: no`) for Suspense streaming and Partial Prerendering (PPR).
+> Which preset should I use — Minimal, Standard, Full, or Custom?
+
+Do not repeat detection results as questions. Ask for a missing value only when
+the repository is genuinely ambiguous (for example both `app/` and `src/app/`
+exist, or no lockfile is present).
 
 ---
 
-## Round 3: CI/CD, Registry Packaging & Git Hooks
+## Round 2 — Categories & specific feature IDs
 
-Probe the user on repository automation, versioning, and commit conventions:
+Present the four categories and their features with defaults. Ask:
 
-1. **Git Hooks**:
-   - Enable Husky commit-msg checking (`@commitlint/config-conventional`)?
-   - Enable Husky pre-push dual test validation (`pnpm run test:all`)?
-2. **GitHub Actions CI/CD**:
-   - Enable Google Release Please for automated SemVer release PRs and changelogs?
-   - Enable automated multi-arch Docker image compilation (AMD64 + ARM64) to GitHub Container Registry (GHCR)?
+> Which categories should I keep, and do you want to name any specific features
+> (N1–N12) to add or drop?
+
+Rules:
+
+- A category selection enables its default-on features only; it does not silently
+  enable default-off features (`N7`, `N11`).
+- Explicit IDs always win over the category default.
+- Record every add/remove and resolve dependencies immediately (see the
+  dependency table in the interview template).
+- State the resulting `[BLOCKED]` or degraded outcome before moving on.
 
 ---
 
-## Round 4: Agent Roster & Models
+## Round 3 — Per-feature options (enabled only)
 
-Short round. The 3-role roster is the contract; do not offer a 2-role downgrade.
+### Category A — Foundation
 
-1. **Roster Confirmation**:
-   - Install `nextjs-dev`, `nextjs-test-author`, `nextjs-qa-auditor`, and the `nextjs-orchestrator` primary agent?
-   - Install the `/create-nextjs-component` and `/create-nextjs-page` command shortcuts?
-2. **Model Overrides** (default: inherit the primary agent's model):
-   - Orchestrator model?
-   - Implementation (`nextjs-dev`) model?
-   - Test author model?
-   - QA auditor model?
-   - Record every choice in `docs/project.json` → `project_context_and_metadata.agents`; leave `null` to inherit.
-3. **Boundary Confirmation**:
-   - Confirm the operator understands that `nextjs-dev` cannot edit tests, both test agents cannot edit implementation, and edge tests are immutable after creation.
-   - Confirm the repair rule: failing assertions go to the dev agent, not to a test agent.
+- **N2 Framework core**: source layout; providers file; environment templates;
+  global boundaries; editor launch config.
+- **N3 Icons & PWA**: favicon source; app name/short name; theme and background
+  color; icon set (192, 512, maskable).
+- **N4 Internationalization**: locales and default; `localePrefix` (`always` or
+  `as-needed`); dictionaries directory; RTL locales; migrate routes into
+  `app/[locale]/` now or later; confirm `proxy.ts` (Next 16+) vs `middleware.ts`.
+
+### Category B — Testing & Quality
+
+- **N5 Jest**: environment (`jsdom`/`node`); coverage thresholds; script names.
+- **N6 Playwright**: browsers; base URL and port; instant-navigation experiments;
+  whether `test:all` includes E2E.
+- **N7 Storybook**: builder preset; accessibility addon; story location; register
+  Storybook MCP.
+- **N8 Design-system lint**: token stylesheet; rule severity; lint command.
+
+### Category C — Agents
+
+- **N9 Agent roster**: confirm the three-role roster plus orchestrator; model
+  overrides per role (default `null` = inherit); command shortcuts; boundary
+  acknowledgement.
 
 > [!NOTE]
-> Do not ask about agent roster in Round 1. Later rounds depend on the roster being
-> settled, so it runs last and the plan can deploy it in one pass.
+> Do not offer a two-role downgrade. The independent QA auditor is the contract.
+> Record every model choice in `docs/project.json` → `project_context_and_metadata.agents`.
+
+### Category D — Delivery & Operations
+
+- **N10 MCP servers**: accepted servers; install `codebase-memory-mcp` or skip;
+  workspace-only vs global (Antigravity reads only global config); first index
+  mode (`fast`/`moderate`).
+- **N11 Docker & proxy**: image only vs compose; Traefik via Compose labels vs
+  Nginx on the host vs none; domain, port, container name; non-root user;
+  Server Actions allowed origins; `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` source.
+- **N12 Git hooks & CI/CD**: `commit-msg` and `pre-push`; gate level (`test:all`,
+  lint only, none); Release Please; multi-arch GHCR publishing (requires N11);
+  issue forms, PR template, and remote labels.
 
 ---
 
-## Post-Interview Execution Protocol
+## Round 4 — Record, plan, and execute
 
-Present the `implementation_plan.md` artifact summarizing all agreed choices, then
-proceed directly with execution without waiting for manual confirmation.
+1. Write `.agents/nextjs-setup-features.json` from
+   [nextjs-setup-features.schema.json](../resources/templates/nextjs-setup-features.schema.json).
+2. Merge `nextjs_setup_features` into `docs/project.json` when N1 is enabled.
+3. Present the confirmation block and wait for approval.
+4. Generate the `implementation_plan.md` artifact listing every planned package,
+   file, and config delta in dependency order.
+5. Execute the enabled features without further confirmation, then verify.
+
+---
+
+## Question-writing rules
+
+- One topic per question; offer a recommended option first and label it
+  `(Recommended)`.
+- Never ask a question that the selection already answers.
+- Prefer multi-select for independent toggles (servers, suites, icons) and
+  single-select for mutually exclusive choices (proxy type, package manager).
+- When the user declines to choose, apply the documented default and say so in
+  the plan.

@@ -53,9 +53,9 @@ Always use YAML folded block scalars (`>-`) or single lines for clean readabilit
 
 ```yaml
 ---
-name: nextjs-i18n-setup
+name: nextjs-integration-setup
 description: >-
-  Configure next-intl internationalization for Next.js App Router. Use when
-  setting up multi-language routing, translation dictionaries, or locale middleware.
+  Configure a Next.js App Router integration. Use when setting up multi-language
+  routing, translation dictionaries, or locale middleware.
 ---
 ```

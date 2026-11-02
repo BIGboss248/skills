@@ -1,203 +1,180 @@
 ---
 name: nextjs-dev-setup
 description: >-
-  Bootstrap, configure, and verify the complete Next.js App Router development environment, developer tooling, internationalization (next-intl), testing suites, MCP servers, Docker containerization, and CI/CD. Triggers on "/nextjs-dev-setup", "setup nextjs dev environment", "start a nextjs project", or "containerize nextjs app".
+  Feature-driven bootstrap, configuration, and verification of a Next.js App Router
+  development environment: framework core, internationalization (next-intl),
+  testing suites (Jest, Playwright, Storybook), design-system linting, agent
+  roster, MCP servers, Docker + reverse proxy, and CI/CD. Triggers on
+  "/nextjs-dev-setup", "setup nextjs dev environment", "start a nextjs project",
+  or "containerize nextjs app".
+metadata:
+  author: BIGBOSS248
+  version: "2.0"
 ---
 
-# Next.js Development Setup (`nextjs-dev-setup`)
+# Next.js Development Setup (Feature-Driven)
 
-A structured, end-to-end orchestration runbook for discovering, configuring, and verifying the Next.js App Router development environment, internationalization (`next-intl`), reverse proxy routing (Traefik / Nginx), and single source of truth at `docs/project.json`.
+Turns Next.js onboarding into a **menu of independently selectable features**,
+grouped by category. Interview first, deploy only what the user enables, and
+verify only what was deployed.
 
----
+## Contract
 
-## Pre-Conditions & Discovery
+- **No writes before selection.** Phase 1 ends with explicit confirmation.
+- **Selected only.** Disabled features are reported `[SKIPPED]` and left untouched.
+- **Categories first, IDs always allowed.** Users may keep whole categories or
+  name specific features (`N1`–`N12`).
+- **Dependencies are explicit.** Missing prerequisites produce `[BLOCKED]` or a
+  documented degraded result — never a silent partial install.
+- **Idempotent.** Re-running merges and updates; never overwrite existing
+  configuration or machine-owned blocks.
+- **No dummy tests, stories, or pages.** Scaffold infrastructure only (Rule 3).
+- **Outdated Next.js context.** Before using any Next.js API, directive, or
+  caching primitive, consult `node_modules/next/dist/docs` through
+  `codebase-memory`. Training data is not authoritative here.
 
-- [ ] **Zero-Interruption Scan**: Scan existing repository files (`package.json`, lockfiles, stylesheets, `docs/adr/*.md`, `docs/plan.md`, `CONTEXT.md`) before asking questions.
-- [ ] Consult [project-json-schema.md](./references/project-json-schema.md) for metadata structure and automated deduction rules.
+## Phase 1 — Feature Selection Interview (mandatory)
 
----
+### 1.1 Detect first (no questions yet)
 
-## Phase 0: Multi-Round Setup Interview (Grilling) & Plan Generation
+Scan `package.json`, lockfiles, `app/` vs `src/app/`, `docs/` and `docs/adr/*`,
+`AGENTS.md`, `.opencode/agents/`, `mcp.json`, `.husky/`, `.github/`, `Dockerfile`,
+`.storybook/`, and `docs/project.json`. Also read `.agents/nextjs-setup-features.json`
+and `.agents/setup-features.json` from previous runs. Only ask about what cannot
+be detected.
 
-Conduct the interactive interview in **progressive, adaptive rounds** (waiting for user response after each round) to tailor the setup:
+### 1.2 Present categories and the feature catalog
 
-1. **Round 1 (Scope & Tooling)**: Probe target testing suites (Jest, Playwright, Storybook), i18n locales (`en`, `fa`, etc. auto-deduced per zero-interruption scan), MCP servers, and `@shadcn/lint` enforcement.
-2. **Round 2 (Reverse Proxy & Production Hosting)**: Probe domain name, port, and reverse proxy strategy:
-   - **Traefik via Docker Compose**: Automated container discovery using Compose labels reading from environment variables (`${DOMAIN_NAME}`, `${TRAEFIK_ENTRYPOINT}`, `${TRAEFIK_CERTRESOLVER}`) with anti-buffering.
-   - **Nginx via Host System**: Standalone configuration in `/etc/nginx/sites-available/<domain>` using Certbot SSL certificates.
-3. **Round 3 (CI/CD, Git Hooks & Registry)**: Probe Husky pre-push test suites, Commitlint, and GitHub Actions Release Please / GHCR workflows.
-4. **Round 4 (Agent Roster & Models)**: Confirm the 3-role agent roster (`nextjs-dev`, `nextjs-test-author`, `nextjs-qa-auditor`) plus the `nextjs-orchestrator` primary agent, and collect an optional model override per role (default: inherit the primary agent's model).
-5. Consult [setup-interview-rounds.md](./references/setup-interview-rounds.md) for complete question sets and branching logic.
-6. **Plan & Execution**: Generate and present an `implementation_plan.md` artifact detailing all planned file creations, configurations, and packages before applying changes, and proceed directly with execution without waiting for manual confirmation.
+| Category | Feature | Default | Depends on |
+| :--- | :--- | :--- | :--- |
+| **A — Foundation** | N1 Project metadata (`docs/project.json`) | on | — |
+| | N2 Framework core & app shell | on | N1 |
+| | N3 App icons & PWA manifest | on | N2 |
+| | N4 Internationalization (`next-intl`) | on | N1, N2 |
+| **B — Testing & Quality** | N5 Jest unit testing | on | N2 |
+| | N6 Playwright E2E & instant navigation | on | N2 |
+| | N7 Storybook workshop | off | N2 |
+| | N8 Design-system lint (`@shadcn/lint`) | on | N2 |
+| **C — Agents** | N9 Agent roster & permission boundaries | on | N2 |
+| **D — Delivery & Operations** | N10 MCP servers & codebase memory | on if installed | N1 |
+| | N11 Docker & reverse proxy | off | N2 |
+| | N12 Git hooks, triage & CI/CD | on | N2, N5/N6 for the gate |
 
----
+Use [feature-selection-interview.md](./resources/templates/feature-selection-interview.md)
+for the menu, presets, dependency-resolution rules, and report template.
 
-## Step-by-Step Execution Flow
+### 1.3 Ask in adaptive rounds
 
-### Stage 1: Project Metadata, Latest Next.js & Internationalization (`next-intl`)
+1. **Preset** — Minimal (`N1, N2`), Standard (`N1`–`N6`, `N8`–`N10`, `N12`),
+   Full (all applicable), or Custom.
+2. **Categories and adjustments** — keep or drop categories, then accept explicit
+   feature IDs to add or remove. Record every change.
+3. **Per-feature options** — only for enabled features. Question sets:
+   [setup-interview-rounds.md](./references/setup-interview-rounds.md) and each
+   runbook under [references/features/](./references/features/).
 
-1. **Project Metadata**: Initialize `docs/project.json` using [project.template.json](./resources/templates/project.template.json) based on user interview choices and discovered locales.
-2. **Install Latest Next.js Framework Core**:
-   - Always install the latest release of Next.js and peer React dependencies: `<pkg_mgr> add next@latest react@latest react-dom@latest` (or `<pkg_mgr> create next-app@latest` when scaffolding from scratch). Never pin or freeze to older major/minor versions.
-3. **Agent Rules & Outdated Context Notice (`AGENTS.md`)**:
-   - Scaffold or update root `AGENTS.md` (or `agent.md`) using [AGENTS.md.template](./resources/templates/AGENTS.md.template).
-   - **Mandatory Notice**: Prominently alert agents that their pre-trained context regarding Next.js is inherently outdated. Mandate that for ANY Next.js task, agents must search and consult the local distribution documentation in `node_modules\next\dist\docs` (or `node_modules/next/dist/docs/`) using `codebase-memory` MCP tools (`search_code`, `search_graph`, `get_code_snippet`) before authoring code.
-4. **Install Internationalization Runtime**: Run `<pkg_mgr> add next-intl` (`pnpm add next-intl`).
-5. **Scaffold `next-intl` Architectural Core**:
-   - `i18n/routing.ts`: Configure `defineRouting` with supported locales and default locale using [routing.ts.template](./resources/templates/i18n/routing.ts.template).
-   - `i18n/request.ts`: Configure server request handler using modern `next/root-params` (`await rootParams.locale()`) using [request.ts.template](./resources/templates/i18n/request.ts.template).
-   - `i18n/navigation.ts`: Export pure TypeScript navigation utilities (`Link`, `redirect`, `usePathname`, `useRouter`, `getPathname`) using [navigation.ts.template](./resources/templates/i18n/navigation.ts.template).
-   - **Request Interceptor**: Deploy [proxy.ts.template](./resources/templates/proxy.ts.template) for Next.js 16+ (`proxy.ts`), or [middleware.ts.template](./resources/templates/middleware.ts.template) for Next.js <=15 (`middleware.ts`).
-   - **Starter Dictionaries**: Deploy baseline catalogs to `messages/en.json` and `messages/fa.json` (or configured locales) using [en.json.template](./resources/templates/messages/en.json.template) and [fa.json.template](./resources/templates/messages/fa.json.template).
-   - **Root Locale Layout**: Scaffold `app/[locale]/layout.tsx` using [locale-layout.tsx.template](./resources/templates/locale-layout.tsx.template) with `generateStaticParams()`, dynamic `lang`/`dir`, and `<NextIntlClientProvider>`.
-   - **Global Types**: Declare `AppConfig.Messages` in `global.d.ts` using [global.d.ts.template](./resources/templates/global.d.ts.template).
-   - Consult [i18n-setup-guide.md](./references/i18n-setup-guide.md) for in-depth rules and architecture.
-6. **Developer Tooling & Providers**:
-   - Configure `.vscode/launch.json` using [vscode-launch.json.template](./resources/templates/vscode-launch.json.template).
-   - Scaffold `app/providers.tsx` with `<ProgressBarProvider>` using [providers.tsx.template](./resources/templates/providers.tsx.template).
-   - Scaffold composite `<Link>` in `app/components/Link.tsx` using [Link.tsx.template](./resources/templates/Link.tsx.template) combining `@/i18n/navigation` with progress bar triggers.
-   - Scaffold `.env.example` using [env.example.template](./resources/templates/env.example.template) for production and `.env.development` using [env.local.template](./resources/templates/env.local.template) for local development (Rule 39).
-   - **App Icons, Apple Icon & PWA Manifest**: Deploy [manifest.ts.template](./resources/templates/manifest.ts.template) to `app/manifest.ts`. Configure root `app/favicon.ico`, `app/icon.png`, and `app/apple-icon.png` per [app-icons-and-pwa-guide.md](./references/app-icons-and-pwa-guide.md).
+### 1.4 Resolve and record
 
-### Stage 1.5: Agent Roster & Permission Boundaries
+- Resolve dependencies; confirm each degraded mode explicitly.
+- Write `.agents/nextjs-setup-features.json` using
+  [nextjs-setup-features.schema.json](./resources/templates/nextjs-setup-features.schema.json).
+- When N1 is enabled, merge `nextjs_setup_features` into `docs/project.json`.
+- Present the confirmation block and wait for approval before Phase 2.
 
-Install the role agents that enforce component/test separation in this repository. Read [agent-roster-guide.md](./references/agent-roster-guide.md) for the full model.
+## Phase 2 — Execute Enabled Features
 
-1. **Collect model overrides** from Round 4. For each role, `{{MODEL_LINE}}` becomes `model: <provider>/<model>` or an empty line to inherit the primary agent's model.
-2. **Deploy the roster.** Create `.opencode/agents/`, `.opencode/commands/`, and `.agents/rules/` when missing, then deploy from [agents/](./resources/templates/agents/) and [rules/](./resources/templates/rules/):
-   - [nextjs-dev.md.template](./resources/templates/agents/nextjs-dev.md.template) → `.opencode/agents/nextjs-dev.md`
-   - [nextjs-test-author.md.template](./resources/templates/agents/nextjs-test-author.md.template) → `.opencode/agents/nextjs-test-author.md`
-   - [nextjs-qa-auditor.md.template](./resources/templates/agents/nextjs-qa-auditor.md.template) → `.opencode/agents/nextjs-qa-auditor.md`
-   - [nextjs-orchestrator.md.template](./resources/templates/agents/nextjs-orchestrator.md.template) → `.opencode/agents/nextjs-orchestrator.md`
-   - [agent-boundaries.md.template](./resources/templates/rules/agent-boundaries.md.template) → `.agents/rules/agent-boundaries.md`
-3. **Substitute placeholders** — never leave a `{{TOKEN}}` in a deployed file:
+Run in dependency order:
+**N1 → N2 → N3 → N4 → N9 → N5 → N6 → N7 → N8 → N10 → N11 → N12**.
 
-   | Token | pnpm | npm | yarn | bun |
-   | :--- | :--- | :--- | :--- | :--- |
-   | `{{PM}}` | `pnpm` | `npm` | `yarn` | `bun` |
-   | `{{PM_RUN}}` | `pnpm` | `npm run` | `yarn` | `bun run` |
-   | `{{MODEL_LINE}}` | `model: …` or empty line | same | same | same |
+For each enabled feature:
 
-4. **Install the command shortcuts** from [commands/](./resources/templates/commands/):
-   - [create-nextjs-component.md.template](./resources/templates/commands/create-nextjs-component.md.template) → `.opencode/commands/create-nextjs-component.md`
-   - [create-nextjs-page.md.template](./resources/templates/commands/create-nextjs-page.md.template) → `.opencode/commands/create-nextjs-page.md`
-5. **Record the roster** in `docs/project.json` under `project_context_and_metadata.agents` (names, paths, model overrides, `enabled: true`).
-6. **Update `AGENTS.md`** with the Agent Roster & Delegation section from [AGENTS.md.template](./resources/templates/AGENTS.md.template).
-7. **Verify discovery**: run `opencode debug agents` where the CLI is available and confirm all four agents load. New agent files register on the next session, not the current one.
+- [ ] Generate the `implementation_plan.md` artifact (files, packages, config
+      deltas) once, before the first write.
+- [ ] Open its runbook and follow it exactly.
+- [ ] Run its acceptance check.
+- [ ] Record `[IMPLEMENTED]`, `[UNTOUCHED]`, `[SKIPPED]`, or `[BLOCKED]` with a
+      reason.
 
-> [!IMPORTANT]
-> **No placeholder tests (Rule 3).** Stage 1.5 configures agents only. It never creates sample or dummy test files.
+| Feature | Runbook |
+| :--- | :--- |
+| N1 Project metadata | [01-project-metadata.md](./references/features/01-project-metadata.md) |
+| N2 Framework core & app shell | [02-framework-core.md](./references/features/02-framework-core.md) |
+| N3 App icons & PWA | [03-app-icons-pwa.md](./references/features/03-app-icons-pwa.md) |
+| N4 Internationalization | [04-internationalization.md](./references/features/04-internationalization.md) |
+| N5 Jest | [05-jest-unit-testing.md](./references/features/05-jest-unit-testing.md) |
+| N6 Playwright | [06-playwright-e2e.md](./references/features/06-playwright-e2e.md) |
+| N7 Storybook | [07-storybook.md](./references/features/07-storybook.md) |
+| N8 Design-system lint | [08-design-system-lint.md](./references/features/08-design-system-lint.md) |
+| N9 Agent roster | [09-agent-roster.md](./references/features/09-agent-roster.md) |
+| N10 MCP servers | [10-mcp-servers.md](./references/features/10-mcp-servers.md) |
+| N11 Docker & proxy | [11-docker-reverse-proxy.md](./references/features/11-docker-reverse-proxy.md) |
+| N12 Git hooks & CI/CD | [12-git-hooks-cicd.md](./references/features/12-git-hooks-cicd.md) |
 
----
+Do not touch files owned only by disabled features — not even to "prepare" them.
 
-### Stage 2: Testing Suites (Jest, Playwright & Instant Navigation)
+### Interop with `setup-repository`
 
-> [!IMPORTANT]
-> **No Dummy Test Files (Rule 3):** Do not create placeholder/sample test files in the workspace. Configure framework files and scripts only. Sample patterns are available in [sample-component.test.tsx](./examples/sample-component.test.tsx), [sample-navigation.spec.ts](./examples/sample-navigation.spec.ts), and [sample-component.stories.tsx](./examples/sample-component.stories.tsx).
+`setup-repository` owns repository-level features (`F1`–`F11`); this skill owns
+app-level features. When a repository-level feature already ran, verify instead
+of re-scaffolding and report `[UNTOUCHED]`:
 
-1. **Jest Unit Testing**: Configure [jest.config.ts.template](./resources/templates/jest.config.ts.template) and [jest.setup.ts.template](./resources/templates/jest.setup.ts.template).
-2. **Playwright E2E & Instant Navigation**: Install `@playwright/test` and `@next/playwright` (`pnpm add -D @playwright/test @next/playwright`), configure [playwright.config.ts.template](./resources/templates/playwright.config.ts.template), and install browsers.
-3. **Next.js Instant Config**: Configure `cacheComponents: true`, `partialPrefetching: true`, and instant insights in `next.config.ts`.
-4. **Storybook Workshop**: Configure [.storybook/main.ts](./resources/templates/storybook-main.ts.template) and [.storybook/preview.tsx](./resources/templates/storybook-preview.tsx.template) (wrapping stories with `NextIntlClientProvider` and `ProgressBarProvider` per Rule 25).
-5. Review architectures in [testing-guide.md](./references/testing-guide.md) and [storybook-guide.md](./references/storybook-guide.md).
+| This skill | Repository skill | Overlap |
+| :--- | :--- | :--- |
+| N1 | F1 Project metadata | same `docs/project.json` |
+| N4 | F11 Next.js i18n | identical next-intl contract |
+| N10 | F3 MCP servers | same `mcp.json` / `.cbmignore` |
+| N11 | F5 Production Docker | same Dockerfile / compose |
+| N12 | F4/F7/F8 Git hooks, triage, release | same `.husky/`, `.github/` |
 
-### Stage 3: Dual MCP Server Configuration
+## Phase 3 — Verify
 
-> [!IMPORTANT]
-> **Antigravity Global MCP Loading Rule:** AG only loads MCP servers configured globally on the host system (`~/.gemini/antigravity/mcp_config.json` and `~/.gemini/config/mcp_config.json`). Workspace `mcp.json` is maintained for portability. Both must be configured.
+- [ ] Run the selection-aware verifier:
+  - **Windows (PowerShell)**:
+    `powershell -ExecutionPolicy Bypass -File .agents/skills/nextjs-dev-setup/scripts/verify-project-config.ps1`
+  - **Linux / macOS (Bash)**:
+    `bash .agents/skills/nextjs-dev-setup/scripts/verify-project-config.sh`
+  - It reads `.agents/nextjs-setup-features.json` (fallback
+    `docs/project.json → nextjs_setup_features`) and reports unchecked features
+    as `SKIPPED`. Pass `-AllFeatures` / `--all` to audit the whole repository.
+- [ ] Re-run each enabled feature's runbook acceptance list; the script cannot
+      certify the build, the browser, or the agent permissions.
+- [ ] Fix reported errors and re-verify until the enabled set is clean.
+- [ ] Confirm disabled features were left untouched.
 
-1. Configure `next-devtools`, `playwright`, `storybook`, and `codebase-memory-mcp`.
-2. **Stutter Prevention**: Set `auto_watch = false` via `codebase-memory-mcp config set auto_watch false` and deploy root [.cbmignore](./resources/templates/cbmignore.template).
-3. Review full specs in [mcp-configuration-guide.md](./references/mcp-configuration-guide.md).
+## Phase 4 — Report and Handoff
 
-### Stage 4: Agent-First Design System Linting (`@shadcn/lint`)
+Produce the report from
+[feature-selection-interview.md](./resources/templates/feature-selection-interview.md#7-execution-report-template):
 
-1. Install `@shadcn/lint` and configure ESLint flat config using [eslint.config.mjs.template](./resources/templates/eslint.config.mjs.template).
-2. Review mechanics in [styling-and-linting-guide.md](./references/styling-and-linting-guide.md).
-
-### Stage 5: Standalone Production Docker & Reverse Proxy (Traefik / Nginx)
-
-1. In `next.config.ts`: wrap config with `withNextIntl = createNextIntlPlugin()` using [next.config.ts.template](./resources/templates/next.config.ts.template), resolve Git commit hash and package version, inject `NEXT_PUBLIC_APP_VERSION` and `NEXT_PUBLIC_GIT_COMMIT_HASH` under `env`, enable `output: "standalone"`, set `deploymentId` (`${pkg.version}-${gitHash}`), configure `headers` with `X-Accel-Buffering: no`, and set `experimental.serverActions.allowedOrigins`.
-2. Document `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` in `.env.example` and pass it to runtime environments.
-3. Deploy [Dockerfile.template](./resources/templates/Dockerfile.template) (with `STOPSIGNAL SIGTERM`) and [docker-compose.yml.template](./resources/templates/docker-compose.yml.template) (with `stop_grace_period: 30s`).
-4. **Reverse Proxy Configuration**:
-   - **Traefik**: Deploy [docker-compose.prod.yml.template](./resources/templates/docker-compose.prod.yml.template) with dynamic environment variable labels (`${DOMAIN_NAME}`, `${TRAEFIK_ENTRYPOINT}`, `${TRAEFIK_CERTRESOLVER}`) and anti-buffering middleware.
-   - **Nginx**: Deploy or output [nginx-site.conf.template](./resources/templates/nginx-site.conf.template) for `/etc/nginx/sites-available/<domain>` with Certbot SSL certificates.
-5. Review architecture and multi-container cache drift callout in [docker-containerization-guide.md](./references/docker-containerization-guide.md).
-
-### Stage 6: Git Hooks, GitHub Triage Setup & Credit-Optimized CI/CD
-
-1. Install `husky`, `@commitlint/cli`, `@commitlint/config-conventional`.
-2. Configure [commitlint.config.mjs.template](./resources/templates/commitlint.config.mjs.template), `.husky/commit-msg`, and `.husky/pre-push` (`pnpm run test:all`).
-3. **GitHub Triage Infrastructure Setup**: Execute [`init_triage_infra.ps1`](./scripts/init_triage_infra.ps1) to scaffold `.github/ISSUE_TEMPLATE/bug_report.yml` (from [bug_report.yml.template](./resources/templates/bug_report.yml.template)) and `.github/ISSUE_TEMPLATE/config.yml` (from [issue_config.yml.template](./resources/templates/issue_config.yml.template)), and provision remote triage labels (`bug`, `agent-triage`, `self-repair`, `verified`) for `github-triage`.
-4. Deploy [.github/workflows/release-please.yml](./resources/templates/release-please.yml.template) with `.next/cache` build caching and multi-arch matrix publishing.
-5. Review caching and triage setup in [cicd-and-release-automation-guide.md](./references/cicd-and-release-automation-guide.md).
-
-### Stage 7: Final Execution Report & Verification
-
-1. Execute the configuration verification script and ensure all checks pass.
-2. Stage all created/modified files in git (`git add .`) per Rule 36.
-3. **Mandatory Final Output**: Render the complete, structured **Next.js Dev Setup Execution Report** markdown table summarizing all implemented files, verification check results, and next development steps.
-
----
-
-## Verification & Sanity Check
-
-- [ ] Execute configuration verification script:
-  - **Windows (PowerShell)**: `powershell -ExecutionPolicy Bypass -File .agents/skills/nextjs-dev-setup/scripts/verify-project-config.ps1`
-  - **Linux / macOS (Bash)**: `bash .agents/skills/nextjs-dev-setup/scripts/verify-project-config.sh`
-- [ ] Confirm the agent roster check passes: all four agent files exist, `nextjs-dev` denies `**/*.test.tsx`, both test agents deny `edit` by default, all three subagents deny `task`, and no `{{TOKEN}}` placeholder remains.
-- [ ] When the OpenCode CLI is available, run `opencode debug agents` and confirm `nextjs-dev`, `nextjs-test-author`, `nextjs-qa-auditor`, and `nextjs-orchestrator` are listed with their expected permission order.
-- [ ] Fix any reported errors and re-verify until all checks pass.
-
----
+- one row per feature (enabled and disabled) with status and reason;
+- the exact commands run and their results;
+- `git add` commands limited to selected features; leave committing to the user;
+- next development steps (dev server, first page/component command, pending
+  features).
 
 ## Edge Cases & Known AI Pitfalls
 
-- **Outdated Next.js Context & Hallucinations**: Model training cutoffs predate recent Next.js releases. Never assume API shapes, directives, or caching mechanisms from memory. Query `node_modules\next\dist\docs` via `codebase-memory` MCP.
-- **Latest Version Enforcement**: Always install `next@latest react@latest react-dom@latest`. Never pin to legacy or older major/minor versions.
-- **Chained Commands**: Never chain commands with `&&` or `;` on a single line in terminal execution.
-- **MCP Disabling**: In AG global configs, `agy.exe` ignores `"disabled": true` inside `mcpServers`. Move disabled servers outside `mcpServers`.
-- **Docker Image Names**: Docker OCI naming strictly requires lowercase repository names (`IMAGE_NAME=$(echo ... | tr '[:upper:]' '[:lower:]')`).
-- **Storybook Intl Context**: Always wrap Storybook stories rendering `Link` or `useTranslations` with `NextIntlClientProvider` and `ProgressBarProvider` (Rule 25).
-- **Navigation Purity**: `i18n/navigation.ts` must remain pure TypeScript without JSX. Component wrappers like `Link` belong in `app/components/Link.tsx` (Rule 11).
-- **Agent Roster Placeholders**: A deployed agent file containing `{{MODEL_LINE}}`, `{{PM}}`, or `{{PM_RUN}}` is invalid and will be rejected by the verification script. Substitute before writing.
-- **Agent Discovery Timing**: New `.opencode/agents/*.md` files register on the next session. Do not claim the roster is active inside the session that created it.
-- **Edit Deny Scope**: In OpenCode, `edit: deny` removes the write, edit, and apply-patch tools. It does not block shell redirection, which is why the templates also deny `*>*`, `*;*`, `Set-Content`, `Out-File`, and friends.
-- **Harness Support**: The roster is OpenCode-specific. Other harnesses fall back to prompt-level roles plus the orchestrator's write audit (`DEGRADED: agent permissions unavailable`).
-
----
-
-## Mandatory Final Output: Execution Report Template
-
-Always output this report upon completing the skill workflow:
-
-```markdown
-## 🛠️ Next.js Dev Setup Execution Report
-
-| Step / Component                     | Target File(s) / Resource                                                                              | Status                          | Notes / Details                                                                  |
-| :----------------------------------- | :----------------------------------------------------------------------------------------------------- | :------------------------------ | :------------------------------------------------------------------------------- |
-| **1. Project Metadata**              | `docs/project.json`                                                                                    | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured package manager, directories, animation & i18n metadata.              |
-| **2. Agent Guidance & Notice**       | `AGENTS.md` / `agent.md`                                                                               | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured mandatory outdated context notice & `node_modules\next\dist\docs` lookup rule. |
-| **3. Internationalization (next-intl)** | `i18n/routing.ts`, `i18n/request.ts`, `i18n/navigation.ts`, `proxy.ts`/`middleware.ts`, `messages/`    | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured next-intl with root-params, proxy interceptor, pure TS navigation & starter dictionaries. |
-| **4. App Icons & PWA Manifest**      | `app/manifest.ts`, `app/favicon.ico`, `app/apple-icon.png`, `app/icon.png`                             | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured root favicon, Apple touch icon, and Web App Manifest using user favicon. |
-| **5. Core Dependencies**             | `package.json`, Lockfile                                                                               | `[IMPLEMENTED]` / `[UNTOUCHED]` | Verified React, Next.js (always latest: `next@latest`), next-intl, styling, and motion libraries. |
-| **6. Next.js Dev Server MCP**        | `~/.gemini/antigravity/mcp_config.json`, `mcp.json`, `.agents/plugins/workspace-tools/mcp_config.json` | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured Next.js Dev Server (`next-devtools`) globally for AG & in workspace.  |
-| **7. Playwright & Instant Testing** | `playwright.config.ts`, `@next/playwright`, `mcp.json`, `~/.gemini/antigravity/mcp_config.json` | `[IMPLEMENTED]` / `[UNTOUCHED]` | Verified runner, browsers, Playwright MCP & `@next/playwright` instant navigation helper. |
-| **8. Codebase Memory & Stutter Fix** | `.cbmignore`, `mcp.json`, `~/.gemini/antigravity/mcp_config.json`, `auto_watch=false`                  | `[IMPLEMENTED]` / `[UNTOUCHED]` | Registered MCP, configured .cbmignore exclusions, and disabled session watcher.  |
-| **9. Jest Unit Testing**             | `jest.config.ts`, `jest.setup.ts`                                                                      | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured Next.js Jest transformer, jsdom environment & test-dom.               |
-| **10. Storybook & Storybook MCP**     | `.storybook/main.ts`, `.storybook/preview.tsx`, `mcp.json`, `~/.gemini/antigravity/mcp_config.json`    | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured Storybook Vite, a11y, NextIntl decorator & Storybook AI MCP.          |
-| **11. Agent-First Tailwind Linter**  | `eslint.config.mjs`, `package.json`                                                                    | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured `@shadcn/lint` for agent verification of design tokens and contracts. |
-| **12. Docker & Reverse Proxy**       | `Dockerfile`, `docker-compose.prod.yml`, `nginx-site.conf`, `.dockerignore`                            | `[IMPLEMENTED]` / `[UNTOUCHED]` | Standalone container, Traefik labels / Nginx HTTPS with Certbot SSL.             |
-| **13. Husky Git Hooks**              | `.husky/commit-msg`, `.husky/pre-push`                                                                 | `[IMPLEMENTED]` / `[UNTOUCHED]` | Enforces dual pre-push test suite (Jest + Playwright) & commitlint.              |
-| **14. Commitlint Config**            | `commitlint.config.mjs`                                                                                | `[IMPLEMENTED]` / `[UNTOUCHED]` | Configured `@commitlint/config-conventional`.                                    |
-| **15. GitHub Triage Infrastructure** | `.github/ISSUE_TEMPLATE/bug_report.yml`, `.github/ISSUE_TEMPLATE/config.yml`, GitHub Labels            | `[IMPLEMENTED]` / `[UNTOUCHED]` | Scaffolded issue templates and synced `bug`, `agent-triage`, `self-repair`, `verified` labels. |
-| **16. Release & CI Build Caching**   | `.github/workflows/release-please.yml`                                                                 | `[IMPLEMENTED]` / `[UNTOUCHED]` | Next.js build cache (.next/cache), SemVer release PRs & GHCR multi-arch pkg.     |
-| **17. Agent Roster & Permissions**   | `.opencode/agents/*.md`, `.opencode/commands/*.md`, `.agents/rules/agent-boundaries.md`                | `[IMPLEMENTED]` / `[UNTOUCHED]` | Dev/test/auditor subagents + orchestrator, permission boundaries, command shortcuts. |
-| **18. Environment Verification**     | `scripts/verify-project-config.ps1` / `.sh`                                                            | `[PASSED]`                      | Sanity check passed with zero errors, including agent roster checks.            |
-
-#### Status Definitions:
-- **`[IMPLEMENTED]`**: Freshly created, installed, or modified during this setup run.
-- **`[UNTOUCHED]`**: Already properly configured prior to running the skill; preserved as-is.
-- **`[SKIPPED]`**: Intentionally omitted based on user preference.
-```
+- **Outdated Next.js context** — never assume API shapes, directives, or caching
+  behavior from memory; query the local docs first.
+- **Latest version enforcement** — always install `next@latest react@latest
+  react-dom@latest`; never pin an older major/minor.
+- **Chained commands** — never chain with `&&` or `;` in a single terminal call.
+- **N2 overwrites** — compose `next.config.*` and provider files instead of
+  replacing them; N4/N6/N11 each add keys to the same config.
+- **N4 double scaffolding** — when `setup-repository` F11 already ran, verify and
+  report `[UNTOUCHED]`; rewriting loses route migrations.
+- **N9 placeholders** — a deployed agent file containing `{{MODEL_LINE}}`,
+  `{{PM}}`, or `{{PM_RUN}}` is invalid; substitute before writing.
+- **N9 discovery timing** — new `.opencode/agents/*.md` files register on the next
+  session; do not claim the roster is active inside the creating session.
+- **N10 selection** — never enable every MCP server silently; each one adds tool
+  definitions to every request. Register only the accepted set.
+- **N11 image names** — Docker OCI names must be lowercase.
+- **N12 test gate** — never point `pre-push` at a script that does not exist;
+  degrade to lint only and record it.
+- **Storybook intl context** — wrap stories with `NextIntlClientProvider` (when
+  N4 is enabled) and `ProgressBarProvider`.
+- **Navigation purity** — `i18n/navigation.ts` stays pure TypeScript; component
+  wrappers belong in `app/components/`.
+- **No placeholders** — placeholder tests, stories, or pages are a contract
+  violation, not a convenience.

@@ -15,16 +15,72 @@ MAGENTA="\033[35m"
 
 JSON_MODE=false
 CUSTOM_CONFIG=""
+ALL_FEATURES=false
+SELECTION_PATH=".agents/nextjs-setup-features.json"
 
-for arg in "$@"; do
-  if [ "$arg" == "--json" ]; then
-    JSON_MODE=true
-  else
-    CUSTOM_CONFIG="$arg"
-  fi
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --json) JSON_MODE=true ;;
+    --all) ALL_FEATURES=true ;;
+    --selection)
+      shift
+      if [ $# -gt 0 ]; then SELECTION_PATH="$1"; fi
+      ;;
+    *) CUSTOM_CONFIG="$1" ;;
+  esac
+  shift
 done
 
 ROOT_DIR="$(pwd)"
+
+# Feature selection (.agents/nextjs-setup-features.json, fallback docs/project.json)
+SELECTION_FILE=""
+if [ "$ALL_FEATURES" = false ]; then
+  for candidate in "$SELECTION_PATH" "docs/project.json"; do
+    if [ -f "$candidate" ]; then
+      SELECTION_FILE="$candidate"
+      break
+    fi
+  done
+fi
+
+ENABLED_FEATURES=""
+if [ -n "$SELECTION_FILE" ] && command -v node >/dev/null 2>&1; then
+  ENABLED_FEATURES=$(node -e '
+    const fs = require("fs");
+    try {
+      let data = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+      data = data.nextjs_setup_features || data;
+      if (Array.isArray(data.enabled)) console.log(data.enabled.join(" "));
+    } catch (error) {
+      /* unreadable selection: audit every feature */
+    }
+  ' "$SELECTION_FILE")
+fi
+
+feature_enabled() {
+  [ -z "$ENABLED_FEATURES" ] && return 0
+  case " $ENABLED_FEATURES " in
+    *" $1 "*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+check_feature() {
+  case "$1" in
+    "Commitlint Configuration"|"Husky Git Hooks"|"Release Please CI/CD"|"GitHub Triage Infrastructure") echo "N12" ;;
+    "Jest Test Runner") echo "N5" ;;
+    "Playwright Test Runner") echo "N6" ;;
+    "Workspace MCP Server Integration"|"Antigravity Global MCP Integration"|"Codebase Memory Exclusions (.cbmignore)") echo "N10" ;;
+    "Docker Containerization") echo "N11" ;;
+    "Agent-First Tailwind Linter (@shadcn/lint)") echo "N8" ;;
+    "App Icons & PWA Web Manifest") echo "N3" ;;
+    "Next.js Internationalization (next-intl)") echo "N4" ;;
+    "Next.js Core Dependency (next@latest)"|"Agent Instructions & Docs Notice"*) echo "N2" ;;
+    "Agent Roster & Permission Boundaries") echo "N9" ;;
+    *) echo "" ;;
+  esac
+}
 
 resolve_config_path() {
   if [ -n "$CUSTOM_CONFIG" ] && [ -f "$CUSTOM_CONFIG" ]; then
@@ -72,17 +128,21 @@ if [ -f "$CONFIG_FILE" ]; then
     IS_VALID_JSON=true
   fi
 else
-  ERRORS+=("Configuration file not found at: $CONFIG_FILE")
+  if feature_enabled N1; then
+    ERRORS+=("Configuration file not found at: $CONFIG_FILE")
+  fi
 fi
 
-if [ "$FILE_EXISTS" = true ] && [ "$IS_VALID_JSON" = false ]; then
+if [ "$FILE_EXISTS" = true ] && [ "$IS_VALID_JSON" = false ] && feature_enabled N1; then
   ERRORS+=("Invalid JSON syntax in '$CONFIG_FILE'")
 fi
 
 # Schema validations using node or jq if available
-if [ "$IS_VALID_JSON" = true ]; then
+if [ "$IS_VALID_JSON" = true ] && feature_enabled N1; then
   if command -v node >/dev/null 2>&1; then
-    SCHEMA_RES=$(node -e "
+    DICT_REQUIRED=false
+    feature_enabled N4 && DICT_REQUIRED=true
+    SCHEMA_RES=$(DICT_REQUIRED="$DICT_REQUIRED" node -e "
       const fs = require('fs');
       try {
         const data = JSON.parse(fs.readFileSync('$CONFIG_FILE', 'utf8'));
@@ -91,7 +151,10 @@ if [ "$IS_VALID_JSON" = true ]; then
           console.log('ERROR:Missing required top-level key: project_context_and_metadata');
           process.exit(0);
         }
-        const reqStrings = ['package_manager', 'new_component_dir', 'style_file_dir', 'component_library', 'dictionaries_dir', 'dictionary_file_pattern'];
+        const reqStrings = ['package_manager', 'new_component_dir', 'style_file_dir', 'component_library'];
+        if (process.env.DICT_REQUIRED === 'true') {
+          reqStrings.push('dictionaries_dir', 'dictionary_file_pattern');
+        }
         for (const s of reqStrings) {
           if (!meta[s] || typeof meta[s] !== 'string' || !meta[s].trim()) {
             console.log('ERROR:Missing or empty required property: ' + s);
@@ -155,13 +218,15 @@ check_path() {
   fi
 }
 
-if [ "$IS_VALID_JSON" = true ] && command -v node >/dev/null 2>&1; then
-  PATHS_DATA=$(node -e "
+if [ "$IS_VALID_JSON" = true ] && feature_enabled N1 && command -v node >/dev/null 2>&1; then
+  DICT_REQUIRED=false
+  feature_enabled N4 && DICT_REQUIRED=true
+  PATHS_DATA=$(DICT_REQUIRED="$DICT_REQUIRED" node -e "
     const fs = require('fs');
     const meta = JSON.parse(fs.readFileSync('$CONFIG_FILE', 'utf8')).project_context_and_metadata || {};
     if (meta.style_file_dir) console.log('style_file_dir|' + meta.style_file_dir + '|file');
     if (meta.new_component_dir) console.log('new_component_dir|' + meta.new_component_dir + '|dir');
-    if (meta.dictionaries_dir) {
+    if (process.env.DICT_REQUIRED === 'true' && meta.dictionaries_dir) {
       console.log('dictionaries_dir|' + meta.dictionaries_dir + '|dir');
       if (Array.isArray(meta.supported_languages) && meta.dictionary_file_pattern) {
         meta.supported_languages.forEach(loc => {
@@ -414,20 +479,34 @@ done
 if [ ${#AGENT_MISSING[@]} -eq 0 ] && [ ${#AGENT_INVALID[@]} -eq 0 ] && [ -f ".agents/rules/agent-boundaries.md" ] && [ ${#COMMANDS_MISSING[@]} -eq 0 ]; then
   AUTOMATION_CHECKS+=("OK:Agent Roster & Permission Boundaries:Found 4 agents in .opencode/agents with enforced write boundaries, .agents/rules/agent-boundaries.md, and both command shortcuts.")
 else
-  if [ ${#AGENT_MISSING[@]} -gt 0 ]; then
-    ERRORS+=("Missing agent file(s): ${AGENT_MISSING[*]}. Run Stage 1.5 of nextjs-dev-setup.")
-  fi
-  if [ ${#AGENT_INVALID[@]} -gt 0 ]; then
-    ERRORS+=("Invalid agent configuration - ${AGENT_INVALID[*]}")
-  fi
-  [ -f ".agents/rules/agent-boundaries.md" ] || ERRORS+=("Missing .agents/rules/agent-boundaries.md.")
-  if [ ${#COMMANDS_MISSING[@]} -gt 0 ]; then
-    WARNINGS+=("Missing command shortcut(s): ${COMMANDS_MISSING[*]}.")
+  if feature_enabled N9; then
+    if [ ${#AGENT_MISSING[@]} -gt 0 ]; then
+      ERRORS+=("Missing agent file(s): ${AGENT_MISSING[*]}. Enable N9 (agent roster) or remove it from the selection.")
+    fi
+    if [ ${#AGENT_INVALID[@]} -gt 0 ]; then
+      ERRORS+=("Invalid agent configuration - ${AGENT_INVALID[*]}")
+    fi
+    [ -f ".agents/rules/agent-boundaries.md" ] || ERRORS+=("Missing .agents/rules/agent-boundaries.md.")
+    if [ ${#COMMANDS_MISSING[@]} -gt 0 ]; then
+      WARNINGS+=("Missing command shortcut(s): ${COMMANDS_MISSING[*]}.")
+    fi
   fi
   AUTOMATION_CHECKS+=("MISS:Agent Roster & Permission Boundaries:Agent roster incomplete or invalid.")
 fi
 
 # --- Output ---
+
+VISIBLE_CHECKS=()
+SKIPPED_CHECKS=()
+for check in "${AUTOMATION_CHECKS[@]}"; do
+  IFS=':' read -r st name desc <<< "$check"
+  feat=$(check_feature "$name")
+  if [ -n "$feat" ] && ! feature_enabled "$feat"; then
+    SKIPPED_CHECKS+=("$name ($feat)")
+  else
+    VISIBLE_CHECKS+=("$check")
+  fi
+done
 
 if [ ${#ERRORS[@]} -eq 0 ]; then
   PASSED=true
@@ -436,14 +515,23 @@ else
 fi
 
 if [ "$JSON_MODE" = true ]; then
-  echo "{\"passed\": $PASSED, \"config\": \"$CONFIG_FILE\", \"errors\": ${#ERRORS[@]}, \"warnings\": ${#WARNINGS[@]}}"
+  echo "{\"passed\": $PASSED, \"config\": \"$CONFIG_FILE\", \"selection\": \"${SELECTION_FILE:-none}\", \"enabledFeatures\": \"$ENABLED_FEATURES\", \"errors\": ${#ERRORS[@]}, \"warnings\": ${#WARNINGS[@]}, \"skippedChecks\": ${#SKIPPED_CHECKS[@]}}"
   if [ "$PASSED" = true ]; then exit 0; else exit 1; fi
 fi
 
 echo -e "\n${BOLD}${CYAN}=== Next.js Dev Setup & project.json Verification ===${RESET}\n"
 echo -e "${BOLD}Configuration File:${RESET} $CONFIG_FILE"
 echo -e "${BOLD}File Exists:${RESET} $([ "$FILE_EXISTS" = true ] && echo -e "${GREEN}Yes${RESET}" || echo -e "${RED}No${RESET}")"
-echo -e "${BOLD}Valid JSON:${RESET} $([ "$IS_VALID_JSON" = true ] && echo -e "${GREEN}Yes${RESET}" || echo -e "${RED}No${RESET}")\n"
+echo -e "${BOLD}Valid JSON:${RESET} $([ "$IS_VALID_JSON" = true ] && echo -e "${GREEN}Yes${RESET}" || echo -e "${RED}No${RESET}")"
+if [ -n "$SELECTION_FILE" ]; then
+  echo -e "${BOLD}Feature Selection:${RESET} $SELECTION_FILE"
+  echo -e "${BOLD}Enabled Features:${RESET} ${ENABLED_FEATURES:-all (selection has no enabled list)}"
+elif [ "$ALL_FEATURES" = true ]; then
+  echo -e "${BOLD}Feature Selection:${RESET} disabled (--all); auditing every feature"
+else
+  echo -e "${BOLD}Feature Selection:${RESET} not found; auditing every feature"
+fi
+echo ""
 
 if [ ${#PATH_CHECKS[@]} -gt 0 ]; then
   echo -e "${BOLD}${MAGENTA}▶ Filesystem Structure & i18n Paths:${RESET}"
@@ -458,9 +546,9 @@ if [ ${#PATH_CHECKS[@]} -gt 0 ]; then
   echo ""
 fi
 
-if [ ${#AUTOMATION_CHECKS[@]} -gt 0 ]; then
-  echo -e "${BOLD}${MAGENTA}▶ Git Hooks, Commit Standards & Release Automation:${RESET}"
-  for check in "${AUTOMATION_CHECKS[@]}"; do
+if [ ${#VISIBLE_CHECKS[@]} -gt 0 ]; then
+  echo -e "${BOLD}${MAGENTA}▶ Feature Audits:${RESET}"
+  for check in "${VISIBLE_CHECKS[@]}"; do
     IFS=':' read -r st name desc <<< "$check"
     if [ "$st" == "OK" ]; then
       echo -e "  ${GREEN}[OK]${RESET} ${BOLD}$name:${RESET} $desc"
@@ -469,6 +557,14 @@ if [ ${#AUTOMATION_CHECKS[@]} -gt 0 ]; then
     else
       echo -e "  ${RED}[MISSING]${RESET} ${BOLD}$name:${RESET} $desc"
     fi
+  done
+  echo ""
+fi
+
+if [ ${#SKIPPED_CHECKS[@]} -gt 0 ]; then
+  echo -e "${BOLD}${YELLOW}▶ Not checked (feature disabled in this setup):${RESET}"
+  for skipped in "${SKIPPED_CHECKS[@]}"; do
+    echo -e "  [SKIP] $skipped"
   done
   echo ""
 fi
