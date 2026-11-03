@@ -6,6 +6,13 @@
 - **Primary Objective**: [High-level target: lead generation, portfolio demonstration, SaaS platform]
 - **Website Category**: [Portfolio / SaaS / Ecommerce / Content Media / Educational]
 
+### Project constants
+- **Default locale / timezone**: [e.g. `en-US` / `UTC`]
+- **Business region**: [e.g. global, `IR` only, `EU`]
+- **Currency & display**: [e.g. `USD` with 2 decimals; or `IRT` for Toman, 0 decimals]
+- **Calendar**: [gregorian / persian / other]
+- **Supported platforms**: [web only / web + desktop / native]
+
 ---
 
 ## 2. Target Audience & Personas
@@ -35,3 +42,65 @@
 - **Reference 1**: [URL] — Key takeaways (Visual density, micro-interactions, dark aesthetic).
 - **Reference 2**: [URL] — Key takeaways (Type hierarchy, interactive playground layout).
 
+---
+
+## 5. Locked Decisions
+
+Every answer the user confirms in the grilling interview lands here **and** in
+`docs/project.json` → `decisions`. Locked means the next agent does not re-open
+it without new evidence.
+
+| ID | Decision | Rationale | Locked | Revisit if |
+| :--- | :--- | :--- | :--- | :--- |
+| `auth-provider` | [e.g. provider owns the session] | [why] | [date] | [trigger] |
+| `persistence` | [e.g. bind mounts in prod] | [why] | [date] | [trigger] |
+| `deploy-target` | [e.g. self-hosted Docker + edge proxy] | [why] | [date] | [trigger] |
+
+### Feature packs
+
+Mirror every entry into `docs/project.json` → `feature_packs`. Disabled packs stay
+visible so they are not silently re-litigated.
+
+| Pack | Enabled | Rationale | Gate | Revisit if |
+| :--- | :---: | :--- | :--- | :--- |
+| `health-monitoring` | [x] | [/api/health required by the compose stack] | Phase 3 | [trigger] |
+| `opentelemetry` | [ ] | [no collector available yet] | Phase 4 | [collector provisioned] |
+| `woocommerce` | [ ] | [no commerce scope] | Phase 7 | [storefront required] |
+
+
+---
+
+## 6. Non-Goals & Explicit Out-of-Scope
+
+List what the plan deliberately does **not** deliver. This prevents scope drift
+and stops a future agent from "helpfully" adding it.
+
+- [e.g. High availability, multi-node, managed database]
+- [e.g. Live payment credentials — sandbox only]
+- [e.g. A second locale]
+
+Each skip in the plan itself must still carry a revisit trigger
+(see `docs/plan/README.md` → `## Amendments`).
+
+---
+
+## 7. Platform, Environment & Safety Constraints
+
+- **Required tool versions**: [Node, package manager, Docker, shell]
+- **OS constraints**: [reserved ports, path limits, line endings]
+- **Resources that must not be touched**: [other stacks, shared networks, sibling
+  repositories, global config]
+- **Destructive actions requiring confirmation**: [reset, migration, data copy]
+- **Restore command for each destructive step**: [command]
+
+---
+
+## 8. Known Risks & Pitfall Seeds
+
+Seed the register with risks already known at planning time. It grows as the plan
+executes; every discovered failure adds one entry.
+
+| # | Risk / Pitfall | Symptom | Mitigation | Phase |
+| :--- | :--- | :--- | :--- | :--- |
+| 1 | [e.g. host-only cookies] | login silently lost across hosts | one hostname | 4 |
+| 2 | [e.g. build-time public env] | stale URL after domain change | rebuild on deploy | 7 |

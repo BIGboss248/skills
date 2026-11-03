@@ -111,8 +111,15 @@ outside the managed block.
 
 ## Commit and quality gates
 
+- **Stage, show, wait for approval.** Never run `git commit`, `git commit
+  --amend`, or `git push` on your own initiative. Stage only the files that
+  belong to the change, show the user `git diff --cached` (stat plus the actual
+  hunks) and the proposed Conventional Commit message, then stop and wait. Commit
+  only after an explicit approval in the same session.
+- **Never sweep in unrelated work.** If other files are already modified, leave
+  them unstaged and say so instead of bundling them into the commit.
 - Conventional Commits only (`feat:`, `fix:`, `docs:`, `chore:`, `ci:`,
   `test:`, `refactor:`); one logical change per commit.
-- Run the documented test gate before pushing (for example
+- Run the documented test gate before committing or pushing (for example
   `pnpm lint && pnpm exec tsc --noEmit && pnpm test:all`).
 - Never commit secrets, `.env*` values, database dumps, or credentials.

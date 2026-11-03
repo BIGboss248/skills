@@ -1,21 +1,70 @@
 # Phase 2: Environment, Testing & CI/CD
 
+> **Precondition:** Phase 1 gate verified.
+> **Outputs:** working dev server, test harness, production image, CI that fails
+> on a broken change.
+
+## Current state
+
+- Node / package manager version:
+- Existing CI or Docker files:
+- Ports already in use on this machine:
+
 ---
 
 ## Deliverables & Tasks
 
-- [ ] **2.1 Package Manager**
-  - [ ] Select and configure package manager (`pnpm` / `bun`) with lockfile
-- [ ] **2.2 Next.js Workspace Initialization**
-  - [ ] Initialize Next.js App Router with TypeScript and Tailwind CSS
-- [ ] **2.3 Agent Documentation & MCP Tools**
-  - [ ] Configure `AGENTS.md` with Next.js guidelines and discrete command rules
-  - [ ] Configure workspace `mcp.json` and host global AGY MCP configs (`next-devtools`, `playwright`, `codebase-memory`)
-- [ ] **2.4 Testing Infrastructure**
-  - [ ] Configure Jest & React Testing Library (`jest.config.ts`, `jsdom`)
-  - [ ] Configure Playwright E2E testing across Chromium, Firefox, WebKit (`playwright.config.ts`)
-  - [ ] Setup unified test verification script (`pnpm run test:all`)
-- [ ] **2.5 CI/CD & Production Containerization**
-  - [ ] Configure multi-stage production Dockerfile (`Dockerfile`, `docker-compose.yml`, `.dockerignore`) for standalone output
-  - [ ] Configure Husky git hooks (`pre-commit`, `pre-push`) with Commitlint
-  - [ ] Configure GitHub Actions Release Please and multi-arch GHCR image workflows
+- [ ] **2.1 Package manager**
+  - **Acceptance:** `packageManager` pinned; lockfile committed;
+    `pnpm install --frozen-lockfile` exits 0 on a clean clone.
+  - **Idempotency:** a second frozen install changes nothing.
+  - **Evidence:** manager + version, install exit code
+  - **Result:** —
+
+- [ ] **2.2 Next.js workspace**
+  - **Acceptance:** `pnpm dev` serves `/` with 200; `pnpm build` exits 0.
+  - **Negative:** a deliberate type error fails `tsc --noEmit`.
+  - **Evidence:** Next/React versions, build route table
+  - **Result:** —
+
+- [ ] **2.3 Agent documentation & MCP**
+  - **Acceptance:** `AGENTS.md` exists and names the commands, the gate, and the
+    "read the framework docs before using an API" rule; workspace MCP config is
+    valid JSON.
+  - **Evidence:** files, registered servers
+  - **Result:** —
+
+- [ ] **2.4 Testing infrastructure**
+  - **Acceptance:** `pnpm test` exits 0 with at least one suite; `pnpm test:e2e`
+    exits 0 on a clean checkout; `pnpm test:all` is documented.
+  - **Negative:** a deliberately failing assertion exits non-zero in CI.
+  - **Evidence:** unit count, e2e count, coverage %
+  - **Result:** —
+
+- [ ] **2.5 Production container**
+  - **Acceptance:** `docker build` succeeds; the container serves `/api/health`
+    with 200; the process runs as non-root.
+  - **Negative:** the image fails to start when a required runtime env var is
+    missing.
+  - **Evidence:** image size, uid, health status
+  - **Result:** —
+
+- [ ] **2.6 Commit hygiene & release automation**
+  - **Acceptance:** a malformed commit message is rejected; a valid one passes;
+    the release workflow is wired to the gate (`needs:`), not standalone.
+  - **Negative:** a red gate produces no tag and no release.
+  - **Evidence:** hook test output, workflow job graph
+  - **Result:** —
+
+- [ ] **2.7 Phase build gate**
+  - **Acceptance:** `pnpm lint`, `pnpm exec tsc --noEmit`, `pnpm test`, and
+    `pnpm build` all exit 0.
+  - **Evidence:** counts and exit codes
+  - **Result:** —
+
+---
+
+**Phase 2 gate:** a clean clone installs, tests, builds, and runs the production
+image; CI rejects a deliberately broken change.
+
+> **Gate verified YYYY-MM-DD (2.1–2.7):** [counts, image smoke result, CI run id].

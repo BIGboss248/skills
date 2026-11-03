@@ -38,11 +38,16 @@ the same corrections.
    record the conflict in `.agents/setup-features.json` under `notes`.
 7. Link `PLAN.md`, `CONTRIBUTING.md`, `SECURITY.md`, and `README.md` rather than
    duplicating their content.
+8. Keep the template's "Stage, show, wait for approval" bullet in "Commit and
+   quality gates" verbatim. It is the repository's standing instruction that
+   agents never author commits; dropping it makes every later session commit on
+   its own initiative.
 
 ## Acceptance
 
 - [ ] `AGENTS.md` names `self-repair`, `codebase-memory`, the confirmed stack skills, and `github-triage` when GitHub Issues are enabled.
 - [ ] The issue-logging contract is present when `github-triage` is listed.
+- [ ] The commit-approval clause (stage, show `git diff --cached`, wait) is present in "Commit and quality gates".
 - [ ] No machine-owned block was removed or reworded.
 - [ ] `.agents/autofix.json` parses as a JSON array.
 - [ ] When question 3 is accepted, `.agents/rules/engineering-standards.md` exists, `AGENTS.md` links to it, `opencode.json` loads it through `instructions` when the repository uses OpenCode, and the file differs from the skill copy only by an intentional, recorded merge.

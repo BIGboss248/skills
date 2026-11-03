@@ -1,32 +1,38 @@
 # Grilling Interview Reference Guide
 
-This guide details the interview methodology, question structuring, and core inquiry areas for Next.js App Router planning.
+This guide details the interview methodology, question structuring, and inquiry
+areas for Next.js App Router planning.
 
 ---
 
 ## Grilling Methodology & The Frontier
 
-The interview is structured as a **design tree** where high-level decisions branch into downstream technical requirements.
+The interview is a **design tree**: high-level decisions branch into downstream
+technical requirements.
 
 ### The Questioning Protocol
 
-1. **Work the Frontier in Rounds**: Group open decisions whose prerequisites are already met into a single round.
-2. **Always Number and Recommend**: Number each question and provide a well-reasoned recommended answer based on Next.js best practices and detected project context.
-3. **Wait for User Response**: Do not execute subsequent rounds or make assumptions until the user confirms or adjusts answers.
-4. **Research Facts Yourself**: When a prerequisite depends on inspecting the codebase, run inspection commands or dispatch subagents rather than asking the user.
+1. **Work the frontier in rounds**: group open decisions whose prerequisites are
+   already met.
+2. **Always number and recommend**: number each question and give a reasoned
+   recommendation based on the inspected workspace.
+3. **Wait for the user's answer**: do not execute later rounds on assumptions.
+4. **Research facts yourself**: inspect the codebase instead of asking.
+5. **Lock every answer**: confirmed answers go into `01-strategy-brief.md` §5 and
+   `project.json` → `decisions` in the same turn.
 
-### Question Round Format
+### Question round format
 
 ```markdown
-❓ **Q1** - **<Question Title>**: <Clear question explanation and options>
+❓ **Q1** - **<Question Title>**: <clear question and options>
 
-➡️ **Recommended**: <Recommended choice with rationale>
+➡️ **Recommended**: <choice + rationale>
 
 ---
 
-❓ **Q2** - **<Question Title>**: <Clear question explanation and options>
+❓ **Q2** - **<Question Title>**: <clear question and options>
 
-➡️ **Recommended**: <Recommended choice with rationale>
+➡️ **Recommended**: <choice + rationale>
 ```
 
 ---
@@ -34,61 +40,137 @@ The interview is structured as a **design tree** where high-level decisions bran
 ## Mandatory Step 1 Grilling Sequence (Pages ➔ Sections ➔ Components)
 
 > [!IMPORTANT]
-> **Strict Hierarchy Rule**: For Step 1 (Design Website & User Experience), the agent must drill down sequentially through three progressive levels:
+> **Strict hierarchy rule**: drill down three levels in order.
 >
-> 1. **Pages Grilling**: Drill down on what exact pages the web application needs (e.g. Home `/`, About `/about`, Projects `/projects`, Blog `/blog`, Lab `/lab`, Contact `/contact`, Dashboard `/dashboard`). Map all routes.
-> 2. **Sections Grilling**: For each identified page, drill down on what specific content sections are required from top to bottom (e.g. For Home: SiteNavbar, Hero, Credentials, FeaturedProjects, InteractiveLabPreview, CTA, SiteFooter).
-> 3. **Components Grilling**: For each section, drill down on what individual UI components are required to construct that section (e.g. Hero needs `HeroHeadline`, `AvailabilityBadge`, `PrimaryCTAButtons`, `HeroGraphic`).
+> 1. **Pages**: exact routes and URLs.
+> 2. **Sections**: for each page, sections from top to bottom.
+> 3. **Components**: for each section, the individual UI components.
 
 ---
 
 ## Core Areas of Inquiry
 
-### 1. Page Inventory & Routes (Step 1 Core)
+### 1. Page Inventory & Routes
 
-- What pages must exist in the application?
-- Which pages belong in the primary navigation header vs footer or utility/detail routes?
-- Which routes require dynamic parameters (e.g., `/projects/[slug]`, `/blog/[slug]`)?
+- Which pages must exist, and at which URLs?
+- Which are primary navigation vs footer vs utility/detail?
+- Which routes are dynamic (`/projects/[slug]`)?
+- Which **non-page** routes exist: redirects, webhooks, callbacks, health?
 
-### 2. Page Sections Breakdown (Step 1 Core)
+### 2. Page Sections
 
-- For every identified page, what specific content sections are needed from top to bottom?
-- What is the primary purpose and narrative flow of each section?
+- For every page, which sections, in what order, and what is each one's job?
 
-### 3. Component Inventory & Roles (Step 1 Core)
+### 3. Component Inventory
 
-- For every section, what specific UI components must be created or assembled?
-- Which components are shared across multiple pages (`SiteNavbar`, `SiteFooter`, `Card`, `Badge`) vs. page-specific (`DoHProberConsole`, `ProjectFilterBar`)?
+- For every section, which components?
+- Which are shared (`SiteHeader`, `Card`) vs page-specific?
+- Which need client interactivity, and which stay server-rendered?
 
-### 4. Product Purpose & Target Audience
+### 4. Product Purpose & Audience
 
-- What core problem does the project solve?
-- Who are the target users (technical literacy, geographic location, primary languages)?
+- What problem does this solve?
+- Who are the users, where are they, and what language/script do they read?
 
 ### 5. Authentication & Authorization
 
-- Is authentication required? (Public, Member, Admin)
-- What provider is preferred (Better Auth, Clerk, Auth.js, Supabase Auth)?
+- Is auth required, and at which routes?
+- Who owns credentials, registration, reset, and logout?
+- Where does the session live — cookie, token, or provider-managed?
+- Does the app ever mint a second session (it should not)?
+- What renders when the session is missing or expired — and is that fail-open?
 
 ### 6. Data Layer & Content Management
 
-- How is data stored and queried (PostgreSQL, SQLite, Supabase, Redis)?
-- What ORM or query tool is used (Drizzle, Prisma, Server Functions)?
-- Is a CMS needed for content editing (in-repo Payload CMS, Headless CMS, local MDX)?
+- Storage: Postgres, SQLite, Supabase, Redis, files?
+- Access: ORM, query builder, server functions?
+- CMS: in-repo, headless, MDX, or none?
+- What is the source of truth for prices, stock, or user state?
 
-### 7. Internationalization (i18n) & Locales
+### 7. Internationalization & Locales
 
-- What languages must be supported (e.g., English `en`, Persian `fa`)?
-- Are there RTL (Right-to-Left) requirements and specific typography pairings?
-- Note: Dictionaries are always placed in `messages/` at the project root.
+- Which languages and which locale is default?
+- RTL requirements and font pairings?
+- Timezone, currency, display unit, decimals, and calendar?
+- Dictionaries always live in root `messages/`.
 
-### 8. Visual Aesthetic, Design Tokens & Multi-Font Pairings
+### 8. Visual Aesthetic & Tokens
 
-- What emotional tone and aesthetic is desired (e.g., clean dark mode, high-velocity engineering, minimalist typography)?
-- Brand primary colors, contrast requirements, and radius tokens.
-- **Harmonious Multi-Font Pairing**: Inquire whether to pair complementary typefaces across global styles (e.g. an expressive display/serif or geometric heading font paired with a clean neutral body sans) to give different sections distinct visual character rather than using a single monolithic font.
+- Emotional tone, brand colors, contrast, radius.
+- Multi-font pairing (display + body) vs a single family.
+- Any existing design system the project must reuse.
 
-### 9. Deployment & Operations
+### 9. Runtime Topology & Ownership
 
-- Target deployment platform (Docker on self-hosted VPS, Vercel, Cloudflare)?
-- Health monitoring (`/api/health`), OpenTelemetry tracing, and CI/CD release automation requirements.
+- What services run in dev and in production (app, backend, database, edge)?
+- Which service answers which path? Produce the ownership matrix together.
+- Where does TLS terminate, and which resolver is used?
+- Is there a callback/webhook path that must bypass bot protection?
+
+### 10. Persistence & Data Lifecycle
+
+- Named volumes or bind mounts, in dev and in prod?
+- Where do uploads live?
+- How is the database backed up, restored, and migrated to a new host?
+- What must be stopped before copying state?
+
+### 11. Integrations & Pinning
+
+- Which third-party plugins/packages/APIs are required (vs optional)?
+- Are versions pinned, and are hashes published upstream?
+- Does activation order matter?
+- Which integrations run at build time vs runtime?
+
+### 12. Quality Gates & Verification
+
+- What exact commands prove the work (lint, types, unit, e2e, build, smoke)?
+- Which of them run offline, and which need the full stack up?
+- What negative case proves a guard actually guards?
+- What is the single command a new contributor runs?
+
+### 13. Non-Goals, Deferrals & Revisit Triggers
+
+- What is explicitly out of scope for this iteration?
+- For each skip: why now, and what event would bring it back?
+- What is deferred until a later phase (and which item is the trigger)?
+
+### 14. Deployment & Operations
+
+- Target platform (Docker/VPS, Vercel, Cloudflare)?
+- Registry, image names, platforms (amd64/arm64)?
+- Who updates what: automatic for the app, manual for stateful services?
+- Health monitoring, tracing, and release automation?
+
+### 15. Capability Pack Selection
+
+- Which packs apply: `health-monitoring`, `opentelemetry`, `woocommerce`?
+- For a **disabled** pack: why not now, and what event brings it back?
+- Is an existing probe, collector, or store chain to be reused instead of added?
+- Which pack items are the riskiest, and does the phase order expose them early?
+
+One numbered question per pack, with a recommendation derived from the inspected
+signals. Record the outcome in `project.json` → `feature_packs` (enabled and
+disabled) in the same turn.
+
+### 16. Platform & Safety Constraints
+
+- OS limits (reserved ports, path length, line endings).
+- Resources that must not be touched (other stacks, shared networks, global
+  config).
+- Destructive actions and their restore commands.
+
+---
+
+## Locking the answers
+
+Before moving to plan generation:
+
+1. Copy every confirmed answer into `01-strategy-brief.md` §5 as a table row
+   (`ID | Decision | Rationale | Locked | Revisit if`).
+2. Mirror it into `project.json` → `decisions` and `feature_packs`.
+3. Record exclusions in `non_goals`.
+4. Record known risks in the pitfall seed table, including the enabled packs'
+   known pitfalls.
+
+An answer that is not written down is not locked, and will be re-litigated by the
+next agent.

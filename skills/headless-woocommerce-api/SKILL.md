@@ -170,4 +170,4 @@ flowchart TD
 - [ ] `addToCart` returns the `Woocommerce-Session` header; a follow-up cart query retains the item.
 - [ ] `viewer` and `customer` resolve billing and orders for the token.
 - [ ] `/wp-admin/` returns 200 after login (no `could not find driver`).
-- [ ] Full commands: [headless-api-reference.md](./references/headless-api-reference.md) and the Next.js [verification playbook](../nextjs-woocommerce/references/verification-playbook.md).
+- [ ] Full commands: [headless-api-reference.md](./references/headless-api-reference.md) and the Next.js [verification playbook](../nextjs-plan/references/features/woocommerce/verification-playbook.md).

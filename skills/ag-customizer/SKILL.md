@@ -41,7 +41,7 @@ Determine which customization mechanism best solves the problem:
    └── examples/            # Optional: Sample code or output references
    ```
 3. **Draft Frontmatter**:
-   - `name`: Lowercase, hyphenated (e.g. `nextjs-otel`, `docker-deploy`). This also registers as a slash command (`/<name>`).
+   - `name`: Lowercase, hyphenated (e.g. `nextjs-plan`, `docker-deploy`). This also registers as a slash command (`/<name>`).
    - `description`: 1-2 concise sentences in **third person**, explicitly stating **what** the skill does and **specific trigger phrases/scenarios** when the agent should activate it.
 4. **Apply Progressive Disclosure**:
    - Keep the main `SKILL.md` tightly focused on the sequence of operational steps and completion criteria (under 150-250 lines).

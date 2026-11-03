@@ -1,0 +1,137 @@
+# Architecture Contracts
+
+> Runtime ownership, session, and state contracts. The strategy brief explains
+> *why*; this document fixes *who answers what* and *where state lives*.
+> Update it in the same commit as any topology change.
+
+---
+
+## 1. Service Topology
+
+### Development
+
+```text
+Browser → https://<dev-host>
+  → Edge proxy (self-signed TLS, Docker provider)
+      ├─ priority 100 → backend container (:80)    [paths…]
+      └─ priority 10  → app proxy → host:3000      catch-all
+```
+
+- **App**: [Next.js dev server on host :3000]
+- **Backend**: [container name, port]
+- **Database**: [container, port, volume]
+- **Edge**: [proxy, version, ports, network]
+- **Hosts entry**: [loopback mapping]
+
+### Production
+
+```text
+Internet → CDN/WAF → Edge proxy (:80/:443, resolver: <name>)
+  ├─ priority 110, no bot protection → callbacks   [paths…]
+  ├─ priority 100 → backend (:80)                  [paths…]
+  └─ priority  10 → app (:3000)                    catch-all
+```
+
+- **Registry / image names**: [e.g. `ghcr.io/<owner>/app`, `…/backend`]
+- **Platforms**: [e.g. `linux/amd64`, `linux/arm64`]
+- **Persistence**: [bind mounts under `prod/data/`; no named volumes]
+- **Deployment method**: [copy directory + `docker compose up -d`]
+
+---
+
+## 2. Routing Ownership Matrix
+
+| Path | Owner | Priority | Notes |
+| :--- | :--- | :---: | :--- |
+| `/` | app | 10 | catch-all |
+| `/api/health` | app | — | container healthcheck |
+| `/login` | app | — | redirect-only handler; link with `<a>` |
+| `/logout` | app | — | redirect-only handler |
+| `/admin` | backend | 100 | native admin |
+| `/checkout` | backend | 100 | native checkout |
+| `/graphql` | backend | 100 | API |
+| `/api/webhooks/*` | app | 110 | must bypass bot protection |
+| `/_next/*` | app | 10 | build assets |
+
+Rules:
+- Exactly one owner per path; priorities must make ties impossible.
+- Bot/WAF protection is per router; callback routers omit it.
+- Never proxy callback paths to the backend when the app owns the redirect.
+
+---
+
+## 3. Auth & Session Contract
+
+```text
+Browser ──Cookie: <prefix>_<hash>──► App server
+                                        │ whitelist → cookie header
+                                        ▼
+                              Backend session validation
+                                        │
+                        principal === null ? guest : signed in
+```
+
+| Concern | Owner | Detail |
+| :--- | :--- | :--- |
+| Credentials, registration, reset | [backend] | [native account form] |
+| Session cookie | [backend] | [prefix], HttpOnly, host-only |
+| Login state | [backend] | positive principal id only |
+| Account/order reads | app | forwards whitelisted cookies |
+| Logout | [backend] | server-minted logout URL/nonce |
+
+**Invariants**
+- **One hostname.** [explain the split failure]
+- **Cookie names are hashed.** Match by prefix only.
+- **Presence ≠ authentication.** Require a positive principal id.
+- **One session store.** The app never mints a second session.
+- **Failure mode:** [guest card / redirect / 401] and why it is not fail-open.
+
+---
+
+## 4. Persistence & Migration
+
+| Concern | Development | Production |
+| :--- | :--- | :--- |
+| Database | [named volume] | [bind mount] |
+| Uploads | [named volume] | [bind mount] |
+| Ownership | [container default] | [`999:999`, `33:33`] |
+| Backup | [dump + archive] | [dump + archive + manifest] |
+
+- Stop the database or dump logically before copying; never copy a live datadir.
+- Keep the same major version, or dump/restore.
+- **Restore command:** [command]
+- Not persisted (do not back up): [build output, caches]
+
+---
+
+## 5. Integrations & Pinning
+
+| Integration | Version | Source | Integrity | Activation order |
+| :--- | :--- | :--- | :--- | :---: |
+| [package/plugin] | [x.y.z] | [registry/tag] | [sha256] | 1 |
+| [package/plugin] | [x.y.z] | [registry/tag] | [sha256] | 2 |
+
+- Every dependency is pinned; `latest` is a defect.
+- Record upstream hashes where available and verify at build/install.
+- Activation order matters when add-ons hook each other — test on a clean install.
+- Updates are reviewed re-pins, never runtime downloads.
+
+---
+
+## 6. Platform & Safety Constraints
+
+- **Tool versions**: [Node, package manager, Docker, shell]
+- **OS limits**: [reserved ports, path length, line endings]
+- **Do not touch**: [other stacks, shared networks, sibling repos, global config]
+- **Destructive actions**: [reset/migrate] require [flag/confirmation]
+- **Recorded restore command**: [command]
+
+---
+
+## 7. Consistency Check
+
+- [ ] Every route in `02-sitemap-and-routes.md` appears in §2.
+- [ ] Every §2 path appears in a plan item.
+- [ ] Every §3 claim has a verification item.
+- [ ] Every §5 integration has a drift check.
+- [ ] Every "do not touch" resource is named in the plan.

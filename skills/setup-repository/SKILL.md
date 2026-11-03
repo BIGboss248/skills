@@ -21,6 +21,9 @@ Never run a fixed checklist: interview first, execute only what the user enables
 - **Dependencies are explicit.** If an enabled feature needs a disabled one, ask the user to enable it or accept the documented degraded result.
 - **Idempotent.** Re-running merges and updates; never overwrite existing documents or machine-owned blocks.
 - **No dummy tests.** Never scaffold placeholder or sample test files in the workspace.
+- **History is the user's.** Never run `git commit`, `git commit --amend`, or
+  `git push`. Stage the selected features, show the staged diff, and wait for
+  approval (Phase 4).
 
 ## Phase 1 — Feature Selection Interview (mandatory)
 
@@ -97,12 +100,20 @@ Do not touch files owned only by disabled features — not even to "prepare" the
 
 ## Phase 4 — Report and Handoff
 
-Produce the report defined at the end of the interview template. It must include:
-
-- the selected preset and the final enabled/disabled list;
-- one row per feature with status and reason;
-- the exact commands run and their result;
-- `git add` / `git commit` commands limited to selected features; leave committing to the user.
+1. Produce the report defined at the end of the interview template. It must
+   include:
+   - the selected preset and the final enabled/disabled list;
+   - one row per feature with status and reason;
+   - the exact commands run and their result.
+2. **Stage only, never commit.** `git add` the files that belong to the selected
+   features (never `git add -A` / `git add .`, which sweeps in the user's
+   in-progress edits), then show the user:
+   - `git diff --cached --stat` and the actual hunks;
+   - the proposed Conventional Commit message (and a follow-up message per
+     additional logical change when the run produced more than one);
+   - anything deliberately left unstaged, with the reason.
+3. **Stop and wait.** Commit or push only after an explicit approval in the same
+   session, then re-run the acceptance checks. Silence is not consent.
 
 ## Edge Cases & Common Mistakes
 
@@ -113,6 +124,9 @@ Produce the report defined at the end of the interview template. It must include
 - **F2 merges** — never delete machine-owned blocks; Next.js rewrites its own `AGENTS.md` section.
 - **F3 watchers** — `auto_watch=true` causes editor stutter; keep it off and index on demand.
 - **F3 MCP selection** — never enable every server silently; ask with a recommendation from [mcp-server-catalog.md](./references/mcp-server-catalog.md) and register only the accepted set.
+- **Committing on the user's behalf** — a setup run often finishes with a dirty
+  tree full of unrelated work. Stage the feature files by path, show the diff,
+  and let the user commit; an agent-authored commit is an unapproved commit.
 - **Scope drift** — if the user adds or removes a feature mid-run, reopen Phase 1 and update the record.
 - **F10 permission order** — the reviewer's blanket `*` deny comes first, the narrow allows next, and the specific denies (redirects, `.env`, `--output`) last, because **last match wins**. Moving a deny before an allow silently re-grants edits or arbitrary shell. Never add the report standard to `instructions`.
 - **F11 double scaffolding** — `nextjs-dev-setup` feature N4 already scaffolds `next-intl`. When it ran first, verify the result and report `[UNTOUCHED]`; never rewrite `i18n/*`, the locale layout, or the interceptor on a working setup.

@@ -196,7 +196,7 @@ Run `patch-wordpress.ps1` after every `docker compose up`, `down`, or image upda
 pwsh ./prod/WordPress/patch-wordpress.ps1
 ```
 
-See [patch-wordpress.ps1](../../headless-woocommerce-api/examples/patch-wordpress.ps1) for a standalone template.
+See [patch-wordpress.ps1](../../../../headless-woocommerce-api/examples/patch-wordpress.ps1) for a standalone template.
 
 Verify:
 
