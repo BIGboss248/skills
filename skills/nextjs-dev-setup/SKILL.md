@@ -3,10 +3,11 @@ name: nextjs-dev-setup
 description: >-
   Feature-driven bootstrap, configuration, and verification of a Next.js App Router
   development environment: framework core, internationalization (next-intl),
-  testing suites (Jest, Playwright, Storybook), design-system linting, agent
-  roster, MCP servers, Docker + reverse proxy, and CI/CD. Triggers on
-  "/nextjs-dev-setup", "setup nextjs dev environment", "start a nextjs project",
-  or "containerize nextjs app".
+  theming (light/dark mode with next-themes), testing suites (Jest, Playwright,
+  Storybook), design-system linting, agent roster, MCP servers, Docker + reverse
+  proxy, and CI/CD. Triggers on "/nextjs-dev-setup", "setup nextjs dev
+  environment", "start a nextjs project", "add dark mode to nextjs", or
+  "containerize nextjs app".
 metadata:
   author: BIGBOSS248
   version: "2.0"
@@ -23,7 +24,11 @@ verify only what was deployed.
 - **No writes before selection.** Phase 1 ends with explicit confirmation.
 - **Selected only.** Disabled features are reported `[SKIPPED]` and left untouched.
 - **Categories first, IDs always allowed.** Users may keep whole categories or
-  name specific features (`N1`–`N12`).
+  name specific features (`N1`–`N13`).
+- **Format-agnostic output.** Generated code follows the project's existing
+  structure and conventions. Never impose a fixed CSS architecture, token
+  vocabulary, selector scheme, or component-library choice; detect first, append
+  only, and never overwrite or rename what the project already owns.
 - **Dependencies are explicit.** Missing prerequisites produce `[BLOCKED]` or a
   documented degraded result — never a silent partial install.
 - **Idempotent.** Re-running merges and updates; never overwrite existing
@@ -51,6 +56,7 @@ be detected.
 | | N2 Framework core & app shell | on | N1 |
 | | N3 App icons & PWA manifest | on | N2 |
 | | N4 Internationalization (`next-intl`) | on | N1, N2 |
+| | N13 Theming & light/dark mode (`next-themes`) | on | N2; N8 recommended |
 | **B — Testing & Quality** | N5 Jest unit testing | on | N2 |
 | | N6 Playwright E2E & instant navigation | on | N2 |
 | | N7 Storybook workshop | off | N2 |
@@ -65,8 +71,8 @@ for the menu, presets, dependency-resolution rules, and report template.
 
 ### 1.3 Ask in adaptive rounds
 
-1. **Preset** — Minimal (`N1, N2`), Standard (`N1`–`N6`, `N8`–`N10`, `N12`),
-   Full (all applicable), or Custom.
+1. **Preset** — Minimal (`N1, N2`), Standard (`N1`–`N6`, `N8`–`N10`, `N12`,
+   `N13`), Full (all applicable), or Custom.
 2. **Categories and adjustments** — keep or drop categories, then accept explicit
    feature IDs to add or remove. Record every change.
 3. **Per-feature options** — only for enabled features. Question sets:
@@ -84,7 +90,7 @@ for the menu, presets, dependency-resolution rules, and report template.
 ## Phase 2 — Execute Enabled Features
 
 Run in dependency order:
-**N1 → N2 → N3 → N4 → N9 → N5 → N6 → N7 → N8 → N10 → N11 → N12**.
+**N1 → N2 → N3 → N4 → N9 → N5 → N6 → N7 → N8 → N13 → N10 → N11 → N12**.
 
 For each enabled feature:
 
@@ -105,6 +111,7 @@ For each enabled feature:
 | N6 Playwright | [06-playwright-e2e.md](./references/features/06-playwright-e2e.md) |
 | N7 Storybook | [07-storybook.md](./references/features/07-storybook.md) |
 | N8 Design-system lint | [08-design-system-lint.md](./references/features/08-design-system-lint.md) |
+| N13 Theming & dark mode | [13-theming.md](./references/features/13-theming.md) |
 | N9 Agent roster | [09-agent-roster.md](./references/features/09-agent-roster.md) |
 | N10 MCP servers | [10-mcp-servers.md](./references/features/10-mcp-servers.md) |
 | N11 Docker & proxy | [11-docker-reverse-proxy.md](./references/features/11-docker-reverse-proxy.md) |
@@ -173,7 +180,34 @@ Produce the report from
 - **N12 test gate** — never point `pre-push` at a script that does not exist;
   degrade to lint only and record it.
 - **Storybook intl context** — wrap stories with `NextIntlClientProvider` (when
-  N4 is enabled) and `ProgressBarProvider`.
+  N4 is enabled). No progress-bar provider is needed: pending feedback is
+  per-link `useLinkStatus` and renders nothing while idle.
+- **Storybook theme parity** — the preview decorator must use the same strategy
+  as the app (`withThemeByClassName` for class, `withThemeByDataAttribute` for
+  `data-theme`), or stories lie about both themes.
+- **Link contract** — internal navigation uses `Link` from `@/i18n/navigation`.
+  `next/link` remains valid only for hash anchors and the locale-less root
+  `not-found.tsx`.
+- **Navigation pending** — per-link `useLinkStatus` from `next/link` (Next
+  ≥15.3, App Router only; Pages Router always returns `pending: false`). No
+  progress-bar package, provider, or router-event listener. The indicator must
+  always render, reserve fixed space, toggle opacity after ~100ms, and respect
+  `prefers-reduced-motion`, or it causes layout shift and flicker. Contract:
+  [navigation-pending-guide.md](./references/navigation-pending-guide.md).
+- **Theme strategy** — `next-themes`' `attribute` must match the selector the
+  token stylesheet actually uses (`class`, `data-theme`, `data-mode`). The
+  stylesheet wins over any default.
+- **Theme structure** — never impose a CSS file layout, token names, color space,
+  or selector scheme. Detect, append the dark layer only, and never re-declare or
+  rename existing token values. Acceptance is behavioral (toggle flips real
+  tokens, persists, no first-paint flash), not textual. Reference:
+  [theming-guide.md](./references/theming-guide.md).
+- **Theme hydration** — `theme`/`resolvedTheme` are `undefined` on the server and
+  the first render; guard icons on mount and add `suppressHydrationWarning` to
+  `<html>` only when the provider writes the attribute client-side.
+- **Theme dependencies** — `next-themes` must be installed whenever the provider
+  wrapper is deployed (N13); a provider importing an uninstalled package fails the
+  N2 acceptance check.
 - **Navigation purity** — `i18n/navigation.ts` stays pure TypeScript; component
   wrappers belong in `app/components/`.
 - **No placeholders** — placeholder tests, stories, or pages are a contract

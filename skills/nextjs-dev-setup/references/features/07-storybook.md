@@ -23,10 +23,14 @@ visual and accessibility regression coverage.
    to `.storybook/main.ts` and
    [storybook-preview.tsx.template](../../resources/templates/storybook-preview.tsx.template)
    to `.storybook/preview.tsx`.
-3. Preview must wrap stories with `NextIntlClientProvider` when N4 is enabled and
-   with `ProgressBarProvider` always — components that render `Link` or call
-   `useTranslations` fail without them.
+3. Preview must wrap stories with `NextIntlClientProvider` when N4 is enabled —
+   components that render `Link` or call `useTranslations` fail without it.
+   Do not add a progress-bar provider: pending feedback is per-link
+   `useLinkStatus` and renders nothing while idle.
 4. Add the `storybook` and `build-storybook` scripts.
+5. Theme decorator parity (N13): use `withThemeByClassName` when the app's token
+   layer reacts to `.dark`, or `withThemeByDataAttribute` for `data-theme` /
+   `data-mode`. A decorator that disagrees with the app misreports both themes.
 5. Add `.storybook/` artifacts (`storybook-static/`, `*storybook.log`) to
    `.gitignore`.
 6. Do **not** create placeholder stories (Rule 3); the pattern in
@@ -38,6 +42,8 @@ visual and accessibility regression coverage.
 - [ ] `.storybook/main.ts` and `.storybook/preview.tsx` exist.
 - [ ] `<PM_RUN> storybook` starts without a missing-provider error.
 - [ ] Preview decorators include `NextIntlClientProvider` when N4 is enabled.
+- [ ] When N13 is enabled, the theme decorator matches the app's switching
+      strategy (`withThemeByClassName` vs `withThemeByDataAttribute`).
 - [ ] No placeholder story exists.
 
 ## Notes

@@ -4,6 +4,9 @@
     "new_component_dir": "app/components",
     "style_file_dir": "app/globals.css",
     "component_library": "shadcn/ui",
+    "theme_strategy": "class",
+    "theme_storage_key": "theme",
+    "theme_toggle_path": "app/components/ThemeToggle.tsx",
     "animation_library": ["gsap"],
     "testing_library": [
       "jest",

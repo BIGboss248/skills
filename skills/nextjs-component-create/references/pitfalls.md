@@ -10,8 +10,9 @@
 | Self-certifying quality without adversarial audit   | Spawn Adversarial Auditor subagent to write `[ComponentName].edge.test.tsx`                      |
 | Guessing unspecific requirements                    | Interview user (suggest `/grill-me`) to clarify props and behavior first                         |
 | Transient plan in chat memory only                  | Save plan to `.agents/history/plan-[component-name].json` and update statuses                    |
-| Standard `next/link` for hero/primary navigation    | Use `@vercel/react-transition-progress` `Link` for primary CTA/nav; `next/link` for static links |
-| Naked internal links (`<Link href="/about">`)       | Use localized paths (`<Link href={localizePath("/about", locale)}>`)                             |
+| Standard `next/link` for internal navigation        | Use `Link` from `@/i18n/navigation`; `next/link` only for hash anchors and the locale-less root `not-found.tsx` |
+| No pending feedback on slow navigations             | Render a `useLinkStatus()` child inside the link; never add a progress-bar package |
+| Naked internal links (`<Link href="/about">`)       | Use `Link` from `@/i18n/navigation` — it prefixes the active locale automatically                |
 | Manual date/currency formatting                     | Use native `Intl.DateTimeFormat` or `Intl.NumberFormat`                                          |
 | Skipping `@param` tags or non-English TSDoc         | Write strict English TSDoc for every prop and parameter                                          |
 | Shared singleton `QueryClient` on server            | Instantiate `new QueryClient()` per request on server                                            |

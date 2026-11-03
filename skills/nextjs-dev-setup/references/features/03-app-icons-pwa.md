@@ -12,7 +12,8 @@ manifest). Skip for internal tools without a brand asset.
 1. **Favicon source** — path to the user's `.ico` / `.png`, or reuse an existing
    `app/favicon.ico`?
 2. **Manifest identity** — app name, short name, `theme_color`,
-   `background_color`, display mode (`standalone` recommended)?
+   `background_color` (derive from the project palette — never leave `#000000`
+   when N13 recorded one), display mode (`standalone` recommended)?
 3. **Icon set** — 192, 512, and a maskable 512 icon, or the minimum single icon?
 
 ## Steps
@@ -32,7 +33,9 @@ manifest). Skip for internal tools without a brand asset.
       `public/` fallbacks).
 - [ ] `app/manifest.ts` exists and exports a valid `MetadataRoute.Manifest`.
 - [ ] Every manifest icon path resolves to a real file.
-- [ ] `theme_color` and `background_color` are explicit, not defaults.
+- [ ] `theme_color` and `background_color` are explicit, not defaults or
+      placeholders, and match the project palette (light background / brand
+      primary).
 
 ## Notes
 

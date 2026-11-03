@@ -78,7 +78,7 @@ export default function manifest(): MetadataRoute.Manifest {
 ### Key Manifest Properties:
 - **`display: 'standalone'`**: Hides browser UI chrome and URL bar when installed to mobile/desktop home screens.
 - **`start_url: '/'`**: Launch URL when opened from the home screen icon.
-- **`theme_color` & `background_color`**: Colors used for splash screens and system title bars.
+- **`theme_color` & `background_color`**: Colors used for splash screens and system title bars. Use the palette's light background and brand primary; the manifest supports one colour only, so pick the light-theme values deliberately.
 - **`icons`**: Array of icon descriptors pointing to static files or generated routes.
 
 ---

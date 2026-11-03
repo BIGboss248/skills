@@ -47,7 +47,26 @@ Use contracts inside `shadcn/no-restyle` when callers need permission to adjust 
 
 ---
 
-## 4. Primitive Directory Overrides
+## 4. Theme Parity (N13)
+
+The lint rules above only work because components read semantic tokens. That is
+also what makes light/dark switching consistent: a component styled with
+`bg-zinc-100` will pass neither the token rule nor dark mode.
+
+When N13 (theming) is deployed:
+
+- Raw palette classes and arbitrary color values are the same violation in both
+  features — fix them, do not disable the rule.
+- Check every new component in light **and** dark before declaring it done; the
+  linter cannot see which theme you looked at.
+- Never add a token to satisfy the linter. If a role is missing a dark
+  counterpart, report it instead of inlining a color.
+- No CSS structure is prescribed. The lint contract is "declared token", not
+  "specific stylesheet layout".
+
+---
+
+## 5. Primitive Directory Overrides
 
 Turn off restyle, arbitrary values, and static class rules in primitive UI directories (`app/components/ui/**`, `components/ui/**`, `src/components/ui/**`) so base components can style themselves:
 

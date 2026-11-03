@@ -54,6 +54,16 @@ Skip for single-locale apps and record `[SKIPPED]`.
    `@/i18n/navigation`.
 10. Record `dictionaries_dir` and `dictionary_file_pattern` in
     `docs/project.json` (N1 contract).
+11. Deploy the navigation contract:
+    - Every internal navigation import (`Link`, `redirect`, `usePathname`,
+      `useRouter`) comes from `@/i18n/navigation`. Only hash anchors, external
+      URLs, and the locale-less root `app/not-found.tsx` may use `next/link`.
+    - Deploy [Link.tsx.template](../../resources/templates/Link.tsx.template) to
+      the component layer when the project wants a single link primitive; it
+      wraps the localized `Link` and exposes the `useLinkStatus` pending
+      indicator.
+    - Pending navigation feedback uses Next's built-in `useLinkStatus` from
+      `next/link`. Do **not** install a global progress-bar library.
 
 ## Acceptance
 
@@ -65,6 +75,10 @@ Skip for single-locale apps and record `[SKIPPED]`.
 - [ ] `app/[locale]/layout.tsx` exports `generateStaticParams()` and renders
       `NextIntlClientProvider`.
 - [ ] Every locale has a dictionary with identical key paths.
+- [ ] No `next/link` import remains for internal navigation; grep for
+      `from "next/link"` and confirm only allowed exceptions.
+- [ ] No progress-bar package is declared; pending feedback uses
+      `useLinkStatus`.
 - [ ] `node_modules/next/dist/docs` was consulted for the current routing and
       provider APIs.
 
@@ -72,6 +86,12 @@ Skip for single-locale apps and record `[SKIPPED]`.
 
 - Deprecated `requestLocale` / `setRequestLocale()` are forbidden.
 - Keep `i18n/navigation.ts` pure TypeScript; component wrappers belong in
-  `app/components/`.
+  `src/components/` (or the component root recorded in `docs/project.json`).
 - Storybook previews and component tests need `NextIntlClientProvider` too (N7).
+  They do not need any progress-bar provider, because `useLinkStatus` reads from
+  the surrounding `<Link>` only and renders nothing while idle.
+- Storybook and Jest load `next-intl` as ESM. Allow `next-intl`, `use-intl`, and
+  their `@formatjs` / `intl-messageformat` dependencies through the test
+  transform (see `transformIgnorePatterns`), or imports fail with "Must use
+  import to load ES Module".
 - Dictionary maintenance after setup follows `nextjs-i18n-usage`.

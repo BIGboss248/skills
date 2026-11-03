@@ -12,6 +12,9 @@ The `docs/project.json` file is the mandatory single source of truth for compone
 | `new_component_dir`       | `string`              | Target directory where components, skeletons, and unit tests are created.   | Auto-discovered from `app/` or `src/` (e.g. `"app/components"` or `"src/components"`).                   |
 | `style_file_dir`          | `string`              | Relative path to the global CSS / theme stylesheet.                         | Auto-discovered from stylesheet path (e.g. `"app/globals.css"` or `"src/app/globals.css"`).              |
 | `component_library`       | `string`              | UI component library or design system adopted in the project.               | Discovered from `package.json` dependencies / `docs/` (e.g. `"shadcn/ui"`, `"radix-ui"`, `"none"`).      |
+| `theme_strategy`          | `string?`             | Selector strategy used for light/dark switching.                            | Written by N13. One of `"class"`, `"data-theme"`, `"data-mode"`; must match the token stylesheet.         |
+| `theme_storage_key`       | `string?`             | `localStorage` key that stores the user's theme choice.                     | Written by N13; defaults to `"theme"`.                                                                   |
+| `theme_toggle_path`       | `string?`             | Path to the deployed theme toggle component.                                | Written by N13 (e.g. `"app/components/ThemeToggle.tsx"`).                                                |
 | `animation_library`       | `Array<string>`       | Motion and animation libraries used for complex animations.                 | Discovered from `package.json` / `docs/adr/` (e.g. `["gsap"]`, `["framer-motion"]`, `["none"]`).         |
 | `testing_library`         | `Array<string>`       | Testing frameworks and libraries configured in the project.                 | Discovered from `package.json` / config files (e.g. `["jest", "playwright", "@testing-library/react"]`). |
 | `supported_languages`     | `Array<LocaleObject>` | List of supported locales with direction, currency, and calendar metadata.  | Discovered from `docs/adr/`, `docs/project-plan.md`, or `CONTEXT.md`.                                    |
@@ -19,6 +22,10 @@ The `docs/project.json` file is the mandatory single source of truth for compone
 | `dictionary_file_pattern` | `string`              | Filename naming pattern for locale translation JSON files.                  | Defaults to `"[locale].json"`.                                                                           |
 | `agents`                  | `object`              | Agent roster installed by feature N9 (orchestrator + three role agents).   | Written by `nextjs-dev-setup`; records paths, model overrides, and `enabled` flags.                      |
 | `nextjs_setup_features`   | `object`              | Confirmed feature selection (preset, categories, enabled/disabled, notes).  | Written by `nextjs-dev-setup` Phase 1; mirrors `.agents/nextjs-setup-features.json`.                     |
+
+Optional keys (`theme_strategy`, `theme_storage_key`, `theme_toggle_path`) are
+written only when N13 is enabled. They record the detected strategy; they never
+prescribe a CSS file structure, token vocabulary, or color space.
 
 ### 1.1 Agent Roster Object (`agents`)
 

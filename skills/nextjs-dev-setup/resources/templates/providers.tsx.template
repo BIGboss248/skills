@@ -1,10 +1,21 @@
 "use client";
 
 import * as React from "react";
-import { ProgressBarProvider, ProgressBar } from "@vercel/react-transition-progress";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 
+/**
+ * App-wide client providers.
+ *
+ * Navigation pending feedback is not a provider concern: it is driven per link
+ * by Next's built-in `useLinkStatus` inside the link itself (see
+ * `Link.tsx.template`). Do not add a global progress-bar provider here.
+ *
+ * The theme wrapper below belongs to N13. Adjust `attribute` to the selector the
+ * project's token layer actually uses (class | data-theme | data-mode) and keep
+ * `disableTransitionOnChange` unless an animated theme change was requested.
+ */
+ */
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(
     () =>
@@ -18,13 +29,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <ProgressBarProvider>
-      <ProgressBar className="fixed top-0 left-0 right-0 z-[9999] h-1 bg-primary shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)] transition-all duration-200" />
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          {children}
-        </ThemeProvider>
-      </QueryClientProvider>
-    </ProgressBarProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        {children}
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }

@@ -58,6 +58,7 @@ Engineering standards, hooks, and provider patterns for consuming **`next-intl`*
 | **"No intl context found"**     | Missing provider in Storybook/test          | Wrap story/test in `<NextIntlClientProvider>`      |
 | **Hardcoded Fallbacks**         | e.g. `t('btn') \|\| 'Submit'`               | Add key to `messages/en.json` & `messages/fa.json` |
 | **Raw `next/link`**             | Drops locale prefix on route change         | Use `Link` from `@/i18n/navigation`                |
+| **Global progress bar package** | Extra dependency and provider, and it does not say *which* link was clicked | Render a `useLinkStatus()` child inside the i18n `Link` |
 
 ---
 

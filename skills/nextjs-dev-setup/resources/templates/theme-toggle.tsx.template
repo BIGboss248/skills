@@ -1,0 +1,93 @@
+"use client";
+
+import * as React from "react";
+import { useTheme } from "next-themes";
+
+/**
+ * Dependency-free theme toggle — a universal fallback for projects that have no
+ * component library yet.
+ *
+ * Adapt before shipping:
+ * - Replace the markup with the project's own `Button` / `DropdownMenu` /
+ *   `Select` when one exists. Keep the handlers and the three options.
+ * - Token names below (`bg-background`, `text-foreground`, `border-border`,
+ *   `bg-accent`, `ring-ring`) are semantic tokens; rename them to whatever the
+ *   project's token layer actually declares. Never hardcode a color.
+ * - `useTheme().theme` is `undefined` during SSR and the first client render,
+ *   so the control renders a same-size placeholder until mounted. Never render
+ *   a theme-specific icon before mount: it causes a hydration mismatch.
+ */
+const ORDER = ["light", "dark", "system"] as const;
+type ThemeChoice = (typeof ORDER)[number];
+
+const LABELS: Record<ThemeChoice, string> = {
+  light: "Light",
+  dark: "Dark",
+  system: "System",
+};
+
+export function ThemeToggle(): React.JSX.Element {
+  const { theme, resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => setMounted(true), []);
+
+  if (!mounted) {
+    // Reserve the exact footprint so the header does not shift after hydration.
+    return <span aria-hidden="true" className="inline-block size-9" />;
+  }
+
+  const current = (ORDER.includes(theme as ThemeChoice) ? theme : "system") as ThemeChoice;
+  const next = ORDER[(ORDER.indexOf(current) + 1) % ORDER.length];
+  const effective = resolvedTheme === "dark" ? "dark" : "light";
+
+  return (
+    <button
+      type="button"
+      aria-label={`Toggle theme (current: ${LABELS[current]})`}
+      title={`Theme: ${LABELS[current]} — click for ${LABELS[next]}`}
+      onClick={() => setTheme(next)}
+      className="inline-flex size-9 items-center justify-center rounded-md border border-border bg-background text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
+    >
+      <ThemeIcon effective={effective} choice={current} />
+      <span className="sr-only">Toggle theme</span>
+    </button>
+  );
+}
+
+function ThemeIcon({
+  effective,
+  choice,
+}: {
+  readonly effective: "light" | "dark";
+  readonly choice: ThemeChoice;
+}): React.JSX.Element {
+  if (choice === "system") {
+    return (
+      <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="4" width="20" height="13" rx="2" />
+        <path d="M8 21h8M12 17v4" />
+      </svg>
+    );
+  }
+
+  return effective === "dark" ? (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
+    </svg>
+  ) : (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+    </svg>
+  );
+}
+
+/**
+ * Optional three-option menu variant for design systems that provide a dropdown.
+ * Keep the same `setTheme` handlers and labels; do not add a fourth state.
+ *
+ * <DropdownMenuItem onClick={() => setTheme("light")}>Light</DropdownMenuItem>
+ * <DropdownMenuItem onClick={() => setTheme("dark")}>Dark</DropdownMenuItem>
+ * <DropdownMenuItem onClick={() => setTheme("system")}>System</DropdownMenuItem>
+ */

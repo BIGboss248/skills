@@ -93,6 +93,8 @@ function Get-CheckFeature([string]$Name) {
         "Next.js Internationalization*" { return "N4" }
         "Next.js Core Dependency*" { return "N2" }
         "Agent Instructions & Docs Notice*" { return "N2" }
+        "Navigation Pending Feedback*" { return "N2" }
+        "Theming & Dark Mode*" { return "N13" }
         "Agent Roster & Permission Boundaries" { return "N9" }
         default { return $null }
     }
@@ -583,6 +585,126 @@ if ($missingAgents.Count -eq 0 -and $invalidAgents.Count -eq 0 -and (Test-Path $
         if ($commandsMissing.Count -gt 0) { $warnings.Add("Missing command shortcut(s): $($commandsMissing -join ', ').") }
     }
     $automationChecks.Add(@{ name = "Agent Roster & Permission Boundaries"; status = "missing"; details = "Agent roster incomplete. Missing: $($missingAgents -join ', '); invalid: $($invalidAgents.Count); boundaries rule: $(Test-Path $boundariesRule)." })
+}
+
+# 15. Navigation Pending Feedback (useLinkStatus) Check
+$progressBarPackages = @("nprogress", "next-nprogress-bar", "@bprogress/core", "@bprogress/next", "react-transition-progress", "@vercel/react-transition-progress")
+$declaredProgressPackages = @()
+$hasNextThemesDep = $false
+if (Test-Path $pkgPath) {
+    try {
+        $pkg = Get-Content -Raw -Path $pkgPath -Encoding UTF8 | ConvertFrom-Json
+        $deps = @{}
+        if ($pkg.dependencies) { $pkg.dependencies.PSObject.Properties | ForEach-Object { $deps[$_.Name] = $_.Value } }
+        if ($pkg.devDependencies) { $pkg.devDependencies.PSObject.Properties | ForEach-Object { $deps[$_.Name] = $_.Value } }
+        foreach ($p in $progressBarPackages) { if ($deps.ContainsKey($p)) { $declaredProgressPackages += $p } }
+        $hasNextThemesDep = $deps.ContainsKey("next-themes")
+    } catch {}
+}
+
+$linkCandidates = @(
+    "$appDir/components/Link.tsx",
+    "$appDir/components/Link.jsx",
+    "src/components/Link.tsx",
+    "src/app/components/Link.tsx"
+)
+$foundLink = $linkCandidates | Where-Object { Test-Path (Join-Path $rootDir $_) } | Select-Object -First 1
+$hasUseLinkStatus = $false
+$linkUsesLocalizedNavigation = $false
+if ($foundLink) {
+    $linkContent = Get-Content -Raw -Path (Join-Path $rootDir $foundLink) -Encoding UTF8
+    $hasUseLinkStatus = $linkContent.Contains("useLinkStatus")
+    $linkUsesLocalizedNavigation = ($linkContent.Contains("@/i18n/navigation") -or $linkContent.Contains("next/link"))
+}
+
+if ($declaredProgressPackages.Count -gt 0) {
+    $automationChecks.Add(@{ name = "Navigation Pending Feedback (useLinkStatus)"; status = "warning"; details = "Global progress-bar package(s) declared: $($declaredProgressPackages -join ', '). Pending feedback must use per-link 'useLinkStatus' from 'next/link'." })
+} elseif ($foundLink -and $hasUseLinkStatus) {
+    $automationChecks.Add(@{ name = "Navigation Pending Feedback (useLinkStatus)"; status = "configured"; details = "'$foundLink' uses the built-in 'useLinkStatus' pending indicator; no progress-bar package is declared." })
+} elseif ($foundLink) {
+    $automationChecks.Add(@{ name = "Navigation Pending Feedback (useLinkStatus)"; status = "warning"; details = "'$foundLink' does not call 'useLinkStatus'. Replace any progress-bar wiring with a per-link inline indicator." })
+} else {
+    $automationChecks.Add(@{ name = "Navigation Pending Feedback (useLinkStatus)"; status = "warning"; details = "No composite Link primitive found (expected $appDir/components/Link.tsx). Internal navigation must go through $appDir/components/Link.tsx or @/i18n/navigation with a per-link 'useLinkStatus' indicator." })
+}
+
+# 16. Theming & Dark Mode (next-themes) Check
+$themeStyleRel = $null
+if ($meta -and $meta.style_file_dir) { $themeStyleRel = [string]$meta.style_file_dir }
+if (-not $themeStyleRel) {
+    $styleCandidates = @("$appDir/globals.css", "$appDir/global.css", "src/app/globals.css", "src/styles/globals.css")
+    $themeStyleRel = $styleCandidates | Where-Object { Test-Path (Join-Path $rootDir $_) } | Select-Object -First 1
+}
+
+$providerCandidates = @(
+    "$appDir/providers.tsx",
+    "$appDir/providers.jsx",
+    "src/app/providers.tsx",
+    "src/components/providers.tsx"
+)
+$foundProvider = $providerCandidates | Where-Object { Test-Path (Join-Path $rootDir $_) } | Select-Object -First 1
+$hasThemeProvider = $false
+$themeAttribute = $null
+if ($foundProvider) {
+    $providerContent = Get-Content -Raw -Path (Join-Path $rootDir $foundProvider) -Encoding UTF8
+    $hasThemeProvider = $providerContent.Contains("next-themes") -and $providerContent.Contains("ThemeProvider")
+    $attributeMatch = [regex]::Match($providerContent, 'attribute\s*=\s*["'']([^"'']+)["'']')
+    if ($attributeMatch.Success) { $themeAttribute = $attributeMatch.Groups[1].Value }
+} elseif (Test-Path (Join-Path $rootDir $appDir)) {
+    $themeProviderFile = Get-ChildItem -Path (Join-Path $rootDir $appDir) -Recurse -File -Include *.tsx,*.jsx -ErrorAction SilentlyContinue |
+        Where-Object { (Get-Content -Raw -Path $_.FullName -Encoding UTF8) -match 'from\s+["'']next-themes["'']' } |
+        Select-Object -First 1
+    if ($themeProviderFile) {
+        $foundProvider = $themeProviderFile.FullName.Replace($rootDir + [System.IO.Path]::DirectorySeparatorChar, "")
+        $providerContent = Get-Content -Raw -Path $themeProviderFile.FullName -Encoding UTF8
+        $hasThemeProvider = $providerContent.Contains("ThemeProvider")
+        $attributeMatch = [regex]::Match($providerContent, 'attribute\s*=\s*["'']([^"'']+)["'']')
+        if ($attributeMatch.Success) { $themeAttribute = $attributeMatch.Groups[1].Value }
+    }
+}
+
+$hasDarkSelector = $false
+if ($themeStyleRel -and (Test-Path (Join-Path $rootDir $themeStyleRel))) {
+    $styleContent = Get-Content -Raw -Path (Join-Path $rootDir $themeStyleRel) -Encoding UTF8
+    $hasDarkSelector = [bool]([regex]::IsMatch($styleContent, '(?i)(\.dark\b|\[data-theme|\[data-mode|prefers-color-scheme\s*:\s*dark)'))
+}
+
+$foundToggle = $null
+if ($meta -and $meta.theme_toggle_path -and (Test-Path (Join-Path $rootDir ([string]$meta.theme_toggle_path)))) {
+    $foundToggle = [string]$meta.theme_toggle_path
+} else {
+    $toggleCandidates = @()
+    foreach ($dir in @("$appDir/components", "src/components", "components", "$appDir/components/ui")) {
+        foreach ($name in @("ThemeToggle.tsx", "ModeToggle.tsx", "theme-toggle.tsx", "mode-toggle.tsx", "ThemeSwitch.tsx", "ThemeSwitcher.tsx", "ThemeMenu.tsx")) {
+            $toggleCandidates += "$dir/$name"
+        }
+    }
+    $foundToggle = $toggleCandidates | Where-Object { Test-Path (Join-Path $rootDir $_) } | Select-Object -First 1
+    if (-not $foundToggle) {
+        foreach ($dir in @("$appDir/components", "src/components", "components")) {
+            if (Test-Path (Join-Path $rootDir $dir)) {
+                $toggleFile = Get-ChildItem -Path (Join-Path $rootDir $dir) -Recurse -File -Include *.tsx,*.jsx -ErrorAction SilentlyContinue |
+                    Where-Object { (Get-Content -Raw -Path $_.FullName -Encoding UTF8) -match 'useTheme\(' } |
+                    Select-Object -First 1
+                if ($toggleFile) {
+                    $foundToggle = $toggleFile.FullName.Replace($rootDir + [System.IO.Path]::DirectorySeparatorChar, "")
+                    break
+                }
+            }
+        }
+    }
+}
+
+$missingTheme = @()
+if (-not $hasNextThemesDep) { $missingTheme += "package next-themes" }
+if (-not $hasThemeProvider) { $missingTheme += "ThemeProvider (next-themes) in the provider file" }
+if (-not $hasDarkSelector) { $missingTheme += "dark selector in '$themeStyleRel' (or record style_file_dir if tokens live elsewhere)" }
+if (-not $foundToggle) { $missingTheme += "theme toggle component (light/dark/system)" }
+
+if ($missingTheme.Count -eq 0) {
+    $attrDetail = if ($themeAttribute) { "attribute='$themeAttribute'" } else { "attribute not declared (default 'class')" }
+    $automationChecks.Add(@{ name = "Theming & Dark Mode (next-themes)"; status = "configured"; details = "next-themes installed; provider composed ($attrDetail); dark selector found in '$themeStyleRel'; toggle at '$foundToggle'." })
+} else {
+    $automationChecks.Add(@{ name = "Theming & Dark Mode (next-themes)"; status = "warning"; details = "Theming integration incomplete. Missing: $($missingTheme -join ', '). No CSS structure is mandated - only the token layer's dark variant must exist." })
 }
 
 # --- Apply the confirmed feature selection to the audits ---

@@ -33,7 +33,7 @@ exist, or no lockfile is present).
 Present the four categories and their features with defaults. Ask:
 
 > Which categories should I keep, and do you want to name any specific features
-> (N1–N12) to add or drop?
+> (N1–N13) to add or drop?
 
 Rules:
 
@@ -57,6 +57,10 @@ Rules:
 - **N4 Internationalization**: locales and default; `localePrefix` (`always` or
   `as-needed`); dictionaries directory; RTL locales; migrate routes into
   `app/[locale]/` now or later; confirm `proxy.ts` (Next 16+) vs `middleware.ts`.
+- **N13 Theming**: detected dark selector and token source; switching strategy
+  (`class` / `data-theme` / `data-mode`); default theme and system following;
+  palette scope (keep values vs derive dark pairs); toggle placement and shape;
+  motion on theme change; storage key.
 
 ### Category B — Testing & Quality
 

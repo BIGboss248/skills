@@ -1,7 +1,8 @@
 import type { Preview } from "@storybook/nextjs-vite";
+// Match the app's theme strategy (N13): withThemeByClassName for `class`,
+// withThemeByDataAttribute for `data-theme` / `data-mode`.
 import { withThemeByClassName } from "@storybook/addon-themes";
 import { NextIntlClientProvider } from "next-intl";
-import { ProgressBarProvider } from "@vercel/react-transition-progress";
 import enMessages from "../messages/en.json";
 import "../app/globals.css";
 
@@ -30,9 +31,7 @@ const preview: Preview = {
     }),
     (Story) => (
       <NextIntlClientProvider locale="en" messages={enMessages}>
-        <ProgressBarProvider>
-          <Story />
-        </ProgressBarProvider>
+        <Story />
       </NextIntlClientProvider>
     ),
   ],

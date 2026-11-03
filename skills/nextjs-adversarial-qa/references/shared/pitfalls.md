@@ -16,8 +16,8 @@ Two catalogues: creation mistakes that testing exposes, and testing mistakes tha
 | Self-certifying quality without adversarial audit | Spawn the independent auditor subagent for `*.edge.test.tsx` |
 | Guessing unspecified behavior | Grill the user before writing the test plan |
 | Transient plan in chat memory only | Persist `test-plan.md` and `.agents/history/plan-[component-name].json` |
-| Standard `next/link` for hero/primary navigation | `@vercel/react-transition-progress` `Link` for primary CTA/nav |
-| Naked internal links (`/about`) | `localizePath` / `ROUTES` |
+| Standard `next/link` for internal navigation | `Link` from `@/i18n/navigation` (locale prefix applied automatically) |
+| Naked internal links (`/about`) | `Link` from `@/i18n/navigation` with a route key, not a hand-built path |
 | Manual date/currency formatting | `Intl.DateTimeFormat` / `Intl.NumberFormat` |
 | Skipping `@param` tags or non-English TSDoc | Strict English TSDoc for every prop and parameter |
 | Shared singleton `QueryClient` on server | `new QueryClient()` per request |

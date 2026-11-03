@@ -25,7 +25,9 @@ Whenever you are asked to create, scaffold, build, or implement **any new React 
    - **Zero Hardcoded Strings (i18n)**: Populate `messages/[locale].json` across all `supported_languages` in `docs/project.json` first and consume via `next-intl` (`getTranslations` / `useTranslations`). Never hardcode copy or in-file fallback objects.
    - **TDD Baseline Delegation**: The `nextjs-test-author` agent authors `[ComponentName].test.tsx` (Jest + RTL + `jest-axe` + `NextIntlClientProvider`) before implementation. Implementation agents never write or edit tests.
    - **Component, Skeleton & Barrel**: Implement `[ComponentName].tsx` (RSC by default, push `"use client"` to leaf nodes), matching `[ComponentName]Skeleton.tsx` (mirroring geometry to prevent CLS), and `index.ts`.
-   - **Semantic Tokens & Logical BiDi Styling**: Exclusively use semantic CSS variables from `app/globals.css` (`bg-background`, `text-foreground`, `border-border`, `text-muted-foreground`) and Tailwind logical properties (`ms-`, `me-`, `ps-`, `pe-`, `start`, `end`). Physical directional classes (`ml-`, `mr-`, `pl-`, `pr-`, `left-`, `right-`) and raw hex/palette classes are strictly forbidden.
+   - **Semantic Tokens & Logical BiDi Styling**: Exclusively use the project's semantic CSS variables declared in the stylesheet recorded as `style_file_dir` in `docs/project.json` (`bg-background`, `text-foreground`, `border-border`, `text-muted-foreground` are the common names — use whatever that stylesheet actually declares) and Tailwind logical properties (`ms-`, `me-`, `ps-`, `pe-`, `start`, `end`). Physical directional classes (`ml-`, `mr-`, `pl-`, `pr-`, `left-`, `right-`) and raw hex/palette classes are strictly forbidden.
+   - **Both Themes or It Does Not Ship**: Every component must be reviewed in light **and** dark. If the project's token layer has no dark counterpart for a role you need, report it — never hardcode a dark-only or light-only color.
+   - **Navigation Pending Feedback**: Links use the composite `Link` (or `@/i18n/navigation` when N4 is enabled), and pending state comes from per-link `useLinkStatus` (`next/link`, Next ≥15.3). Never add a progress-bar package or provider, and never mount the indicator conditionally.
    - **Verification Gate**: Run `pwsh .agents/skills/nextjs-component-dev/scripts/verify-dev.ps1 -ComponentPath <target_component_dir>`, run targeted Playwright specs, and inspect runtime health via `next-devtools` MCP (`nextjs_call`).
    - **Plan Checklist Sync**: The orchestrator checks off completed component items (`- [x]`) in `docs/plan/05-pages-and-components.md`. Role agents never edit the plan.
 
@@ -48,7 +50,45 @@ Whenever you are asked to create, scaffold, build, or implement **any new Next.j
 
 ---
 
-## 3. Agent Roster & Delegation
+## 3. Navigation Pending Feedback & Theme Consistency
+
+### 3.1 Pending feedback is per link
+
+- The only supported pending signal is `useLinkStatus` from `next/link`
+  (introduced in Next.js 15.3; App Router only). It must be called inside a
+  descendant of the `<Link>` it reports on.
+- **Forbidden**: `nprogress`, `next-nprogress-bar`, `@bprogress/*`,
+  `react-transition-progress`, `@vercel/react-transition-progress`, router-event
+  listeners, or any global "progress provider" in `providers.tsx` /
+  `layout.tsx`.
+- The indicator is always rendered, reserves fixed space, toggles opacity after
+  ~100ms, respects `prefers-reduced-motion`, and is `aria-hidden`. Conditionally
+  mounting it causes layout shift; appearing instantly causes flicker.
+- Route-level fallbacks (`loading.tsx`, `<Suspense>`) are a different layer and
+  remain the preferred fix for genuinely slow routes.
+- Contract: `.agents/skills/nextjs-dev-setup/references/navigation-pending-guide.md`.
+
+### 3.2 Theme consistency
+
+- One token layer. Components consume semantic tokens; only the token layer
+  differs between light and dark. Do not add tokens ad hoc, and do not invent a
+  second token file.
+- `next-themes` owns the preference. Its `attribute` must equal the selector the
+  stylesheet actually uses: `class`, `data-theme`, or `data-mode`. Do not read
+  `localStorage` or `matchMedia` in components.
+- Never overwrite, rename, or reorder existing token declarations. Append the
+  missing dark counterpart only, and follow the stylesheet structure the project
+  already uses — do not impose a CSS file layout, token vocabulary, or color
+  space of your own.
+- The toggle lives once in the app shell, offers light / dark / system, has an
+  accessible name, and reads `resolvedTheme` (guarded on mount).
+- `theme`/`resolvedTheme` are `undefined` before mount — guard icon rendering and
+  keep `suppressHydrationWarning` on `<html>` only when the provider writes the
+  attribute client-side.
+
+---
+
+## 4. Agent Roster & Delegation
 
 This repository installs four OpenCode agents. Permissions enforce the boundaries; assume a denied write is intentional.
 
@@ -74,16 +114,16 @@ Full contract: [`.agents/rules/agent-boundaries.md`](./.agents/rules/agent-bound
 
 ---
 
-## 4. Setup Feature Selection (`.agents/nextjs-setup-features.json`)
+## 5. Setup Feature Selection (`.agents/nextjs-setup-features.json`)
 
 Read the recorded selection before assuming a tool exists: a disabled feature is
-deliberate, not broken. `N1`–`N12` map to the runbooks under
+deliberate, not broken. `N1`–`N13` map to the runbooks under
 `nextjs-dev-setup/references/features/`. Do not add configuration for a disabled
 feature without enabling it in the selection first.
 
 ---
 
-## 5. Always-Active Lifecycle & Code Intelligence Skills
+## 6. Always-Active Lifecycle & Code Intelligence Skills
 
 - **Self-Repair (`self-repair`)**: Always read [`.agents/skills/self-repair/SKILL.md`](./.agents/skills/self-repair/SKILL.md) and load [`.agents/autofix.json`](./.agents/autofix.json) at session start and before executing any task. Immediately record any new user correction or preference to `.agents/autofix.json`.
 - **Codebase Memory (`codebase-memory`)**: Always follow [`.agents/skills/codebase-memory/SKILL.md`](./.agents/skills/codebase-memory/SKILL.md) (`index_status` / `index_repository` first, then `search_graph`, `trace_path`, `get_code_snippet`) before searching or exploring the codebase.

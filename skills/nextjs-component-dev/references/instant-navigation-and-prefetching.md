@@ -215,7 +215,7 @@ test.describe("Product Component Instant Navigation", () => {
 
 ## 8. Contextual Link Loading Feedback (`useLinkStatus`)
 
-While global progress bars (e.g. `@vercel/react-transition-progress`) indicate that a navigation transition is occurring at the viewport level, they do not communicate *which* component was triggered. In dense grids (product catalogs, search results, feeds) and primary action buttons, pair prefetching strategies with `useLinkStatus` to deliver immediate, contextual micro-feedback.
+Section 8 covers per-link feedback. A global progress bar is deliberately not part of this stack: it adds a dependency and a provider, and it does not communicate *which* link was triggered. In dense grids (product catalogs, search results, feeds) and primary action buttons, pair prefetching strategies with `useLinkStatus` to deliver immediate, contextual micro-feedback inside a `Link` from `@/i18n/navigation`.
 
 ### Core Mechanics
 - **Import:** `import { useLinkStatus } from "next/link";`
@@ -263,6 +263,9 @@ export function LinkButtonContent({
 ```
 
 ### Best Practices for Dense Grids:
-1. **Never Multi-Fire Prefetch:** Retain default `<Link>` or hover prefetching (`router.prefetch()`) across dense lists of 30+ items.
-2. **Prevent Multi-Click:** Apply `pointer-events-none cursor-wait` while `pending` is active.
-3. **Preserve Semantic Layout:** Use `useLinkStatus` strictly within the child of `<Link>` to keep semantic HTML `<a>` tags intact for SEO and screen readers.
+1. **Localized Href:** Render these children inside `Link` from `@/i18n/navigation`, never `next/link` — the locale prefix must come from the navigation provider.
+2. **Never Multi-Fire Prefetch:** Retain default `<Link>` or hover prefetching (`router.prefetch()`) across dense lists of 30+ items.
+3. **Prevent Multi-Click:** Apply `pointer-events-none cursor-wait` while `pending` is active.
+4. **Preserve Semantic Layout:** Use `useLinkStatus` strictly within the child of `<Link>` to keep semantic HTML `<a>` tags intact for SEO and screen readers.
+5. **No Hardcoded Copy:** `label` and `loadingLabel` come from the dictionary (`messages/[locale].json`), never from literals in the component.
+6. **Prefetched Routes Show Nothing:** If the destination was prefetched, the pending phase is skipped. Do not treat a silent indicator as a bug.

@@ -34,9 +34,11 @@ export interface LinkStatusContentProps {
 /**
  * Contextual loading indicator for Next.js App Router `<Link>` components.
  *
- * Must be rendered as a child of a `<Link>` component. Reads `useLinkStatus()`
- * to determine if this specific link transition is pending, rendering an inline
- * spinner and accessible pending attributes.
+ * Must be rendered as a child of a `Link` from `@/i18n/navigation` (which
+ * passes straight through to `next/link`). Reads `useLinkStatus()` to determine
+ * if this specific link transition is pending, rendering an inline spinner and
+ * accessible pending attributes. `label` and `loadingLabel` must come from the
+ * dictionary, never from literals in the component.
  *
  * @param props - Component configuration properties.
  * @returns An inline element reflecting the current link transition status.

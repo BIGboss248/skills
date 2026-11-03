@@ -1,50 +1,95 @@
 "use client";
 
 import * as React from "react";
+import { useLinkStatus } from "next/link";
 import { Link as I18nLink } from "@/i18n/navigation";
-import { useProgress } from "@vercel/react-transition-progress";
 
+/**
+ * Composite link primitive.
+ *
+ * Requirement: `next@15.3+` (useLinkStatus was introduced in 15.3). The skill
+ * always installs the latest release, so no version guard is needed in code.
+ *
+ * The pending indicator is per link: `useLinkStatus` reads the transition state
+ * of the nearest ancestor `<Link>` only. Never replace it with a global
+ * progress-bar library or provider.
+ *
+ * When N4 (next-intl) is disabled, change the import above to
+ * `import Link as I18nLink from "next/link";` and keep everything else.
+ */
 export interface LinkProps extends React.ComponentProps<typeof I18nLink> {
   /**
-   * Prefetch strategy:
-   * - `null` / `undefined` (default): Prefetches shared App Shell (layout + static chrome). Zero per-link server invocations. Ideal for dense feeds and lists.
-   * - `true`: Prefetches App Shell AND server-evaluates dynamic `params` / `searchParams` with 1 server invocation. Best for high-intent primary CTAs.
-   * - `false`: Disables viewport prefetching.
+   * Prefetch strategy (App Router):
+   * - `"auto"` / `null` / `undefined` (default): static routes prefetch fully;
+   *   dynamic routes prefetch down to the nearest `loading.js` boundary.
+   * - `true`: full route prefetch for static and dynamic routes (1 server
+   *   invocation) — reserve for high-intent primary CTAs.
+   * - `false`: no prefetch on viewport entry or hover. The most useful setting
+   *   for `useLinkStatus`: pending feedback is otherwise skipped when the route
+   *   was already prefetched.
    */
-  prefetch?: boolean | null;
+  prefetch?: boolean | "auto" | null;
+  /**
+   * Render the inline pending indicator while this link's navigation is in
+   * flight.
+   * @defaultValue true
+   */
+  showPendingIndicator?: boolean;
+}
+
+interface LinkStatusIndicatorProps {
+  readonly className?: string;
 }
 
 /**
- * Composite Link component combining localized routing from `next-intl`
- * with automatic top route progress bar triggering from `@vercel/react-transition-progress`.
+ * Inline, decorative pending indicator driven by Next's `useLinkStatus`.
  *
- * Supports optimized Next.js App Router prefetching:
- * - Default (`prefetch={null}`): Bounded $O(\text{routes})$ App Shell prefetch.
- * - `prefetch={true}`: Full dynamic URL data prefetch for instant zero-skeleton transitions.
+ * Must be rendered as a descendant of the `<Link>` it reports on. It:
+ * - reserves a fixed size and always occupies space (no layout shift),
+ * - fades in only after ~100ms, so sub-100ms navigations never flash,
+ * - pulses only while pending, and stops for `prefers-reduced-motion`,
+ * - carries no copy and is `aria-hidden` (decorative hint, not a status).
  */
-export function Link({ href, prefetch, onClick, children, ...props }: LinkProps) {
-  const startProgress = useProgress();
-
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-    if (onClick) onClick(e);
-
-    // Only start progress bar if event was not prevented and target is an internal app route
-    if (
-      !e.defaultPrevented &&
-      typeof href === "string" &&
-      !href.startsWith("http") &&
-      !href.startsWith("#") &&
-      !href.startsWith("mailto:") &&
-      !href.startsWith("tel:")
-    ) {
-      startProgress();
-    }
-  };
+export function LinkStatusIndicator({
+  className = "",
+}: LinkStatusIndicatorProps): React.JSX.Element {
+  const { pending } = useLinkStatus();
 
   return (
-    <I18nLink href={href} prefetch={prefetch} onClick={handleClick} {...props}>
-      {children}
-    </I18nLink>
+    <span
+      aria-hidden="true"
+      data-pending={pending}
+      className={`ms-2 inline-block size-1.5 shrink-0 transition-opacity duration-150 delay-100 motion-reduce:transition-none ${
+        pending ? "opacity-100" : "opacity-0"
+      } ${className}`.trim()}
+    >
+      <span className="block size-full rounded-full bg-current animate-pulse motion-reduce:animate-none" />
+    </span>
   );
 }
 
+/**
+ * Single link primitive for the app.
+ *
+ * Composes next-intl's locale-aware `Link` (so every href carries the active
+ * locale prefix and client navigation never relies on proxy negotiation) with
+ * Next's built-in `useLinkStatus` pending indicator. No progress-bar library is
+ * involved.
+ *
+ * Supports optimized Next.js App Router prefetching:
+ * - Default (`prefetch={null}`): bounded App Shell / partial prefetch.
+ * - `prefetch={true}`: full dynamic URL data prefetch for instant transitions.
+ * - `prefetch={false}`: never prefetch; pending feedback is always observable.
+ */
+export function Link({
+  showPendingIndicator = true,
+  children,
+  ...props
+}: LinkProps): React.JSX.Element {
+  return (
+    <I18nLink {...props}>
+      {children}
+      {showPendingIndicator ? <LinkStatusIndicator /> : null}
+    </I18nLink>
+  );
+}

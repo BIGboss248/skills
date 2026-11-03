@@ -77,6 +77,8 @@ check_feature() {
     "App Icons & PWA Web Manifest") echo "N3" ;;
     "Next.js Internationalization (next-intl)") echo "N4" ;;
     "Next.js Core Dependency (next@latest)"|"Agent Instructions & Docs Notice"*) echo "N2" ;;
+    "Navigation Pending Feedback (useLinkStatus)") echo "N2" ;;
+    "Theming & Dark Mode (next-themes)") echo "N13" ;;
     "Agent Roster & Permission Boundaries") echo "N9" ;;
     *) echo "" ;;
   esac
@@ -492,6 +494,102 @@ else
     fi
   fi
   AUTOMATION_CHECKS+=("MISS:Agent Roster & Permission Boundaries:Agent roster incomplete or invalid.")
+fi
+
+# 15. Navigation Pending Feedback (useLinkStatus)
+PROGRESS_PKGS=()
+for pkg_name in "nprogress" "next-nprogress-bar" "@bprogress/core" "@bprogress/next" "react-transition-progress" "@vercel/react-transition-progress"; do
+  if [ -f "package.json" ] && grep -Fq "\"$pkg_name\"" package.json; then
+    PROGRESS_PKGS+=("$pkg_name")
+  fi
+done
+
+FOUND_LINK=""
+for lc in "$APP_DIR/components/Link.tsx" "$APP_DIR/components/Link.jsx" "src/components/Link.tsx" "src/app/components/Link.tsx"; do
+  if [ -f "$lc" ]; then FOUND_LINK="$lc"; break; fi
+done
+
+if [ ${#PROGRESS_PKGS[@]} -gt 0 ]; then
+  AUTOMATION_CHECKS+=("WARN:Navigation Pending Feedback (useLinkStatus):Global progress-bar package(s) declared: ${PROGRESS_PKGS[*]}. Use per-link 'useLinkStatus' from 'next/link' instead.")
+elif [ -n "$FOUND_LINK" ] && grep -Fq "useLinkStatus" "$FOUND_LINK"; then
+  AUTOMATION_CHECKS+=("OK:Navigation Pending Feedback (useLinkStatus):'$FOUND_LINK' uses the built-in 'useLinkStatus' pending indicator.")
+elif [ -n "$FOUND_LINK" ]; then
+  AUTOMATION_CHECKS+=("WARN:Navigation Pending Feedback (useLinkStatus):'$FOUND_LINK' does not call 'useLinkStatus'. Replace progress-bar wiring with a per-link inline indicator.")
+else
+  AUTOMATION_CHECKS+=("WARN:Navigation Pending Feedback (useLinkStatus):No composite Link primitive found (expected $APP_DIR/components/Link.tsx). Internal navigation needs a per-link 'useLinkStatus' indicator.")
+fi
+
+# 16. Theming & Dark Mode (next-themes)
+HAS_NEXT_THEMES=false
+if [ -f "package.json" ] && grep -Fq '"next-themes"' package.json; then
+  HAS_NEXT_THEMES=true
+fi
+
+THEME_STYLE=""
+if [ -f "$CONFIG_FILE" ]; then
+  THEME_STYLE=$(grep -o '"style_file_dir"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" 2>/dev/null | head -1 | sed -E 's/.*"([^"]*)"$/\1/' || true)
+fi
+if [ -z "$THEME_STYLE" ]; then
+  for sc in "$APP_DIR/globals.css" "$APP_DIR/global.css" "src/app/globals.css" "src/styles/globals.css"; do
+    if [ -f "$sc" ]; then THEME_STYLE="$sc"; break; fi
+  done
+fi
+
+FOUND_PROVIDER=""
+for pc in "$APP_DIR/providers.tsx" "$APP_DIR/providers.jsx" "src/app/providers.tsx" "src/components/providers.tsx"; do
+  if [ -f "$pc" ]; then FOUND_PROVIDER="$pc"; break; fi
+done
+HAS_THEME_PROVIDER=false
+THEME_ATTRIBUTE=""
+if [ -n "$FOUND_PROVIDER" ] && grep -Fq 'next-themes' "$FOUND_PROVIDER" && grep -Fq 'ThemeProvider' "$FOUND_PROVIDER"; then
+  HAS_THEME_PROVIDER=true
+  THEME_ATTRIBUTE=$(grep -o 'attribute[[:space:]]*=[[:space:]]*"[^"]*"' "$FOUND_PROVIDER" 2>/dev/null | head -1 | sed -E 's/.*"([^"]*)"/\1/' || true)
+elif [ -d "$APP_DIR" ]; then
+  THEME_PROVIDER_FILE=$(grep -rl --include='*.tsx' --include='*.jsx' 'next-themes' "$APP_DIR" 2>/dev/null | head -1 || true)
+  if [ -n "$THEME_PROVIDER_FILE" ]; then
+    FOUND_PROVIDER="$THEME_PROVIDER_FILE"
+    HAS_THEME_PROVIDER=true
+    THEME_ATTRIBUTE=$(grep -o 'attribute[[:space:]]*=[[:space:]]*"[^"]*"' "$THEME_PROVIDER_FILE" 2>/dev/null | head -1 | sed -E 's/.*"([^"]*)"/\1/' || true)
+  fi
+fi
+
+HAS_DARK_SELECTOR=false
+if [ -n "$THEME_STYLE" ] && [ -f "$THEME_STYLE" ] && grep -Eqi '(\.dark\b|\[data-theme|\[data-mode|prefers-color-scheme[[:space:]]*:[[:space:]]*dark)' "$THEME_STYLE"; then
+  HAS_DARK_SELECTOR=true
+fi
+
+FOUND_TOGGLE=""
+if [ -f "$CONFIG_FILE" ]; then
+  THEME_TOGGLE=$(grep -o '"theme_toggle_path"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" 2>/dev/null | head -1 | sed -E 's/.*"([^"]*)"$/\1/' || true)
+  if [ -n "$THEME_TOGGLE" ] && [ -f "$THEME_TOGGLE" ]; then FOUND_TOGGLE="$THEME_TOGGLE"; fi
+fi
+if [ -z "$FOUND_TOGGLE" ]; then
+  for tdir in "$APP_DIR/components" "src/components" "components" "$APP_DIR/components/ui"; do
+    for tname in ThemeToggle.tsx ModeToggle.tsx theme-toggle.tsx mode-toggle.tsx ThemeSwitch.tsx ThemeSwitcher.tsx ThemeMenu.tsx; do
+      if [ -f "$tdir/$tname" ]; then FOUND_TOGGLE="$tdir/$tname"; break 2; fi
+    done
+  done
+fi
+if [ -z "$FOUND_TOGGLE" ]; then
+  for tdir in "$APP_DIR/components" "src/components" "components"; do
+    if [ -d "$tdir" ]; then
+      TOGGLE_FILE=$(grep -rl --include='*.tsx' --include='*.jsx' 'useTheme(' "$tdir" 2>/dev/null | head -1 || true)
+      if [ -n "$TOGGLE_FILE" ]; then FOUND_TOGGLE="$TOGGLE_FILE"; break; fi
+    fi
+  done
+fi
+
+MISSING_THEME=()
+if [ "$HAS_NEXT_THEMES" = false ]; then MISSING_THEME+=("package next-themes"); fi
+if [ "$HAS_THEME_PROVIDER" = false ]; then MISSING_THEME+=("ThemeProvider (next-themes) in the provider file"); fi
+if [ "$HAS_DARK_SELECTOR" = false ]; then MISSING_THEME+=("dark selector in '${THEME_STYLE:-style_file_dir}' (or record style_file_dir if tokens live elsewhere)"); fi
+if [ -z "$FOUND_TOGGLE" ]; then MISSING_THEME+=("theme toggle component (light/dark/system)"); fi
+
+if [ ${#MISSING_THEME[@]} -eq 0 ]; then
+  AUTOMATION_CHECKS+=("OK:Theming & Dark Mode (next-themes):next-themes installed; provider composed (attribute='${THEME_ATTRIBUTE:-class}'); dark selector in '$THEME_STYLE'; toggle at '$FOUND_TOGGLE'.")
+else
+  MISSING_JOINED=$(printf '%s, ' "${MISSING_THEME[@]}")
+  AUTOMATION_CHECKS+=("WARN:Theming & Dark Mode (next-themes):Theming integration incomplete. Missing: ${MISSING_JOINED%, }. No CSS structure is mandated - only the token layer's dark variant must exist.")
 fi
 
 # --- Output ---

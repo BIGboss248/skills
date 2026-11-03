@@ -46,7 +46,7 @@ Before creating or modifying components, read the planning artifacts created by 
 - **Theme tokens only.** Use semantic variables from `app/globals.css` (`bg-background`, `text-foreground`, `border-border`, `text-muted-foreground`). Hardcoded hex or palette scales are forbidden.
 - **Class merging.** Always use `cn(...)` (`clsx` + `tailwind-merge`).
 - **BiDi.** Use logical properties (`ms-`, `me-`, `ps-`, `pe-`, `start`, `end`). Physical directions (`ml-`, `mr-`, `pl-`, `pr-`, `left`, `right`) are forbidden.
-- **Progress-aware links.** `@vercel/react-transition-progress` `<Link>` for primary navigation/CTAs; `next/link` for static utility links; raw `<a>` is forbidden.
+- **Localized links.** `Link` from `@/i18n/navigation` for all internal navigation (it applies the locale prefix); `next/link` only for hash anchors and the locale-less root `not-found.tsx`; raw `<a>` is forbidden for internal routes. Pending feedback uses a `useLinkStatus()` child inside the link, not a progress-bar package.
 - **Images.** `next/image` with explicit dimensions or `fill`, responsive `sizes`, and `priority` for above-the-fold LCP assets.
 
 ---

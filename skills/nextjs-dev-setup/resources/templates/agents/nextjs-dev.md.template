@@ -138,6 +138,10 @@ failure_report: []   # populated on a repair round
 - Hardcoded copy, fallback strings, or in-file dictionary objects.
 - Physical directional classes (`ml-`, `pr-`, `left-`); use logical properties.
 - Hardcoded colors or raw color scales; use semantic tokens.
+- Wrapping links in a global progress-bar library, provider, or router-event
+  listener — pending feedback is per-link `useLinkStatus`.
+- Shipping a component reviewed in only one theme, or adding a token instead of
+  reporting a missing dark counterpart.
 - Importing a Server Component inside a `"use client"` file.
 - Creating a Storybook story unless explicitly asked.
 - Creating sample or placeholder files outside the target directory.

@@ -20,7 +20,7 @@ A comprehensive reference for bootstrapping, configuring, and verifying **`next-
    - Deprecated `requestLocale` and `setRequestLocale()` are strictly forbidden.
 4. **Pure TypeScript Navigation:**
    - Export `Link`, `redirect`, `usePathname`, `useRouter`, `getPathname` from `i18n/navigation.ts` (pure TypeScript, zero JSX per Rule 11).
-   - Composite UI wrappers (e.g. `Link` with progress bar) live in `app/components/Link.tsx`.
+   - Composite UI wrappers (e.g. `Link` with the inline `useLinkStatus` pending indicator) live in `app/components/Link.tsx`.
 5. **Static Generation:**
    - Root layout `app/[locale]/layout.tsx` MUST export `generateStaticParams()` returning `{ locale }` for all supported locales in `routing.locales` (Rule 24).
 6. **Starter Translation Dictionaries:**
@@ -44,13 +44,13 @@ A comprehensive reference for bootstrapping, configuring, and verifying **`next-
 | `messages/en.json` | [`en.json.template`](../resources/templates/messages/en.json.template) | Starter baseline English dictionary |
 | `messages/fa.json` | [`fa.json.template`](../resources/templates/messages/fa.json.template) | Starter baseline Persian dictionary |
 | `next.config.ts` | [`next.config.ts.template`](../resources/templates/next.config.ts.template) | Wraps config with `createNextIntlPlugin()` |
-| `app/components/Link.tsx` | [`Link.tsx.template`](../resources/templates/Link.tsx.template) | Composite Link with progress bar integration |
+| `app/components/Link.tsx` | [`Link.tsx.template`](../resources/templates/Link.tsx.template) | Composite Link with per-link `useLinkStatus` pending indicator |
 | `.storybook/preview.tsx` | [`storybook-preview.tsx.template`](../resources/templates/storybook-preview.tsx.template) | Storybook decorator with `NextIntlClientProvider` |
 
 ---
 
 ## 3. Storybook & Test Harness Integration
 
-- **Storybook Context (Rule 25):** Always wrap Storybook stories rendering `Link` or `useTranslations` with `NextIntlClientProvider` (supplying `messages` from `messages/en.json`) and `ProgressBarProvider` in `.storybook/preview.tsx`.
+- **Storybook Context (Rule 25):** Always wrap Storybook stories rendering `Link` or `useTranslations` with `NextIntlClientProvider` (supplying `messages` from `messages/en.json`) in `.storybook/preview.tsx`. Pending navigation feedback uses Next's `useLinkStatus` inside the link itself, so no progress-bar provider belongs in the preview.
 - **Zero-Hardcoding Contract (Rule 27):** Never include hardcoded user-facing strings or in-file mock dictionaries in component code. All strings must be extracted into `messages/[locale].json` across all supported languages.
 

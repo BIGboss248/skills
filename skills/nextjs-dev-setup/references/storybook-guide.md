@@ -37,7 +37,9 @@ Storybook suites must include a `CssCheck` story that asserts a resolved `getCom
 
 ## 4. Theme Tokens & i18n Decorators
 
-All Storybook preview wrappers and story decorators MUST strictly use semantic theme tokens from `globals.css` (`bg-background`, `text-foreground`, `border-border`) with scoped `.light` and `.dark` classes. If components use `next-intl` navigation (`Link`, `useRouter`), wrap stories with `NextIntlClientProvider` and `ProgressBarProvider`.
+All Storybook preview wrappers and story decorators MUST strictly use semantic theme tokens from `globals.css` (`bg-background`, `text-foreground`, `border-border`) with scoped `.light` and `.dark` classes. If components use `next-intl` navigation (`Link`, `useRouter`), wrap stories with `NextIntlClientProvider`. Pending navigation feedback is per-link `useLinkStatus` and needs no additional provider.
+
+Theme parity (N13): the decorator must mirror the app's actual strategy — `withThemeByClassName({ themes: { light: "", dark: "dark" } })` for the `class` strategy, or `withThemeByDataAttribute({ attributeName: "data-theme" })` when the token layer reacts to `data-theme`. A mismatched decorator makes stories lie about both themes.
 
 ---
 
