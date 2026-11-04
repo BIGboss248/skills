@@ -3,13 +3,16 @@ set -u
 
 usage() {
     cat <<'EOF'
-Usage: bash verify-qa.sh <TargetPath> [Mode] [--no-run] [--help]
+Usage: bash verify-qa.sh <TargetPath> [Mode] [--tier fast|full] [--no-run] [--help]
 
 Verifies Next.js test artifacts and runs the targeted QA suites.
 
   TargetPath   Component directory (components/home/Hero) or route directory
                (app/[locale]/about).
   Mode         baseline | adversarial | page | all | audit   (default: all)
+  --tier       fast | full (default: fast). 'fast' runs Jest only and defers
+               Playwright to the pre-push gate; 'full' runs everything and is
+               reserved for pre-push, CI, or an explicit user request.
   --no-run     Audit files only; do not execute test runners.
   --help       Show this help.
 
@@ -24,12 +27,17 @@ fi
 
 TARGET_PATH=""
 MODE="all"
+TIER="fast"
 NO_RUN=0
 
 for arg in "$@"; do
     case "$arg" in
         --help|-h) usage; exit 0 ;;
         --no-run) NO_RUN=1 ;;
+        --tier) ;;
+        --tier=fast) TIER="fast" ;;
+        --tier=full) TIER="full" ;;
+        fast|full) TIER="$arg" ;;
         baseline|adversarial|page|all|audit) MODE="$arg" ;;
         *) if [ -z "$TARGET_PATH" ]; then TARGET_PATH="$arg"; fi ;;
     esac
@@ -143,16 +151,23 @@ for file in "${JEST_FILES[@]}"; do
     fi
 done
 
-for file in "${E2E_FILES[@]}"; do
-    echo "[INFO] Running Playwright: $file"
-    if [ "$PKG_MANAGER" = "bun" ]; then bun run test:e2e "$file"
-    elif [ "$PKG_MANAGER" = "npm" ]; then npm run test:e2e -- "$file"
-    else "$PKG_MANAGER" run test:e2e -- "$file"; fi
-    if [ $? -ne 0 ]; then
-        echo "[FAIL] Playwright suite failed: $(basename "$file")"
-        exit 1
-    fi
-done
+if [ ${#E2E_FILES[@]} -gt 0 ] && [ "$TIER" != "full" ]; then
+    echo "[DEFERRED] Playwright suites are expensive and run pre-push:"
+    for file in "${E2E_FILES[@]}"; do echo "  - $file"; done
+    echo "  Run now only on explicit request: $PKG_MANAGER run test:e2e <file>  (or --tier full)"
+    echo "[DEFERRED] A deferred suite is not a passing suite."
+else
+    for file in "${E2E_FILES[@]}"; do
+        echo "[INFO] Running Playwright: $file"
+        if [ "$PKG_MANAGER" = "bun" ]; then bun run test:e2e "$file"
+        elif [ "$PKG_MANAGER" = "npm" ]; then npm run test:e2e -- "$file"
+        else "$PKG_MANAGER" run test:e2e -- "$file"; fi
+        if [ $? -ne 0 ]; then
+            echo "[FAIL] Playwright suite failed: $(basename "$file")"
+            exit 1
+        fi
+    done
+fi
 
-echo "[SUCCESS] QA verification passed for '$COMP_NAME' (mode: $MODE)."
+echo "[SUCCESS] QA verification passed for '$COMP_NAME' (mode: $MODE, tier: $TIER)."
 exit 0

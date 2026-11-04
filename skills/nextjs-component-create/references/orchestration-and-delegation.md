@@ -60,17 +60,24 @@ target:
   path: <new_component_dir>/<page>/<ComponentName>/ | app/[locale]/<route>/
 spec: <design-spec.md | page-spec.md>
 plan: <implementation_plan.md | none>
+worktree:
+  branch: agent/<kebab-slug>
+  path: ../<repo>-worktrees/<kebab-slug>
+  base: main
 project:
   config: docs/project.json
   package_manager: pnpm
   locales: [en, fa]
   dictionaries: messages
+tier: fast          # fast only; 'full' is pre-push/CI/user-request
 failure_report: []        # repair rounds only
 rules:
   - One role per artifact.
   - Edge tests are immutable; baseline tests change only with a logged reason.
   - Failing test means failing code.
   - Targeted execution only.
+  - Fast tier only: never Playwright, full Jest, build, or Storybook build.
+  - Write inside the worktree; never in the user's working tree.
   - No test.only / it.skip / placeholder assertions.
 ```
 
@@ -82,17 +89,21 @@ for test agents and in the `nextjs-dev` agent prompt for implementation.
 
 ## 4. Phase Gates
 
-| Gate | Owner | Pass condition |
-| :--- | :--- | :--- |
-| Spec complete | orchestrator | `design-spec.md` / `page-spec.md` §7 rows are explicit and verifiable |
-| Baseline authored | test-author | `test-plan.md` maps every §7 row to an ID and layer |
-| Baseline green | orchestrator | targeted suite exits `0`, output recorded |
-| Implementation clean | dev | `verify-dev` / `verify-page` exits `0`, no dev-server errors |
-| Edge suite authored | qa-auditor | ≥6 cases across ≥4 categories (component) or ≥4 page-boundary cases |
-| All suites green | orchestrator | baseline + edge + Playwright exit `0` |
-| Boundaries held | orchestrator | write audit exit `0` |
+| Gate | Owner | Tier | Pass condition |
+| :--- | :--- | :--- | :--- |
+| Spec complete | orchestrator | — | `design-spec.md` / `page-spec.md` §7 rows are explicit and verifiable |
+| Baseline authored | test-author | fast | `test-plan.md` maps every §7 row to an ID and layer |
+| Baseline green | orchestrator | fast | targeted Jest suite exits `0`, output recorded |
+| Page suite authored | test-author | fast (authoring) | spec exists, passes static audit, listed in `deferred_expensive_tests[]` |
+| Implementation clean | dev | fast | `verify-dev` / `verify-page` exits `0`, no dev-server errors |
+| Edge suite authored | qa-auditor | fast | ≥6 cases across ≥4 categories (component) or ≥4 page-boundary cases |
+| All fast suites green | orchestrator | fast | baseline + edge Jest exit `0`; Playwright deferred |
+| Boundaries held | orchestrator | — | write audit exit `0` |
+| Merge clean | orchestrator | — | `agent/<slug>` merges into `main` with `--no-ff` |
+| Expensive tier | pre-push hook | full | `test:all` exits `0` at `git push` |
 
-Never accept `status: PASS` from an agent without the command and exit code.
+Never accept `status: PASS` from an agent without the command and exit code, and
+never accept `PASS` for a suite that was deferred.
 
 ---
 
@@ -172,15 +183,55 @@ must:
 
 ---
 
-## 8. Orchestrator Checklist
+## 8. Worktree Isolation
+
+Full contract:
+[`../../nextjs-dev-setup/references/agent-worktree-isolation.md`](../../nextjs-dev-setup/references/agent-worktree-isolation.md).
+
+1. **One worktree per target**, created in Phase 0b before any write:
+   `agent-worktree.ps1 -Action create -Slug <slug>` (or the `.sh` equivalent).
+2. Layout: `../<repo>-worktrees/<slug>`, branch `agent/<slug>`, base `main`.
+3. Every delegate brief carries `worktree.branch`, `worktree.path`, and
+   `worktree.base`. Agents read, write, install, and verify inside that path.
+4. The orchestrator owns the merge; only one merge runs at a time.
+5. Test agents write inside the dev worktree; they do not open their own.
+6. Cleanup is `-Action remove` **after** the merge is accepted.
+
+## 9. Merge & Conflict Protocol
+
+```text
+fast gates green + audit clean
+  └─ merge agent/<slug> --no-ff into main
+       ├─ clean   -> Phase 8 report; expensive tier deferred to pre-push
+       └─ conflict-> helper aborts merge (exit 3), main stays clean, branch intact
+                     -> STOP, report conflicting paths, ASK THE USER
+                        A) rebase agent branch onto main and re-merge
+                        B) keep main, drop the conflicting hunk
+                        C) user resolves manually
+```
+
+Hard rules:
+
+1. Never choose a resolution on the user's behalf.
+2. Never `-X ours`, `-X theirs`, `--strategy-option`, `reset --hard`, rebase
+   without instruction, or force-push.
+3. Never resolve a lockfile or dependency conflict; report `BLOCKED: lockfile conflict`.
+4. Never merge a dirty main worktree, and never merge a worktree with uncommitted changes.
+5. Log the chosen option and the resolution in the execution report.
+
+---
+
+## 10. Orchestrator Checklist
 
 - [ ] Roster present and loaded (`opencode debug agents` if available).
 - [ ] Target classified; mode decided; paths resolved from `docs/project.json`.
+- [ ] Worktree created on `agent/<slug>` off `main`; briefs carry its path.
 - [ ] Spec gate passed.
 - [ ] Baseline delegated, authored, and green (or expected-red) with output.
-- [ ] Implementation delegated; verification output recorded.
-- [ ] Adversarial audit delegated; `immutable_edits` empty.
-- [ ] Repair loop closed with exit `0`.
+- [ ] Implementation delegated; verification output recorded (fast tier).
+- [ ] Adversarial audit delegated; `immutable_edits` empty; E2E deferred.
+- [ ] Repair loop closed with fast suites at exit `0`.
 - [ ] Write audit exit `0`.
+- [ ] Merged into `main` with `--no-ff`, or `BLOCKED: merge conflict` reported to the user.
 - [ ] Plan checklist ticked by the orchestrator only.
-- [ ] Report rendered with commands and exit codes.
+- [ ] Report rendered with commands, exit codes, `[DEFERRED]` expensive gate, and merge result.

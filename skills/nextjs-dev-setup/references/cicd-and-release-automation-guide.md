@@ -36,10 +36,13 @@ To minimize GitHub Actions minutes and eliminate unnecessary billing overhead:
    ```bash
    echo "pnpm exec commitlint --edit \$1" > .husky/commit-msg
    ```
-4. **`pre-push` Hook (Dual-Suite Enforcement - Rule 4)**:
+4. **`pre-push` Hook (Expensive Tier - Rule 4)**:
    ```bash
-   echo "pnpm run test:all" > .husky/pre-push
+   echo "pnpm run test:prepush" > .husky/pre-push
    ```
+   This is the **only** local execution point for the expensive test tier
+   (full Jest + Playwright). Development runs targeted Jest only; see
+   [testing-guide.md](./testing-guide.md#6-test-execution-tiers-fast-during-dev-expensive-pre-push).
 
 ---
 

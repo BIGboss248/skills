@@ -258,6 +258,17 @@ if ($hasHusky) {
     $automationChecks.Add(@{ name = "Husky Git Hooks"; status = "missing"; details = "Missing .husky/ directory. Run 'pnpm exec husky init'." })
 }
 
+# 2b. Pre-push gate must run the expensive test tier
+if ($hasPrePush) {
+    $prePushContent = Get-Content -Raw -Path (Join-Path $huskyDir "pre-push") -Encoding UTF8
+    $runsExpensive = ($prePushContent -match "test:all|test:prepush|test:e2e|playwright")
+    if ($runsExpensive) {
+        $automationChecks.Add(@{ name = "Pre-push Test Tier"; status = "configured"; details = "pre-push runs the expensive tier (full Jest + Playwright)." })
+    } else {
+        $automationChecks.Add(@{ name = "Pre-push Test Tier"; status = "warning"; details = "pre-push does not reference test:all/test:prepush; expensive suites will never run locally. Point it at '<pm> run test:prepush'." })
+    }
+}
+
 # 3. Release Please Check
 $releaseWfs = @(".github/workflows/release-please.yml", ".github/workflows/release-please.yaml", ".github/workflows/release.yml", ".github/workflows/release.yaml")
 $foundReleaseWf = $releaseWfs | Where-Object { Test-Path (Join-Path $rootDir $_) } | Select-Object -First 1

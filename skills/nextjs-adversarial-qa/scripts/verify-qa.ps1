@@ -7,12 +7,19 @@
     then executes only the files under test. Exits 0 on success, 1 on failure,
     2 on usage error.
 
+    Tier 'fast' (default) runs Jest only and DEFERS Playwright to the pre-push
+    gate. Tier 'full' runs every suite and is reserved for pre-push, CI, or an
+    explicit user request. See references/shared/test-execution-tiers.md.
+
 .PARAMETER TargetPath
     Component directory (e.g. components/home/Hero) or route directory
     (e.g. app/[locale]/about).
 
 .PARAMETER Mode
     baseline | adversarial | page | all | audit. Default: all.
+
+.PARAMETER Tier
+    fast | full. Default: fast. Never select 'full' during development.
 
 .PARAMETER ComponentName
     Optional explicit component name. Defaults to the directory name.
@@ -27,6 +34,9 @@
     pwsh verify-qa.ps1 -TargetPath components/home/Hero -Mode all
 
 .EXAMPLE
+    pwsh verify-qa.ps1 -TargetPath components/home/Hero -Mode all -Tier full
+
+.EXAMPLE
     pwsh verify-qa.ps1 -TargetPath app/[locale]/about -Mode page
 #>
 param(
@@ -36,6 +46,10 @@ param(
     [Parameter(Position = 1)]
     [ValidateSet("baseline", "adversarial", "page", "all", "audit")]
     [string]$Mode = "all",
+
+    [Parameter(Position = 2)]
+    [ValidateSet("fast", "full")]
+    [string]$Tier = "fast",
 
     [string]$ComponentName,
 
@@ -161,16 +175,23 @@ foreach ($file in $jestFiles) {
     }
 }
 
-foreach ($file in $e2eFiles) {
-    Write-Host "[INFO] Running Playwright: $file" -ForegroundColor Cyan
-    if ($pkgManager -eq "bun") { & bun run test:e2e $file }
-    elseif ($pkgManager -eq "npm") { & npm run test:e2e -- $file }
-    else { & $pkgManager run test:e2e -- $file }
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "[FAIL] Playwright suite failed: $(Split-Path $file -Leaf)" -ForegroundColor Red
-        exit $LASTEXITCODE
+if ($e2eFiles.Count -gt 0 -and $Tier -ne "full") {
+    Write-Host "[DEFERRED] Playwright suites are expensive and run pre-push:" -ForegroundColor Yellow
+    foreach ($file in $e2eFiles) { Write-Host "  - $file" -ForegroundColor Yellow }
+    Write-Host "  Run now only on explicit request: $pkgManager run test:e2e <file>  (or -Tier full)" -ForegroundColor Yellow
+    Write-Host "[DEFERRED] A deferred suite is not a passing suite." -ForegroundColor Yellow
+} else {
+    foreach ($file in $e2eFiles) {
+        Write-Host "[INFO] Running Playwright: $file" -ForegroundColor Cyan
+        if ($pkgManager -eq "bun") { & bun run test:e2e $file }
+        elseif ($pkgManager -eq "npm") { & npm run test:e2e -- $file }
+        else { & $pkgManager run test:e2e -- $file }
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "[FAIL] Playwright suite failed: $(Split-Path $file -Leaf)" -ForegroundColor Red
+            exit $LASTEXITCODE
+        }
     }
 }
 
-Write-Host "[SUCCESS] QA verification passed for '$compName' (mode: $Mode)." -ForegroundColor Green
+Write-Host "[SUCCESS] QA verification passed for '$compName' (mode: $Mode, tier: $Tier)." -ForegroundColor Green
 exit 0

@@ -50,8 +50,8 @@ fi
 
 echo -e "\033[0;32m[PASS] Files present: ${COMP_NAME}.tsx, ${COMP_NAME}Skeleton.tsx, $(basename "$TEST_FILE")\033[0m"
 
-# Test authoring and execution are owned by nextjs-adversarial-qa.
-echo -e "\033[0;36m[INFO] Test execution is delegated. Run nextjs-adversarial-qa/scripts/verify-qa.sh \"$RESOLVED_DIR\" all\033[0m"
+# Test authoring and execution are owned by nextjs-adversarial-qa (fast tier only).
+echo -e "\033[0;36m[INFO] Fast-tier execution is delegated. Run nextjs-adversarial-qa/scripts/verify-qa.sh \"$RESOLVED_DIR\" all (Jest only; Playwright deferred to pre-push)\033[0m"
 
 # Verify zero in-file i18n placeholders / mock translation dictionaries
 if [ -f "$COMPONENT_FILE" ]; then

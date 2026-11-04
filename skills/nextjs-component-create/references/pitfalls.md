@@ -28,3 +28,7 @@
 | Hardcoded callback stubs in stories                 | Import `fn` from `'storybook/test'` so clicks log to Actions panel                               |
 | Skipping Storybook tests in verification            | Run smoke test (`pnpm run storybook:smoke`) and build (`pnpm run build-storybook`)               |
 | Overwriting pre-existing component files            | Audit companion files and enter Backfill Mode without overwriting working code                   |
+| Running Playwright or the full suite during dev     | Fast tier only: targeted Jest file; Playwright/full Jest/build run at pre-push                    |
+| Reporting a deferred E2E suite as `PASS`            | Report `DEFERRED (pre-push)` and list it in `deferred_expensive_tests[]`                          |
+| Writing in the user's working tree                  | Create and work in the `agent/<slug>` worktree; merge into `main` after the fast gates            |
+| Resolving a merge conflict by guessing              | Abort the merge, keep the branch, report the paths, and ask the user to choose                    |

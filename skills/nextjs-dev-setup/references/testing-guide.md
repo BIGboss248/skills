@@ -125,7 +125,38 @@ Configure test scripts with exit-code-safe flags so empty project suites do not 
     "test:coverage": "jest --coverage --passWithNoTests",
     "test:e2e": "playwright test --pass-with-no-tests",
     "test:e2e:ui": "playwright test --ui",
-    "test:all": "jest --passWithNoTests && playwright test --pass-with-no-tests"
+    "test:all": "jest --passWithNoTests && playwright test --pass-with-no-tests",
+    "test:prepush": "pnpm run test:all"
   }
 }
 ```
+
+---
+
+## 6. Test Execution Tiers (fast during dev, expensive pre-push)
+
+Two tiers, one gate. Canonical contract:
+[`nextjs-adversarial-qa/references/shared/test-execution-tiers.md`](../../nextjs-adversarial-qa/references/shared/test-execution-tiers.md).
+
+| Tier | Contents | Runs where |
+| :--- | :--- | :--- |
+| **Fast** | Targeted Jest file(s): `<pm> test -- <file>` | Every development loop; agents run these |
+| **Expensive** | Playwright component + page E2E, full Jest, `build`, Storybook smoke/build | `.husky/pre-push`, CI, or explicit user request |
+
+Rules:
+
+1. **Component and page development never runs the expensive tier.** No browser
+   launches, no whole-project Jest, no production build.
+2. **E2E specs are still authored** in the same session; execution is deferred and
+   declared (`deferred_expensive_tests[]`).
+3. **A deferred suite is reported `DEFERRED (pre-push)`**, never `PASS`.
+4. **`.husky/pre-push` is the acceptance gate** for the expensive tier and must
+   call a script that exists:
+   ```bash
+   pnpm run test:prepush
+   ```
+5. `verify-qa` and `verify-component-create` default to `-Tier fast`; `-Tier full`
+   is reserved for pre-push, CI, and explicit user requests.
+
+Worktree note: `.husky/` hooks live in the shared `.git`, so the pre-push gate
+applies to every agent worktree automatically.

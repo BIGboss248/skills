@@ -36,11 +36,17 @@
 ## 3. Execution Commands
 
 ```bash
+# Fast tier — run during development
 pnpm test -- <component_dir>/[ComponentName].test.tsx
 pnpm test -- <component_dir>/[ComponentName].edge.test.tsx
+
+# Expensive tier — authored now, executed at git push (.husky/pre-push)
 pnpm test:e2e tests/e2e/components/<page>/[ComponentName].spec.ts
 pnpm test:e2e tests/e2e/pages/<route>.spec.ts
 ```
+
+Status column: use `PASS` for an executed suite, `DEFERRED` for an authored-but-unrun
+Playwright suite. Never mark a deferred suite `PASS`.
 
 ---
 

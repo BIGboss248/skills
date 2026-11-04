@@ -18,6 +18,25 @@ Single source of truth for planning, authoring, executing, and hardening Next.js
 > - **QA Auditor:** [`references/adversarial/`](./references/adversarial/) + [`templates/adversarial/`](./resources/templates/adversarial/)
 > - **Prompts / payloads:** [`resources/prompts/`](./resources/prompts/)
 > - **Verification:** [`scripts/verify-qa.ps1`](./scripts/verify-qa.ps1) / [`.sh`](./scripts/verify-qa.sh)
+> - **Execution tiers (fast vs pre-push):** [`references/shared/test-execution-tiers.md`](./references/shared/test-execution-tiers.md)
+
+---
+
+## Execution Tiers
+
+Development runs the **fast** tier only. Expensive suites run **pre-push**.
+
+| Tier | What runs | When |
+| :--- | :--- | :--- |
+| **Fast** | The targeted Jest file(s) under test | Every development loop |
+| **Expensive** | Playwright component/page E2E, full Jest, build, Storybook build | `.husky/pre-push`, CI, or an explicit user request |
+
+- Authoring is not execution: E2E specs are still written now, statically
+  audited, and declared in `deferred_expensive_tests[]`.
+- Never start a browser to debug. Never run the whole Jest project during
+  iteration.
+- A deferred suite is reported `DEFERRED (pre-push)`, never `PASS`.
+- Full policy: [`references/shared/test-execution-tiers.md`](./references/shared/test-execution-tiers.md).
 
 ---
 
@@ -67,9 +86,10 @@ If the spec is missing, stop and return `BLOCKED: missing specification` to the 
 4. **Baseline Tests Are Mutable With a Reason** — `nextjs-test-author` may revise a baseline test when the spec changed or the assertion was wrong, recording the reason in `test-plan.md`. It may never weaken coverage to make a failing implementation pass.
 5. **Fix the Code, Not the Tests** — a failing assertion means the implementation is wrong until proven otherwise.
 6. **Targeted Execution** — run only the files under test. Never the full suite during iteration.
-7. **Zero Placeholder Tests** — no `it.skip`, `test.fixme`, `test.only`, empty bodies, or assertions that cannot fail.
-8. **Real Providers** — wrap with the real `NextIntlClientProvider` (dictionary messages) and `QueryClientProvider`. Mocking translations hides i18n defects.
-9. **Deterministic Async** — `userEvent.setup()`, `findBy*`/`waitFor`, fake timers, and teardown of subscriptions.
+7. **Fast Tier During Development** — Jest only; Playwright, the full Jest project, builds, and Storybook builds are deferred to the pre-push gate and declared in `deferred_expensive_tests[]`.
+8. **Zero Placeholder Tests** — no `it.skip`, `test.fixme`, `test.only`, empty bodies, or assertions that cannot fail.
+9. **Real Providers** — wrap with the real `NextIntlClientProvider` (dictionary messages) and `QueryClientProvider`. Mocking translations hides i18n defects.
+10. **Deterministic Async** — `userEvent.setup()`, `findBy*`/`waitFor`, fake timers, and teardown of subscriptions.
 
 ---
 
@@ -86,19 +106,22 @@ If the spec is missing, stop and return `BLOCKED: missing specification` to the 
 - [ ] **Step 2: Author the Baseline / Page Suite** (`nextjs-test-author`)
   - Read [`unit-testing-standards.md`](./references/authoring/unit-testing-standards.md) or [`page-testing-standards.md`](./references/authoring/page-testing-standards.md).
   - Write files at exactly the paths in the payload; run only those files.
+  - Jest files run immediately (fast tier). Playwright files are authored, statically audited, and **deferred** to pre-push.
 
 - [ ] **Step 3: Baseline Gate** (orchestrator)
-  - Green baseline before implementation proceeds (TDD gate).
+  - Green baseline before implementation proceeds (TDD gate). For Jest that means a real execution; for a Playwright page suite it means authored + audited + `DEFERRED (pre-push)`.
 
 - [ ] **Step 4: Adversarial Audit** (`nextjs-qa-auditor`)
   - Read [`adversarial-test-matrix.md`](./references/adversarial/adversarial-test-matrix.md).
   - Diff baseline coverage against spec §7, then write the immutable edge suite and component E2E spec.
   - Return `code_fixes_required[]`; never touch implementation.
+  - Do not launch a browser. The component E2E spec is deferred.
 
 - [ ] **Step 5: Execute & Repair** (orchestrator loop)
-  - Run edge + page suites through `verify-qa`.
+  - Run edge + page suites through `verify-qa` in the fast tier (Jest only).
   - On failure, route `code_fixes_required` to the dev agent, then re-run.
   - Re-run until exit code `0`. Consult [`pitfalls.md`](./references/shared/pitfalls.md) before blaming a test.
+  - Expensive suites are exercised by the pre-push gate; a failure there reopens this loop.
 
 - [ ] **Step 6: Report & Handoff**
   - Fill [`qa-report.template.md`](./resources/templates/adversarial/qa-report.template.md) and return it as the final message. Do not write the report to disk — the auditor has no edit permission outside its test artifacts.
@@ -121,24 +144,30 @@ If the spec is missing, stop and return `BLOCKED: missing specification` to the 
 ## Verification & Self-Check
 
 ```bash
-# Component (baseline + adversarial + Playwright)
+# Component — fast tier (default): static audit + targeted Jest, Playwright deferred
 pwsh .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.ps1 -TargetPath <component_dir> -Mode all
 
-# Page suite
+# Page suite — fast tier: suite authored and audited, Playwright deferred
 pwsh .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.ps1 -TargetPath <route_dir> -Mode page
+
+# Expensive tier — pre-push / CI / explicit user request only
+pwsh .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.ps1 -TargetPath <component_dir> -Mode all -Tier full
 
 # Linux / macOS
 bash .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.sh <component_dir> all
 bash .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.sh <route_dir> page
+bash .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.sh <component_dir> all --tier full
 ```
 
-- [ ] All targeted suites exit `0` with zero skipped tests.
-- [ ] Every `test-plan.md` row has a status of `PASS`.
+- [ ] Fast suites exit `0` with zero skipped tests.
+- [ ] Every deferred Playwright file is listed in `deferred_expensive_tests[]`; nothing deferred is reported as `PASS`.
+- [ ] Every `test-plan.md` row has a status of `PASS` or `DEFERRED`.
 - [ ] `*.edge.test.tsx` exists and was authored by `nextjs-qa-auditor`.
 - [ ] No `test.only`, `it.skip`, or `test.fixme` in any created file.
 - [ ] No hardcoded English copy asserted in place of dictionary values.
 - [ ] Page suite asserts metadata, JSON-LD, locale routing, and error boundary.
 - [ ] Every baseline revision is logged with a reason.
+- [ ] No browser was launched during development.
 
 ---
 
@@ -155,6 +184,9 @@ bash .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.sh <route_dir> page
 | Fixed `setTimeout` waits | Use `findBy*`, `waitFor`, or fake timers |
 | Weakening an edge test to pass CI | Fix the component; edge tests are immutable |
 | Test agent editing the component "to unblock" | Forbidden by permission; return `code_fixes_required` |
+| Running Playwright to "check quickly" during development | Defer it; declare it in `deferred_expensive_tests[]` |
+| Running the whole Jest project during iteration | Run only the file under test |
+| Reporting a deferred suite as `PASS` | Report `DEFERRED (pre-push)` |
 
 Full catalogue: [`references/shared/pitfalls.md`](./references/shared/pitfalls.md).
 
@@ -164,6 +196,7 @@ Full catalogue: [`references/shared/pitfalls.md`](./references/shared/pitfalls.m
 
 **Shared**
 - [Test Strategy Matrix](./references/shared/test-strategy-matrix.md) — layer selection and gates.
+- [Test Execution Tiers](./references/shared/test-execution-tiers.md) — fast vs expensive, pre-push gate, deferral contract.
 - [Playwright E2E Standards](./references/shared/playwright-e2e-standards.md) — hydration, instant navigation, visual, network.
 - [Subagent & Agent Protocol](./references/shared/subagent-test-author-protocol.md) — role contract and return payloads.
 - [Test Plan & Report Schema](./references/shared/test-plan-and-report-schema.md) — output contract.

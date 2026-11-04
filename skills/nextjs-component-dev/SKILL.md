@@ -4,7 +4,7 @@ description: >-
   Build Next.js App Router React components with Suspense skeletons, semantic OKLCH tokens, next-intl dictionaries, and Tailwind logical styling; test authoring is delegated to nextjs-adversarial-qa. MANDATORY SKILL: activate for every new component, UI section, card, widget, or layout element. Triggers on "/nextjs-component-dev", "create component", "new component", "build component", "develop component".
 metadata:
   author: BIGboss248
-  version: "1.8"
+  version: "1.9"
 ---
 
 # Next.js Component & Skeleton Development (`nextjs-component-dev`)
@@ -26,6 +26,8 @@ Specialized workflow for creating production-ready React Server Components (RSC)
 > - Caching & Revalidation: [`references/caching-and-revalidation.md`](./references/caching-and-revalidation.md)
 > - RSC, State Boundaries & Lazy Loading: [`references/rsc-and-state-boundaries.md`](./references/rsc-and-state-boundaries.md)
 > - Code Templates: [`resources/templates/`](./resources/templates/) ([Component](./resources/templates/component.template.tsx), [Form Component](./resources/templates/form-component.template.tsx), [Skeleton](./resources/templates/skeleton.template.tsx), [Link Status Button](./resources/templates/link-status-button.template.tsx))
+> - Source Tree Isolation & Merge: [`../nextjs-dev-setup/references/agent-worktree-isolation.md`](../nextjs-dev-setup/references/agent-worktree-isolation.md)
+> - Test Execution Tiers (fast vs pre-push): [`../nextjs-adversarial-qa/references/shared/test-execution-tiers.md`](../nextjs-adversarial-qa/references/shared/test-execution-tiers.md)
 > - Test Templates (owned by QA): [`../nextjs-adversarial-qa/resources/templates/`](../nextjs-adversarial-qa/resources/templates/)
 > - Reference Implementations: [`examples/`](./examples/)
 > - Verification Scripts: [`scripts/verify-dev.ps1`](./scripts/verify-dev.ps1) (Windows) / [`scripts/verify-dev.sh`](./scripts/verify-dev.sh) (Linux)
@@ -96,9 +98,24 @@ Specialized workflow for creating production-ready React Server Components (RSC)
 
 - **No test authoring in this skill.** Jest + RTL and Playwright standards, templates, and execution live exclusively in [`nextjs-adversarial-qa`](../nextjs-adversarial-qa/SKILL.md).
 - **Agent boundaries:** tests are written by `nextjs-test-author` and `nextjs-qa-auditor`. A dev agent cannot edit `*.test.ts(x)`, `*.edge.test.tsx`, `tests/e2e/**`, or `test-plan.md`; permissions enforce it. Report a failing assertion instead of changing it.
-- **TDD gate:** Invoke QA in `baseline` mode after plan approval and before writing JSX. The gate is a green baseline suite.
+- **Fast tier only.** During development run the targeted Jest file(s) for the component. Never run Playwright, the full Jest project, `build`, or Storybook builds: that is the expensive tier and it runs at `git push` through `.husky/pre-push`.
+- **TDD gate:** Invoke QA in `baseline` mode after plan approval and before writing JSX. The gate is a green baseline Jest suite.
 - **Handoff:** After implementation, invoke QA in `adversarial` mode; the independent auditor owns `[ComponentName].edge.test.tsx`.
-- **Repair:** If a suite fails, fix the component — never the assertions. Route `code_fixes_required[]` items back through implementation.
+- **Deferral:** Playwright specs are authored now, audited statically, and declared in `deferred_expensive_tests[]`. A deferred suite is reported `DEFERRED (pre-push)`, never `PASS`.
+- **Repair:** If a fast suite fails, fix the component — never the assertions. Route `code_fixes_required[]` items back through implementation.
+
+### 9. Source Tree Isolation (Worktrees)
+
+- **Your own worktree.** Implementation agents do not write in the user's working tree. Create a worktree on branch `agent/<kebab-task-slug>` off `main` before the first write:
+  ```powershell
+  pwsh .agents/skills/nextjs-dev-setup/scripts/agent-worktree.ps1 -Action create -Slug hero-card
+  ```
+  ```bash
+  bash .agents/skills/nextjs-dev-setup/scripts/agent-worktree.sh create hero-card
+  ```
+- **One task, one worktree, one branch.** Never reuse another agent's worktree and never write in the main tree while the worktree task is open.
+- **Run the fast gates inside the worktree**, commit there, then merge into `main` (`--no-ff`).
+- **Conflicts are not yours to resolve.** Abort the merge, keep the branch, and ask the user how to resolve it. Full contract: [`agent-worktree-isolation.md`](../nextjs-dev-setup/references/agent-worktree-isolation.md).
 
 ---
 
@@ -115,7 +132,7 @@ The implementation plan must cover:
 4. **Dictionary Strategy**: Explicit translation namespaces and keys to add to `messages/[locale].json` across all `supported_languages` in `docs/project.json` (zero hardcoded strings or in-file mock dictionaries).
 5. **Theme Tokens & Styling**: Identified semantic OKLCH CSS variables and logical layout classes.
 6. **Testing Strategy (delegated to `nextjs-adversarial-qa`)**: Reference the QA `test-plan.md` path and planned test files. Do not enumerate test cases here; the QA skill owns the coverage matrix.
-7. **Verification Gate**: `verify-dev.ps1`/`.sh` for companion files and i18n, then `verify-qa.ps1`/`.sh` for targeted suites.
+7. **Verification Gate**: `verify-dev.ps1`/`.sh` for companion files and i18n, plus the targeted Jest baseline suite. Playwright, the full Jest project, and builds are the expensive tier and run at `git push` (pre-push), not here.
 
 ---
 
@@ -127,6 +144,11 @@ The implementation plan must cover:
   - Set `request_feedback = true` and `user_facing = true` on the artifact.
   - Wait for user review and explicit approval before writing any code.
   - **Form / Mutation Component Routing Gate**: If the component renders a form or accepts user mutations, read references/form-server-actions.md. Grill the user on whether to include useOptimistic and document the recommendation in implementation_plan.md.
+
+- [ ] **Step 0.5: Create the Isolated Worktree**
+  - Create branch `agent/<kebab-task-slug>` off `main` with `agent-worktree.ps1` / `.sh` (`-Action create`).
+  - Install dependencies inside the worktree; it shares `.git` but not `node_modules`.
+  - Do all reads, writes, and commands from the worktree path for the rest of the task.
 
 - [ ] **Step 1: Dev Server Verification & Next DevTools Connection**
   - Query `next-devtools` MCP via `nextjs_index` to detect running Next.js dev server instances.
@@ -151,18 +173,28 @@ The implementation plan must cover:
   - Create matching Suspense skeleton `[ComponentName]Skeleton.tsx` mirroring layout geometry and classes to prevent CLS.
   - Create clean barrel export `index.ts`.
 
-- [ ] **Step 5: Runtime Diagnostics & Verification Gate**
+- [ ] **Step 5: Fast Verification Gate (no expensive suites)**
   - **Next DevTools Runtime Inspection & Navigation Inspector:** Use `next-devtools` MCP server (`nextjs_call`) to check for compilation errors, runtime exceptions, hydration issues, or broken routes. Use Navigation Inspector ("Pause on navigations") to verify the static shell and App Shell render instantly with granular fallbacks.
-  - **Companion & i18n Verification:** Run `verify-dev.ps1`/`.sh` (file presence + dictionary compliance; it no longer executes tests):
+  - **Companion & i18n Verification:** Run `verify-dev.ps1`/`.sh` (file presence + dictionary compliance; it does not execute tests):
     - **Windows (PowerShell):** `pwsh .agents/skills/nextjs-component-dev/scripts/verify-dev.ps1 -ComponentPath <target_component_dir>`
     - **Linux / macOS (Bash):** `bash .agents/skills/nextjs-component-dev/scripts/verify-dev.sh <target_component_dir>`
-  - **Test Execution (QA):** Run `verify-qa.ps1`/`.sh` from `nextjs-adversarial-qa` to execute baseline, adversarial, and Playwright suites.
-  - Fix syntax errors, missing dictionary keys, or implementation defects until all suites pass.
+  - **Fast Test Tier (mandatory):** run only the Jest files for this component — baseline first, then the edge file once it exists:
+    - `pnpm test -- <target_component_dir>/[ComponentName].test.tsx`
+    - `pnpm test -- <target_component_dir>/[ComponentName].edge.test.tsx`
+  - **Forbidden here:** `pnpm run test:e2e`, `pnpm exec playwright test`, bare `pnpm test`, `pnpm run test:all`, `pnpm build`, `storybook build`. These are expensive and belong to the pre-push gate.
+  - **Declare deferrals:** list every authored-but-unrun Playwright file in `deferred_expensive_tests[]`. Report it as `DEFERRED (pre-push)`, never `PASS`.
+  - Fix syntax errors, missing dictionary keys, or implementation defects until the fast gates pass.
 
 - [ ] **Step 6: Implementation Plan Checklist Synchronization**
   - When orchestrated, the orchestrator checks off the completed component item (`- [x]`) in `docs/plan/05-pages-and-components.md`.
   - If all sub-components and page infrastructure tasks for the parent page are completed, the orchestrator checks off the parent page item (`- [x]`).
   - When invoked directly without the orchestrator, perform this step yourself.
+
+- [ ] **Step 7: Commit in the Worktree and Merge into `main`**
+  - `git add <changed paths>` and commit on `agent/<slug>` (scoped commits inside the worktree are the only permitted commits).
+  - Merge from the main worktree: `agent-worktree.ps1 -Action merge -Slug <slug>` / `agent-worktree.sh merge <slug>`.
+  - **On a merge conflict:** do not resolve it. The helper aborts the merge, keeps the branch, prints the conflicting paths, and exits `3`. Report `BLOCKED: merge conflict` and ask the user to choose rebase / keep main / manual resolution.
+  - Merging is local only. Never `git push`, never `--no-verify`; the expensive tier runs at push from `.husky/pre-push`.
 
 ---
 
@@ -172,5 +204,7 @@ The implementation plan must cover:
 - **Zero In-File i18n Fallbacks:** Never hardcode dictionary objects or fallbacks (`const DEFAULT_CONTENT = {...}`) in TSX files. All text must come from `messages/[locale].json`.
 - **Hydration Warning Detection & Browser APIs:** Never access browser-only globals (`window`, `localStorage`) during SSR. Use `dynamic(() => import('./Widget'), { ssr: false, loading: () => <WidgetSkeleton /> })` instead of double-rendering `useEffect(mounted)` flags to eliminate hydration crashes cleanly.
 - **Strict Logical Styling (BiDi):** Never use physical directions (`ml-`, `mr-`, `pl-`, `pr-`, `left-`, `right-`). Always use logical alternatives (`ms-`, `pe-`, `ps-`, `me-`, `start`, `end`).
-- **Targeted Test Execution:** Run only the specific test files via `nextjs-adversarial-qa/scripts/verify-qa` to conserve tokens and time (never the full suite during iterations).
+- **Targeted Test Execution:** Run only the specific Jest files for the component. Never the full suite, Playwright, or a production build during development — those are the expensive tier and run at `git push`.
+- **Isolation Before Code:** Never start a component in the user's working tree. Create the `agent/<slug>` worktree first and write there.
+- **Merge Conflicts Are a Stop Signal:** Abort the merge, keep the branch, and ask the user. Never `-X ours`/`-X theirs`, never force-push, never rewrite history.
 - **Storybook Story Separation:** Do not author `.stories.tsx` or run Storybook builds during standard component development unless the `nextjs-storybook-story` skill is specifically requested. Consult [`references/storybook-reference.md`](./references/storybook-reference.md).

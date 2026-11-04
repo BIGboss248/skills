@@ -28,7 +28,7 @@ Whenever you are asked to create, scaffold, build, or implement **any new React 
    - **Semantic Tokens & Logical BiDi Styling**: Exclusively use the project's semantic CSS variables declared in the stylesheet recorded as `style_file_dir` in `docs/project.json` (`bg-background`, `text-foreground`, `border-border`, `text-muted-foreground` are the common names — use whatever that stylesheet actually declares) and Tailwind logical properties (`ms-`, `me-`, `ps-`, `pe-`, `start`, `end`). Physical directional classes (`ml-`, `mr-`, `pl-`, `pr-`, `left-`, `right-`) and raw hex/palette classes are strictly forbidden.
    - **Both Themes or It Does Not Ship**: Every component must be reviewed in light **and** dark. If the project's token layer has no dark counterpart for a role you need, report it — never hardcode a dark-only or light-only color.
    - **Navigation Pending Feedback**: Links use the composite `Link` (or `@/i18n/navigation` when N4 is enabled), and pending state comes from per-link `useLinkStatus` (`next/link`, Next ≥15.3). Never add a progress-bar package or provider, and never mount the indicator conditionally.
-   - **Verification Gate**: Run `pwsh .agents/skills/nextjs-component-dev/scripts/verify-dev.ps1 -ComponentPath <target_component_dir>`, run targeted Playwright specs, and inspect runtime health via `next-devtools` MCP (`nextjs_call`).
+   - **Verification Gate (fast tier)**: Run `pwsh .agents/skills/nextjs-component-dev/scripts/verify-dev.ps1 -ComponentPath <target_component_dir>` and the targeted Jest baseline/edge files, then inspect runtime health via `next-devtools` MCP (`nextjs_call`). Do **not** run Playwright, the full Jest project, or a production build — those are the expensive tier and run at `git push` through `.husky/pre-push`.
    - **Plan Checklist Sync**: The orchestrator checks off completed component items (`- [x]`) in `docs/plan/05-pages-and-components.md`. Role agents never edit the plan.
 
 ---
@@ -44,8 +44,8 @@ Whenever you are asked to create, scaffold, build, or implement **any new Next.j
    - **Companion Route Files**: Create `loading.tsx` skeleton and `error.tsx` boundary where applicable.
    - **Page Implementation (`page.tsx`)**: Use async `params` (`Promise<{ locale: string, ... }>`), export `generateMetadata()` with canonical alternates, export `generateStaticParams()` for localized/dynamic routes, inject typed `<JsonLd>` (`schema-dts`) with `<` escaped as `\u003c`, and wrap dynamic streaming subtrees in granular `<Suspense>` boundaries.
    - **Delegate New Page Components to `nextjs-component-dev`**: Whenever a new page requires new section or child components, you **MUST** use [`.agents/skills/nextjs-component-dev/SKILL.md`](./.agents/skills/nextjs-component-dev/SKILL.md) to build each component.
-   - **Page Test Delegation**: The `nextjs-test-author` agent writes `tests/e2e/pages/<route>.spec.ts` in `page` mode after the route is implemented. Implementation agents never write or edit tests.
-   - **Verification Gate**: Run `pwsh .agents/skills/nextjs-page-dev/scripts/verify-page.ps1 -RoutePath <route_dir>`.
+   - **Page Test Delegation**: The `nextjs-test-author` agent writes `tests/e2e/pages/<route>.spec.ts` in `page` mode after the route is implemented. Implementation agents never write or edit tests. The suite is authored and statically audited now; its execution is deferred to pre-push.
+   - **Verification Gate (fast tier)**: Run `pwsh .agents/skills/nextjs-page-dev/scripts/verify-page.ps1 -RoutePath <route_dir>`. Never run Playwright or a production build during development.
    - **Plan Checklist Sync**: The orchestrator checks off completed page infrastructure items (`page.tsx`, `loading.tsx`, `error.tsx`, `generateMetadata`, `JSON-LD Schema`, `generateStaticParams()`) in `docs/plan/05-pages-and-components.md`, and checks off the parent page item when all its sub-items are complete.
 
 ---
@@ -112,6 +112,38 @@ Rules:
 9. **Command shortcuts**: `/create-nextjs-component` and `/create-nextjs-page` route to `nextjs-orchestrator`.
 
 Full contract: [`.agents/rules/agent-boundaries.md`](./.agents/rules/agent-boundaries.md).
+
+### 4.1 Test Tiers & Isolated Branches
+
+**Test tiers — fast during development, expensive pre-push:**
+
+| Tier | Contents | Runs | Never runs |
+| :--- | :--- | :--- | :--- |
+| Fast | Targeted Jest file(s) for the artifact under test | Every development loop | — |
+| Expensive | Playwright component/page E2E, full Jest, `build`, Storybook build | `.husky/pre-push`, CI, explicit user request | During development |
+
+- E2E specs are still **authored** in the same session, statically audited, and
+  declared in `deferred_expensive_tests[]`.
+- Report them `DEFERRED (pre-push)`; never `PASS`.
+- `verify-qa` / `verify-component-create` default to `-Tier fast`; `-Tier full` is
+  pre-push/CI only.
+- Full contract:
+  [`.agents/skills/nextjs-adversarial-qa/references/shared/test-execution-tiers.md`](./.agents/skills/nextjs-adversarial-qa/references/shared/test-execution-tiers.md).
+
+**Isolated branches — one worktree per component/page task:**
+
+- Implementation agents never write in the user's working tree. They work on
+  branch `agent/<slug>` at `../<repo>-worktrees/<slug>`.
+- Create: `pwsh .agents/skills/nextjs-dev-setup/scripts/agent-worktree.ps1 -Action create -Slug <slug>`
+  (or `bash .agents/skills/nextjs-dev-setup/scripts/agent-worktree.sh create <slug>`).
+- Merge into `main` with `--no-ff` after the fast gates and write audit pass.
+- **Merge conflict → stop.** The helper aborts the merge, keeps the branch, prints
+  the conflicting paths, and exits `3`. Ask the user to choose: A) rebase the agent
+  branch onto `main`, B) keep `main` and drop the conflicting hunk, C) manual
+  resolution. Never `-X ours`/`-X theirs`, never force-push, never rewrite history.
+- Agents never push and never use `--no-verify`; the expensive tier is the push gate.
+- Full contract:
+  [`.agents/skills/nextjs-dev-setup/references/agent-worktree-isolation.md`](./.agents/skills/nextjs-dev-setup/references/agent-worktree-isolation.md).
 
 ---
 

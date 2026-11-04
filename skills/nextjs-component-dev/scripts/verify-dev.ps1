@@ -49,8 +49,9 @@ if ($missing.Count -gt 0) {
 
 Write-Host "[PASS] Files present: $compName.tsx, ${compName}Skeleton.tsx, $(Split-Path $testFile -Leaf)" -ForegroundColor Green
 
-# Test authoring and execution are owned by nextjs-adversarial-qa.
-Write-Host "[INFO] Test execution is delegated. Run nextjs-adversarial-qa/scripts/verify-qa.ps1 -TargetPath `"$resolvedDir`" -Mode all" -ForegroundColor Cyan
+# Test execution is delegated to nextjs-adversarial-qa.
+# Fast tier only: Playwright, the full Jest project, and builds run at 'git push' (pre-push).
+Write-Host "[INFO] Fast-tier execution is delegated. Run nextjs-adversarial-qa/scripts/verify-qa.ps1 -TargetPath `"$resolvedDir`" -Mode all (Jest only; Playwright deferred to pre-push)" -ForegroundColor Cyan
 
 # Verify zero in-file i18n placeholders / mock translation dictionaries
 if (Test-Path $componentFile) {

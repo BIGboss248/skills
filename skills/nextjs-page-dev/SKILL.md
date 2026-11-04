@@ -54,10 +54,11 @@ Specialized workflow for creating production-ready Next.js App Router pages with
 - Never write complex section components inline inside `page.tsx` or create ad-hoc component files without tests/skeletons. Whenever a page requires new section or UI components under `<new_component_dir>/<page-name>/`, activate and strictly execute [`.agents/skills/nextjs-component-dev/SKILL.md`](../nextjs-component-dev/SKILL.md) for each component.
 - When orchestrated, every new section component routes through the component track (spec → `nextjs-test-author` baseline → `nextjs-dev` implementation → `nextjs-qa-auditor` edge suite).
 
-### 7. Agent Boundaries
+### 7. Agent Boundaries & Source Isolation
 - Implementation is written by `nextjs-dev` when orchestrated. This skill never authors tests.
 - Page tests belong to `nextjs-test-author`; adversarial page assertions belong to `nextjs-qa-auditor`.
 - Only the orchestrator updates `docs/plan/05-pages-and-components.md`.
+- All page work happens on branch `agent/<slug>` in its own worktree (contract: [`../nextjs-dev-setup/references/agent-worktree-isolation.md`](../nextjs-dev-setup/references/agent-worktree-isolation.md)). A merge conflict is never resolved by an agent: abort, keep the branch, and ask the user.
 
 ---
 
@@ -84,12 +85,12 @@ Specialized workflow for creating production-ready Next.js App Router pages with
     5. Render `<JsonLd>` structured data component.
 
 - [ ] **Step 4: Page Test Suite (Delegated to `nextjs-test-author`, `page` mode)**
-  - Spawn the `nextjs-test-author` agent with the route definition, `page-spec.md`, and `docs/project.json`.
+  - Spawn the `nextjs-test-author` agent with the route definition, `page-spec.md`, `docs/project.json`, and the worktree path.
   - It produces `tests/e2e/pages/<route>.spec.ts` covering metadata, canonical/hreflang, JSON-LD, locale coverage, loading/error boundaries, instant shell, RTL, and route boundaries.
   - Do not author page tests here; consult [`../nextjs-adversarial-qa/SKILL.md`](../nextjs-adversarial-qa/SKILL.md).
-  - Gate: page suite green before Step 5.
+  - Gate: the suite is **authored and statically audited**, then listed in `deferred_expensive_tests[]`. Do not launch a browser: Playwright is the expensive tier and runs at pre-push.
 
-- [ ] **Step 5: Verification & Sanity Check**
+- [ ] **Step 5: Verification & Sanity Check (fast tier)**
   - Run the page verification script:
     - **Windows (PowerShell):**
       ```pwsh
@@ -99,9 +100,11 @@ Specialized workflow for creating production-ready Next.js App Router pages with
       ```bash
       bash .agents/skills/nextjs-page-dev/scripts/verify-page.sh <route_dir>
       ```
-  - Run the page test suite:
+  - Audit the page suite without executing it:
     - **Windows:** `pwsh .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.ps1 -TargetPath <route_dir> -Mode page`
     - **Linux / macOS:** `bash .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.sh <route_dir> page`
+    - Expected output: `[DEFERRED] Playwright suites are expensive and run pre-push`. That is a pass for this phase.
+  - **Forbidden here:** `pnpm run test:e2e`, `pnpm exec playwright test`, `pnpm build` — expensive tier, pre-push only.
   - Ensure zero TypeScript, missing dictionary, metadata, or JSON-LD errors.
 
 - [ ] **Step 6: Implementation Plan Checklist Synchronization**

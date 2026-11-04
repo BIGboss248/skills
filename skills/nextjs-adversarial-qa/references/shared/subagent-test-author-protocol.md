@@ -96,8 +96,11 @@ Both agents return JSON only, with no prose before or after.
   "status": "PASS | FAIL | BLOCKED",
   "agent": "nextjs-qa-auditor",
   "mode": "adversarial",
+  "worktree": { "branch": "agent/<slug>", "path": "..." },
+  "tier": "fast",
   "files_created": ["..."],
   "commands": ["..."],
+  "deferred_expensive_tests": ["tests/e2e/components/<page>/<ComponentName>.spec.ts"],
   "cases": { "passed": 0, "failed": 0, "skipped": 0 },
   "failures": [{ "test": "BND-3", "severity": "major", "reason": "..." }],
   "code_fixes_required": ["..."],
@@ -115,7 +118,9 @@ Both agents return JSON only, with no prose before or after.
 Both test agents:
 
 - Editing implementation files, dictionaries, or runner configuration.
-- Running the full test suite.
+- Running the full test suite, Playwright, or any production build during development (fast tier only).
+- Reporting a deferred Playwright suite as `PASS`; it is `DEFERRED (pre-push)`.
+- Writing outside the assigned `agent/<slug>` worktree.
 - Creating dummy or sample tests outside the target directory.
 - Adding dependencies.
 - Asserting hardcoded English copy instead of dictionary-driven values.

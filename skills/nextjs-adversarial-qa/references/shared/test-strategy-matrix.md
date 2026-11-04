@@ -33,18 +33,23 @@ Decide the cheapest layer that can prove the behavior. Push assertions down to J
 3. **One behavior per test.** A failing test must identify exactly one defect.
 4. **No duplicate coverage.** If Jest proves it, do not repeat it in Playwright unless SSR/hydration changes the outcome.
 5. **Targeted runs only.** `pnpm test -- <file>` and `pnpm test:e2e <file>`, never the full suite during iteration.
+6. **Fast tier only during development.** Playwright, the full Jest project, and builds run pre-push. Authoring a Playwright spec is not permission to execute it.
 
 ---
 
 ## 3. Gates by Mode
 
-| Mode | Gate | Blocks |
-| :--- | :--- | :--- |
-| `baseline` | `[ComponentName].test.tsx` green | Component implementation may start |
-| `page` | `tests/e2e/pages/<route>.spec.ts` green | Page marked complete in `docs/plan/05-pages-and-components.md` |
-| `adversarial` | `[ComponentName].edge.test.tsx` green | Orchestrator Phase 3 handoff |
-| `repair` | All targeted suites green | Any completion claim |
-| `audit` | Report delivered, no code change | Nothing (advisory) |
+| Mode | Gate | Tier | Blocks |
+| :--- | :--- | :--- | :--- |
+| `baseline` | `[ComponentName].test.tsx` green | fast | Component implementation may start |
+| `page` | `tests/e2e/pages/<route>.spec.ts` authored + audited; execution at pre-push | fast (authoring) / expensive (execution) | Page marked complete in `docs/plan/05-pages-and-components.md` |
+| `adversarial` | `[ComponentName].edge.test.tsx` green; component E2E deferred | fast | Orchestrator Phase 3 handoff |
+| `repair` | All targeted fast suites green | fast | Any completion claim |
+| `audit` | Report delivered, no code change | — | Nothing (advisory) |
+| `pre-push` | `test:all` (full Jest + Playwright) green | expensive | Pushing the branch |
+
+Expensive-tier policy: [`test-execution-tiers.md`](./test-execution-tiers.md). A
+deferred suite is never reported as passing.
 
 ---
 

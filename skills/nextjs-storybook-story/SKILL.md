@@ -63,6 +63,11 @@ Specialized workflow for generating and updating co-located Storybook stories (`
   - Implement CSF3 metadata, `argTypes`, `fn()` action spies, markdown docs, and the 4 canonical story variants.
 
 - [ ] **Step 3: Verification & Smoke Test Execution**
+  > [!NOTE]
+  > Storybook smoke/build is part of the **expensive tier**. Run it here only because
+  > this skill was explicitly invoked. Standard component development must not run
+  > Storybook builds; `.husky/pre-push` owns them.
+
   - Run verification script to check story presence and execute Storybook smoke test:
     * **Windows (PowerShell):**
       ```pwsh

@@ -99,6 +99,16 @@ Before generating files, always audit whether the component already exists:
 
 All test authoring and execution is delegated to [`nextjs-adversarial-qa`](../../nextjs-adversarial-qa/SKILL.md) in `baseline`, `page`, `adversarial`, or `repair` mode. This orchestrator never writes assertions directly and never weakens an edge test.
 
+Two execution rules apply to every test artifact:
+
+- **Fast tier only during development** — targeted Jest files run; Playwright, the
+  full Jest project, `build`, and Storybook builds run at `git push` through
+  `.husky/pre-push`. Policy:
+  [`test-execution-tiers.md`](../../nextjs-adversarial-qa/references/shared/test-execution-tiers.md).
+- **Worktree only** — every write happens on branch `agent/<slug>` in its own
+  worktree. Policy:
+  [`agent-worktree-isolation.md`](../../nextjs-dev-setup/references/agent-worktree-isolation.md).
+
 ---
 
 ## 9. Page Track

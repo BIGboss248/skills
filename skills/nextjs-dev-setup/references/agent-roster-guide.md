@@ -8,6 +8,16 @@ The roster is **instruction-scoped, not permission-locked**: the subagents carry
 orchestrator writes an explicit brief before every spawn and audits the diff when
 the agent returns.
 
+Two execution rules apply to every role:
+
+1. **Fast tier only during development.** Narrow Jest runs; Playwright, full Jest,
+   and builds run at `git push` through `.husky/pre-push`. See
+   [testing-guide.md](./testing-guide.md#6-test-execution-tiers-fast-during-dev-expensive-pre-push).
+2. **One worktree per task.** Implementation agents work on branch `agent/<slug>`
+   in `../<repo>-worktrees/<slug>` and merge into `main` with `--no-ff`. Merge
+   conflicts are escalated to the user. See
+   [agent-worktree-isolation.md](./agent-worktree-isolation.md).
+
 ---
 
 ## 1. Why Briefs + Audit, Not Permission Blocks
@@ -62,10 +72,12 @@ without a brief returns `BLOCKED: missing brief`.
 role: nextjs-test-author | nextjs-dev | nextjs-qa-auditor
 objective: <one sentence; the artifact to produce>
 mode: baseline | page | implementation | repair | adversarial | audit
+worktree: agent/<slug> at ../<repo>-worktrees/<slug> (base: main)
+tier: fast
 write_scope: <explicit globs, e.g. "src/components/**" or "e2e/pages/**">
 read_scope: <paths, plus the spec and plan documents>
 forbidden: <paths owned by another role + package.json, lockfiles, runner configs>
-commands: <exact expected commands, e.g. "pnpm test src/components/Foo.test.tsx">
+commands: <exact expected commands, e.g. "pnpm test -- src/components/Foo.test.tsx">
 done_when: <acceptance evidence: green suite, build output, file list>
 report: the agent's JSON return block, no prose
 ```
@@ -78,24 +90,31 @@ Brief rules:
 - Never widen `forbidden` to dodge a decision, and never narrow `write_scope` to a
   single file when the role legitimately needs a directory.
 - Re-brief on repair rounds; route the same failing test back to its owner.
+- Always include `worktree:` and `tier: fast`. Omitting either makes the brief
+  incomplete and the subagent returns `BLOCKED: missing brief`.
 
 ---
 
 ## 4. Review Loop
 
 ```
-brief -> subagent runs + self-verifies -> orchestration audits diff + re-runs suite
+brief -> subagent works in its worktree + self-verifies (fast tier)
+      -> orchestrator audits diff + re-runs the fast suite
       -> accept | re-brief with failures -> repeat
+      -> merge agent/<slug> into main (--no-ff) | conflict -> ask user
 ```
 
 The orchestrator, on every return:
 
-1. `git status --short` and `git diff --stat`; compare with `write_scope`.
+1. `git status --short` and `git diff --stat` **inside the worktree**; compare with
+   `write_scope`.
 2. Restore any out-of-scope path, then report the violation.
-3. Re-run the claimed-green command and compare counts.
+3. Re-run the claimed-green fast command and compare counts. Never run Playwright
+   or the full suite to check a claim.
 4. Run `audit-agent-writes` (when installed) and `verify-component-create` /
-   `verify-page`.
-5. Accept only with the command output that proves the claim.
+   `verify-page` in the fast tier.
+5. Accept only with the command output that proves the claim, and only when every
+   deferred suite is declared as `DEFERRED (pre-push)`.
 
 ---
 
@@ -122,7 +141,10 @@ verification commands in the review step to the repository's real script names
 - [ ] `.opencode/agents/nextjs-qa-auditor.md` — no `permission` block
 - [ ] `.opencode/agents/nextjs-orchestrator.md` — `task` allows only the three
       roles; brief + review sections present
-- [ ] `.agents/rules/agent-boundaries.md`
+- [ ] `.agents/rules/agent-boundaries.md` — includes tier and worktree rules
+- [ ] `scripts/agent-worktree.ps1` and `scripts/agent-worktree.sh`
+- [ ] `package.json` → `test:fast`, `test:e2e`, `test:all`, `test:prepush`
+- [ ] `.husky/pre-push` → `<pm> run test:prepush`
 - [ ] `.opencode/commands/create-nextjs-component.md`
 - [ ] `.opencode/commands/create-nextjs-page.md`
 - [ ] `docs/project.json` → `project_context_and_metadata.agents`
@@ -145,6 +167,10 @@ tool locks:
 | Spawn `@general` | any role agent | Refuses; only the orchestrator delegates |
 | Run its own suite | any role agent | Executes it directly, no approval prompt from the user |
 | Return `PASS` without output | any role agent | Rejected by the orchestrator review step |
+| Start a Playwright run during development | any role agent | Refuses, defers to pre-push, declares the file |
+| Return `PASS` for a deferred suite | any role agent | Rejected; must be `DEFERRED (pre-push)` |
+| Write in the main working tree | `nextjs-dev` | Refuses; creates and uses `agent/<slug>` worktree |
+| Hit a merge conflict | merge owner | Aborts, keeps the branch, reports paths, asks the user |
 
 New agent files register on the **next** session. A session already running will
 not see them.

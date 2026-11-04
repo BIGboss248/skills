@@ -77,11 +77,17 @@ export interface [ComponentName]Props {
 
 ## 6. Verification Gate
 
+Fast tier (run during development):
+
 - Companion files and i18n:
   ```pwsh
   pwsh .agents/skills/nextjs-component-dev/scripts/verify-dev.ps1 -ComponentPath <target_component_dir>
   ```
-- Targeted suites (baseline + adversarial + Playwright):
+- Targeted Jest (baseline + adversarial):
   ```pwsh
   pwsh .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.ps1 -TargetPath <target_component_dir> -Mode all
   ```
+
+Expensive tier (deferred to `git push` via `.husky/pre-push`; never run here):
+
+- Playwright component spec, full Jest project, production build.

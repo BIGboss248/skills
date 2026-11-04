@@ -17,6 +17,11 @@ inside the scope they were given.
 | `nextjs-test-author` | subagent | Baseline and page suites | `*.test.ts(x)`, `tests/e2e/pages/**`, `test-plan.md` |
 | `nextjs-qa-auditor` | subagent | Adversarial edge suites and audit | `*.edge.test.tsx`, `tests/e2e/components/**` |
 
+Every agent works in its **own git worktree** on branch `agent/<slug>`; nothing
+is written in the user's working tree. See
+[`../skills/nextjs-dev-setup/references/agent-worktree-isolation.md`](../skills/nextjs-dev-setup/references/agent-worktree-isolation.md)
+in the skills hub.
+
 ---
 
 ## Write Matrix
@@ -43,14 +48,16 @@ instead of doing it — it is an instruction, not a tool lock.
 ## Enforcement
 
 1. **Brief before spawn.** The orchestrator passes role, objective, mode,
-   `write_scope`, `read_scope`, `forbidden`, expected commands, and the definition
-   of done. A subagent without a brief must return `BLOCKED: missing brief`.
-2. **Self-verification.** Subagents run their own builds, linters, type checks,
-   and targeted suites and return the real command output. They never wait for
-   the user to approve a command.
+   `worktree`, `tier`, `write_scope`, `read_scope`, `forbidden`, expected
+   commands, and the definition of done. A subagent without a brief must return
+   `BLOCKED: missing brief`.
+2. **Self-verification, fast tier.** Subagents run their own linters, type checks,
+   and targeted Jest files and return the real command output. They never wait for
+   the user to approve a command, and never launch Playwright, full Jest, or a
+   build during development.
 3. **Audit on return.** The orchestrator runs `git status --short` and `git diff
-   --stat`, compares the touched paths against `write_scope`, and restores
-   anything outside it before accepting the work.
+   --stat` inside the worktree, compares the touched paths against `write_scope`,
+   and restores anything outside it before accepting the work.
 4. **No silent widening.** If the brief was wrong, the orchestrator re-briefs and
    logs the change; the subagent never expands its own scope.
 
@@ -76,17 +83,32 @@ instead of doing it — it is an instruction, not a tool lock.
 8. **The orchestrator audits the diff.** Before reporting success it verifies that
    each agent touched only its allowed classes of files, and re-runs the suite it
    claims is green.
+9. **Fast tier during development.** Playwright, the full Jest project, `build`,
+   and Storybook builds run at `git push` through `.husky/pre-push`. Authored E2E
+   specs are reported `DEFERRED (pre-push)`, never `PASS`.
+10. **One worktree per task.** Branch `agent/<slug>` off `main`, path
+    `../<repo>-worktrees/<slug>`. Only the orchestrator (or a directly invoked
+    `nextjs-dev`) merges it into `main`, with `--no-ff`.
+11. **Conflicts belong to the user.** Abort the merge, keep the branch, report the
+    conflicting paths, and ask which resolution to use. Never `-X ours`/`-X
+    theirs`, never force-push, never rewrite history.
+12. **No pushing.** Agents never `git push` and never use `--no-verify`.
 
 ---
 
 ## Repair Loop
 
 ```
-suite fails
+fast suite fails
   -> owning test agent returns failures[] + code_fixes_required[]
   -> nextjs-dev fixes implementation (never the test)
   -> owning test agent re-runs the same files
   -> repeat until exit 0
+
+pre-push fails (expensive tier)
+  -> push is rejected by the hook
+  -> reopen the loop on the same agent branch
+  -> re-run the failing file with the real command, fix code, retry push
 ```
 
 Escalation:
@@ -94,6 +116,23 @@ Escalation:
 - Baseline wrong -> `nextjs-test-author` fixes it, logs the reason.
 - Edge wrong -> user decision; orchestrator edits and logs it.
 - Spec ambiguous -> `BLOCKED: ambiguous specification` with the rows in question.
+- Merge conflict -> `BLOCKED: merge conflict` with paths; the user chooses.
+
+---
+
+## Worktree Lifecycle
+
+```text
+create  -> agent-worktree.ps1/.sh create <slug>   (branch agent/<slug>, base main)
+work    -> implement + fast tests inside the worktree
+commit  -> scoped conventional commit on agent/<slug>
+verify  -> fast gates + write audit inside the worktree
+merge   -> agent-worktree.ps1/.sh merge <slug>     (--no-ff into main)
+conflict-> abort (exit 3), keep branch, ASK USER
+cleanup -> agent-worktree.ps1/.sh remove <slug>     (after acceptance)
+```
+
+The pre-push hook lives in the shared `.git`, so it applies to every worktree.
 
 ---
 

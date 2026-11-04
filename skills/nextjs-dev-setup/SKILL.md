@@ -183,6 +183,14 @@ Produce the report from
 - **N11 image names** — Docker OCI names must be lowercase.
 - **N12 test gate** — never point `pre-push` at a script that does not exist;
   degrade to lint only and record it.
+- **Test tiers** — `pre-push` is the only local execution point for Playwright and
+  the full Jest project. Never wire the expensive tier into `commit-msg` or
+  `pre-commit`, and never let component development run it. Details:
+  [testing-guide.md](./references/testing-guide.md#6-test-execution-tiers-fast-during-dev-expensive-pre-push).
+- **Agent worktrees** — implementation agents must not write in the user's working
+  tree. Deploy the worktree helper with N9 and record the contract in `AGENTS.md`.
+  `.husky/` hooks live in the shared `.git`, so they apply to every worktree.
+  Details: [agent-worktree-isolation.md](./references/agent-worktree-isolation.md).
 - **Storybook intl context** — wrap stories with `NextIntlClientProvider` (when
   N4 is enabled). No progress-bar provider is needed: pending feedback is
   per-link `useLinkStatus` and renders nothing while idle.

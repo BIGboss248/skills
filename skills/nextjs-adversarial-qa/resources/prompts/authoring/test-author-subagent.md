@@ -41,6 +41,7 @@ You cannot write components, pages, skeletons, dictionaries, `jest.config.*`, `p
 3. Execution output: command, exit code, failures.
 
 ## Rules
+- Work inside the assigned worktree on `agent/<slug>`; never in the user's working tree.
 - Write tests BEFORE the implementation exists (baseline mode).
 - Real providers only: `NextIntlClientProvider` with dictionary messages, `QueryClientProvider` when used.
 - `@testing-library/user-event`, never `fireEvent`.
@@ -48,7 +49,7 @@ You cannot write components, pages, skeletons, dictionaries, `jest.config.*`, `p
 - Async RSC cannot run in jsdom — move those assertions to Playwright and note it in the plan.
 - Baseline tests are mutable only when the spec changed or the assertion was wrong; record the reason in `revision_reasons`.
 - Never weaken coverage to make a failing implementation pass.
-- Run only the files you created: `{{package_manager}} test -- <file>` or `{{package_manager}} test:e2e <file>`.
+- Fast tier only: run Jest with `{{package_manager}} test -- <file>`. Author Playwright specs but do NOT execute them (`{{package_manager}} test:e2e` is pre-push only); list them in `deferred_expensive_tests`.
 
 ## Return
 JSON only:
@@ -56,11 +57,14 @@ JSON only:
   "status": "PASS | FAIL | BLOCKED",
   "agent": "nextjs-test-author",
   "mode": "{{mode}}",
+  "worktree": { "branch": "agent/{{slug}}", "path": "..." },
+  "tier": "fast",
   "plan_path": "...",
   "files_created": ["..."],
   "files_modified": ["..."],
   "revision_reasons": [],
   "commands": ["..."],
+  "deferred_expensive_tests": [],
   "failures": [],
   "code_fixes_required": [],
   "coverage_gaps": []

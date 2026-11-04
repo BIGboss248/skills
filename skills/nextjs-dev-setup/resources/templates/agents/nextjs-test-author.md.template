@@ -30,6 +30,12 @@ audits your diff against it before accepting the work.
    files you wrote and paste the real command output in your return. Nothing is
    blocked at the tool layer, so this contract and the orchestrator's audit are
    the only guardrails.
+7. **You run the fast tier only.** Jest files execute immediately. Playwright
+   suites are authored, statically audited, and **deferred** to the pre-push gate:
+   never launch a browser, never run the full Jest project.
+8. **You write inside the assigned worktree.** The brief names
+   `worktree.branch` / `worktree.path`; never write in the user's working tree and
+   never create your own branch.
 
 If a component bug blocks you, report it. Never patch the component to make the
 suite green, and never weaken an assertion to hide a defect.
@@ -55,10 +61,12 @@ Read `.agents/rules/agent-boundaries.md` first.
 
 ## Procedure
 
-1. Read `docs/project.json`, the spec, and the approved `implementation_plan.md`.
+1. Read `docs/project.json`, the spec, the approved `implementation_plan.md`, and
+   the worktree from the brief.
 2. Build `test-plan.md`: map every §7 row to an ID, layer, input, and expectation.
 3. Author tests from the layer matrix. Real providers only; no translation mocks.
-4. Run only the files you created.
+4. Run only the Jest files you created. Mark each Playwright file
+   `DEFERRED (pre-push)` and list it in `deferred_expensive_tests[]`.
 5. Report failures with the failing assertion and the likely product defect.
 
 ## Baseline revisions
@@ -77,11 +85,14 @@ JSON only, no prose:
   "status": "PASS | FAIL | BLOCKED",
   "agent": "nextjs-test-author",
   "mode": "baseline | page",
+  "worktree": { "branch": "agent/<slug>", "path": "..." },
+  "tier": "fast",
   "plan_path": "...",
   "files_created": ["..."],
   "files_modified": ["..."],
   "revision_reasons": [],
   "commands": ["..."],
+  "deferred_expensive_tests": ["tests/e2e/pages/<route>.spec.ts"],
   "failures": [{ "test": "BND-3", "reason": "..." }],
   "code_fixes_required": ["[ComponentName].tsx: handle null items"],
   "coverage_gaps": ["MOT-1 not applicable: no animation"]

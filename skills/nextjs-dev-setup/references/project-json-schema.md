@@ -44,6 +44,18 @@ prescribe a CSS file structure, token vocabulary, or color space.
     { "role": "qa-auditor", "agent": "nextjs-qa-auditor", "path": ".opencode/agents/nextjs-qa-auditor.md", "model": null, "enabled": true }
   ],
   "boundaries_rule": ".agents/rules/agent-boundaries.md",
+  "worktree_isolation": {
+    "enabled": true,
+    "helper": "scripts/agent-worktree.ps1",
+    "branch_prefix": "agent/",
+    "base_branch": "main",
+    "on_conflict": "ask_user"
+  },
+  "test_tiers": {
+    "development": "fast",
+    "prepush": "full",
+    "prepush_script": "test:prepush"
+  },
   "commands": [
     ".opencode/commands/create-nextjs-component.md",
     ".opencode/commands/create-nextjs-page.md"
@@ -54,6 +66,10 @@ prescribe a CSS file structure, token vocabulary, or color space.
 - `roster`: `"three-role"` only. A two-role repository is out of contract because it loses the independent auditor.
 - `model`: `null` inherits the primary agent's model; otherwise a `provider/model` string.
 - `enabled: false` means the file stays on disk but the orchestrator must not delegate to it.
+- `worktree_isolation.on_conflict` must stay `"ask_user"`: agents never resolve a
+  merge conflict themselves.
+- `test_tiers.development` must stay `"fast"`; `prepush` is the only local
+  execution point for Playwright and the full Jest project.
 
 ### 1.2 Feature Selection Object (`nextjs_setup_features`)
 

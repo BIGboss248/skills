@@ -268,6 +268,15 @@ else
   AUTOMATION_CHECKS+=("MISSING:Husky Git Hooks:Missing .husky/ directory.")
 fi
 
+# 2b. Pre-push gate must run the expensive test tier
+if [ -f ".husky/pre-push" ]; then
+  if grep -qE "test:all|test:prepush|test:e2e|playwright" ".husky/pre-push" 2>/dev/null; then
+    AUTOMATION_CHECKS+=("OK:Pre-push Test Tier:pre-push runs the expensive tier (full Jest + Playwright).")
+  else
+    AUTOMATION_CHECKS+=("WARN:Pre-push Test Tier:pre-push does not reference test:all/test:prepush; expensive suites will never run locally.")
+  fi
+fi
+
 # 3. Release Please
 if [ -f ".github/workflows/release-please.yml" ] || [ -f ".github/workflows/release.yml" ]; then
   WF=".github/workflows/release-please.yml"

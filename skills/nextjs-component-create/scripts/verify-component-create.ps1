@@ -4,8 +4,12 @@
 
 .DESCRIPTION
     Runs the phase gates in order: dev companions/i18n, Storybook, then the QA
-    suites (baseline + adversarial + Playwright). Stops at the first failure and
-    returns its exit code.
+    suites (baseline + adversarial). Stops at the first failure and returns its
+    exit code.
+
+    Tier 'fast' (default) runs Jest only and DEFERS Playwright to the pre-push
+    gate. Tier 'full' runs every gate and belongs to pre-push, CI, or an explicit
+    user request. See nextjs-adversarial-qa/references/shared/test-execution-tiers.md.
 
 .PARAMETER ComponentPath
     Target component directory.
@@ -15,6 +19,9 @@
 
 .PARAMETER TargetKind
     Verify a component (default) or a page route.
+
+.PARAMETER Tier
+    fast | full. Default: fast.
 
 .PARAMETER SkipStorybook
     Skip the Storybook smoke/build gate (when stories are out of scope).
@@ -42,6 +49,9 @@ param(
 
     [ValidateSet("component", "page")]
     [string]$TargetKind = "component",
+
+    [ValidateSet("fast", "full")]
+    [string]$Tier = "fast",
 
     [switch]$SkipStorybook,
 
@@ -104,12 +114,19 @@ if ($TargetKind -eq "page") {
 
 if (-not $SkipTests) {
     $qaMode = if ($TargetKind -eq "page") { "page" } else { "all" }
-    Invoke-Gate -Label "Phase 4 - QA suites ($qaMode)" -Action {
-        & (Join-Path $skillsRoot "nextjs-adversarial-qa/scripts/verify-qa.ps1") -TargetPath $ComponentPath -Mode $qaMode
+    Invoke-Gate -Label "Phase 4 - QA suites ($qaMode, tier $Tier)" -Action {
+        & (Join-Path $skillsRoot "nextjs-adversarial-qa/scripts/verify-qa.ps1") -TargetPath $ComponentPath -Mode $qaMode -Tier $Tier
     }
 } else {
     Write-Host "[SKIP] QA suite gate (SkipTests)" -ForegroundColor Yellow
 }
 
-Write-Host "[SUCCESS] $TargetKind creation verification passed for: $ComponentPath" -ForegroundColor Green
+if ($Tier -ne "full") {
+    Write-Host "[DEFERRED] Expensive tier not executed. It runs at 'git push' through .husky/pre-push:" -ForegroundColor Yellow
+    Write-Host "  - full Jest project, Playwright component + page E2E, production build, Storybook build" -ForegroundColor Yellow
+    Write-Host "  Explicit re-run: pwsh verify-component-create.ps1 -ComponentPath $ComponentPath -TargetKind $TargetKind -Tier full" -ForegroundColor Yellow
+    Write-Host "[DEFERRED] A deferred suite is not a passing suite." -ForegroundColor Yellow
+}
+
+Write-Host "[SUCCESS] $TargetKind creation verification passed for: $ComponentPath (tier: $Tier)" -ForegroundColor Green
 exit 0

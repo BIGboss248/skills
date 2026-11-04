@@ -16,6 +16,17 @@
       "items": { "type": "string" }
     },
     "history_file": { "type": "string" },
+    "worktree": {
+      "type": "object",
+      "properties": {
+        "branch": { "type": "string", "pattern": "^agent/[a-z0-9]+(-[a-z0-9]+)*$" },
+        "path": { "type": "string" },
+        "base": { "type": "string" },
+        "merge_status": { "type": "string", "enum": ["pending", "clean", "conflict", "not_owner"] }
+      }
+    },
+    "tier": { "type": "string", "enum": ["fast", "full"] },
+    "deferred_expensive_tests": { "type": "array", "items": { "type": "string" } },
     "agent_assignments": {
       "type": "array",
       "items": {

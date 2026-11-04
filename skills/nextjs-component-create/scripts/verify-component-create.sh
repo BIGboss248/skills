@@ -3,13 +3,17 @@ set -u
 
 usage() {
     cat <<'EOF'
-Usage: bash verify-component-create.sh <TargetPath> [component|page] [--skip-storybook] [--skip-tests] [--help]
+Usage: bash verify-component-create.sh <TargetPath> [component|page] [--tier fast|full] [--skip-storybook] [--skip-tests] [--help]
 
 End-to-end verification for the Next.js creation pipeline.
 
 Runs the phase gates in order: component infrastructure or page route files,
-Storybook (components only), then QA suites (baseline + adversarial + Playwright,
-or the page suite). Stops at the first failure.
+Storybook (components only), then QA suites (baseline + adversarial, or the page
+suite). Stops at the first failure.
+
+  --tier fast|full   Default: fast. 'fast' runs Jest only and defers Playwright
+                     to the pre-push gate; 'full' runs every gate and belongs to
+                     pre-push, CI, or an explicit user request.
 
 Exit codes: 0 success, 1 gate failure, 2 usage error.
 EOF
@@ -22,6 +26,7 @@ fi
 
 COMPONENT_PATH=""
 TARGET_KIND="component"
+TIER="fast"
 SKIP_STORYBOOK=0
 SKIP_TESTS=0
 
@@ -30,6 +35,10 @@ for arg in "$@"; do
         --help|-h) usage; exit 0 ;;
         --skip-storybook) SKIP_STORYBOOK=1 ;;
         --skip-tests) SKIP_TESTS=1 ;;
+        --tier) ;;
+        --tier=fast) TIER="fast" ;;
+        --tier=full) TIER="full" ;;
+        fast|full) TIER="$arg" ;;
         component|page) TARGET_KIND="$arg" ;;
         *) if [ -z "$COMPONENT_PATH" ]; then COMPONENT_PATH="$arg"; fi ;;
     esac
@@ -81,11 +90,18 @@ fi
 if [ "$SKIP_TESTS" -eq 0 ]; then
     QA_MODE="all"
     [ "$TARGET_KIND" = "page" ] && QA_MODE="page"
-    run_gate "Phase 4 - QA suites ($QA_MODE)" \
-        bash "$SKILLS_ROOT/nextjs-adversarial-qa/scripts/verify-qa.sh" "$COMPONENT_PATH" "$QA_MODE"
+    run_gate "Phase 4 - QA suites ($QA_MODE, tier $TIER)" \
+        bash "$SKILLS_ROOT/nextjs-adversarial-qa/scripts/verify-qa.sh" "$COMPONENT_PATH" "$QA_MODE" "$TIER"
 else
     echo "[SKIP] QA suite gate (--skip-tests)"
 fi
 
-echo "[SUCCESS] $TARGET_KIND creation verification passed for: $COMPONENT_PATH"
+if [ "$TIER" != "full" ]; then
+    echo "[DEFERRED] Expensive tier not executed. It runs at 'git push' through .husky/pre-push:"
+    echo "  - full Jest project, Playwright component + page E2E, production build, Storybook build"
+    echo "  Explicit re-run: bash verify-component-create.sh $COMPONENT_PATH $TARGET_KIND --tier full"
+    echo "[DEFERRED] A deferred suite is not a passing suite."
+fi
+
+echo "[SUCCESS] $TARGET_KIND creation verification passed for: $COMPONENT_PATH (tier: $TIER)"
 exit 0

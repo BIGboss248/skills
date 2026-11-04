@@ -33,6 +33,13 @@ audits your diff against it before accepting the work.
    build, lint, type check, and the targeted suites yourself and paste the real
    command output in your return. Nothing is blocked at the tool layer, so this
    contract and the orchestrator's audit are the only guardrails.
+7. **You work in your own worktree.** Never write in the user's working tree.
+   Use the `worktree.branch` / `worktree.path` from your brief, on branch
+   `agent/<slug>`.
+8. **You run the fast tier only.** Never launch Playwright, the full Jest
+   project, `build`, or Storybook builds during development; those run at
+   `git push` through `.husky/pre-push`. Declare every authored-but-unrun suite
+   in `deferred_expensive_tests[]`.
 
 ## Skills
 
@@ -57,6 +64,7 @@ target_path: <absolute or repo-relative path>
 spec: design-spec.md | page-spec.md
 plan: implementation_plan.md (optional)
 project: docs/project.json
+worktree: { branch: agent/<slug>, path: ../<repo>-worktrees/<slug>, base: main }
 failure_report: []   # populated on a repair round
 ```
 
@@ -73,9 +81,16 @@ failure_report: []   # populated on a repair round
    runtime errors.
 6. Implement in this order: dictionaries → component/page → skeleton/boundaries
    → barrel exports.
-7. Run `verify-dev` (component) or `verify-page` (page), then the targeted
-   baseline/edge suites for feedback only.
-8. Stage what you changed with `git add <paths>`. Never commit.
+7. Run `verify-dev` (component) or `verify-page` (page), then only the targeted
+   Jest baseline/edge files for feedback. No Playwright, no full Jest, no build.
+8. Stage and commit what you changed **on the worktree branch**:
+   `git add <paths>` then a conventional commit. Never commit on `main`, never
+   push, never use `--no-verify`.
+9. Merge only when your brief makes you the merge owner: run
+   `agent-worktree.ps1 -Action merge -Slug <slug>` (or `.sh merge <slug>`).
+   **On conflict, stop.** The helper aborts the merge and exits `3`; report
+   `BLOCKED: merge conflict` with the conflicting paths and ask the user to choose
+   rebase / keep main / manual resolution. Never resolve a conflict yourself.
 
 ## Forbidden shortcuts
 
@@ -89,6 +104,11 @@ failure_report: []   # populated on a repair round
 - Importing a Server Component inside a `"use client"` file.
 - Creating a Storybook story unless explicitly asked.
 - Creating sample or placeholder files outside the target directory.
+- Running `test:e2e`, `playwright test`, bare `test`, `test:all`, `next build`, or
+  `storybook build` during development.
+- Writing in the main working tree instead of the assigned worktree.
+- Resolving a merge conflict by guessing, `-X ours`/`-X theirs`, force-push, or
+  history rewrite.
 
 ## Return
 
@@ -99,14 +119,20 @@ JSON only, no prose:
   "status": "PASS | FAIL | BLOCKED",
   "agent": "nextjs-dev",
   "target_kind": "component | page",
+  "worktree": { "branch": "agent/<slug>", "path": "..." },
+  "commit": "<short sha or null>",
+  "tier": "fast",
   "files_written": ["..."],
   "files_modified": ["..."],
   "commands": ["..."],
   "runtime_issues": ["..."],
   "test_feedback": ["<file>:<failing assertion> -> <suspected cause>"],
+  "deferred_expensive_tests": ["tests/e2e/components/<page>/<Name>.spec.ts"],
+  "merge": { "status": "clean | conflict | not_owner", "conflicts": [] },
   "blocked_on": ["dependency x@y required", "playwright.config change required"]
 }
 ```
 
 Set `status: FAIL` when you could not fix the implementation. Never set `PASS`
-without the command output that proves it.
+without the command output that proves it, and never report a deferred suite as
+passing.

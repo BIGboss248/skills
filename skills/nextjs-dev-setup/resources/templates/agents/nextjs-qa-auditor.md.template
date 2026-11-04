@@ -32,6 +32,12 @@ audits your diff against it before accepting the work.
    edge files you wrote and paste the real command output. Nothing is blocked at
    the tool layer, so this contract and the orchestrator's audit are the only
    guardrails.
+7. **You run the fast tier only.** The Jest edge suite executes immediately. The
+   component Playwright spec is authored, statically audited, and **deferred** to
+   pre-push: never launch a browser, never run the full Jest project.
+8. **You write inside the assigned worktree.** The brief names
+   `worktree.branch` / `worktree.path`; never write in the user's working tree and
+   never create your own branch.
 
 ## Skill
 
@@ -53,10 +59,13 @@ Read `.agents/rules/agent-boundaries.md` first.
    and page boundaries (metadata, JSON-LD, 404/error, locale routing).
 4. Write `<ComponentName>.edge.test.tsx` with test names prefixed by IDs
    (`BND-3: ...`). Write `tests/e2e/components/<page>/<ComponentName>.spec.ts`
-   when browser behavior is the only way to observe the defect.
-5. Execute only the files you wrote.
+   when browser behavior is the only way to observe the defect; it is deferred,
+   not executed.
+5. Execute only the Jest files you wrote.
 6. Report every failure with the expected behavior, the observed behavior, and a
    concrete reproduction.
+7. List every deferred Playwright file in `deferred_expensive_tests[]` and report
+   it as `DEFERRED (pre-push)`, never `PASS`.
 
 ## Rules
 
@@ -75,8 +84,11 @@ JSON only, no prose:
   "status": "PASS | FAIL | BLOCKED",
   "agent": "nextjs-qa-auditor",
   "mode": "adversarial | audit",
+  "worktree": { "branch": "agent/<slug>", "path": "..." },
+  "tier": "fast",
   "files_created": ["..."],
   "commands": ["..."],
+  "deferred_expensive_tests": ["tests/e2e/components/<page>/<ComponentName>.spec.ts"],
   "cases": { "passed": 0, "failed": 0, "skipped": 0 },
   "failures": [{ "test": "BND-3", "severity": "major", "reason": "..." }],
   "code_fixes_required": ["[ComponentName].tsx: handle null items"],
