@@ -6,7 +6,7 @@ description: >-
   repo, or initialize repository.
 metadata:
   author: BIGboss248
-  version: "2.9"
+  version: "3.0"
 ---
 
 # Setup Repository (Feature-Driven)
@@ -51,10 +51,11 @@ Use [feature-selection-interview.md](./resources/templates/feature-selection-int
 | F9 | Branch protection | off | existing CI check |
 | F10 | Code review gate (`reviewer` subagent + report standard) | on | F2 |
 | F11 | Next.js internationalization (`next-intl`, locale routing, dictionaries) | off | Next.js App Router project, F1 |
+| F12 | Planning workflow (`plan` skill + `/plan` command) | on | — |
 
 ### 1.3 Ask in adaptive rounds
 
-1. **Preset** — Minimal (`F1, F2`), Standard (`F1, F2, F4, F6, F7, F8, F10`, plus `F3` when installed), Full (all except `F9` unless a CI check exists, plus `F11` for Next.js App Router projects), or Custom.
+1. **Preset** — Minimal (`F1, F2`), Standard (`F1, F2, F4, F6, F7, F8, F10, F12`, plus `F3` when installed), Full (all except `F9` unless a CI check exists, plus `F11` for Next.js App Router projects), or Custom.
 2. **Adjustments** — multi-select overrides; record every add/remove.
 3. **Per-feature options** — only for enabled features; each runbook lists its own questions.
 
@@ -67,7 +68,7 @@ Use [feature-selection-interview.md](./resources/templates/feature-selection-int
 
 ## Phase 2 — Execute Enabled Features
 
-Run in dependency order: **F1 → F2 → F3 → F4 → F5 → F6 → F7 → F8 → F9 → F10 → F11**.
+Run in dependency order: **F1 → F2 → F3 → F4 → F5 → F6 → F7 → F8 → F9 → F10 → F11 → F12**.
 
 For each enabled feature:
 
@@ -88,6 +89,7 @@ For each enabled feature:
 | F9 Branch protection | [09-branch-protection.md](./references/features/09-branch-protection.md) |
 | F10 Code review gate | [10-code-review.md](./references/features/10-code-review.md) |
 | F11 Next.js i18n | [11-nextjs-i18n.md](./references/features/11-nextjs-i18n.md) |
+| F12 Planning workflow | [12-planning-workflow.md](./references/features/12-planning-workflow.md) |
 
 Do not touch files owned only by disabled features — not even to "prepare" them.
 
@@ -133,4 +135,7 @@ Do not touch files owned only by disabled features — not even to "prepare" the
 - **F11 interceptor** — Next.js 16+ uses `proxy.ts`, Next.js <=15 uses `middleware.ts`. Keeping both applies the locale redirect twice; delete the other file and merge custom logic into one handler.
 - **F11 document shell** — `<html>`/`<body>` live only in `app/[locale]/layout.tsx`. Leaving them in `app/layout.tsx` as well nests document elements and breaks `lang`/`dir`.
 - **F11 dictionary drift** — a locale added to `routing.ts` without a matching `messages/<locale>.json`, or with missing keys, fails the verifier and the build; scaffold every locale in the same step.
+- **F12 plan drift** — a plan amended after execution starts is amended in place (`A1`, `P2.1a`), never renumbered; completed steps and links depend on the numbers.
+- **F12 planning vs permission** — producing a plan never authorizes implementation. The approval gate is mandatory, and a destructive step inside an approved plan asks again.
+- **F12 duplicate planning** — a repository that already generates a roadmap (F11/Next.js plans, `PLAN.md`) keeps one planning convention; verify the existing one and report `[UNTOUCHED]` instead of installing a second.
 - **Repo-vs-app overlap** — `nextjs-dev-setup` features `N1/N4/N10/N11/N12` overlap with `F1/F11/F3/F5/F4/F7/F8`. Detect existing app-level setup first; verify and report `[UNTOUCHED]` instead of re-scaffolding the same files.

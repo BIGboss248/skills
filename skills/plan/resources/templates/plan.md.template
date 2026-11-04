@@ -1,0 +1,119 @@
+# <Plan title>
+
+- **Task type**: <feature | bugfix | refactor | migration | ops | research | writing | personal>
+- **Created**: <YYYY-MM-DD>
+- **Status**: draft | approved | in progress | done
+- **Owner**: <user or agent>
+- **Slug**: `<slug>`
+
+## Goal
+
+<One sentence: the outcome, in the user's words.>
+
+## Definition of done
+
+- <Observable result 1 — a command, artifact, or state.>
+- <Observable result 2.>
+
+## Non-goals
+
+- <Excluded scope> — follow-up: <note or "not planned">.
+
+## Decisions
+
+| # | Decision | Source |
+| :--- | :--- | :--- |
+| D1 | <locked answer> | Round 1 |
+| D2 | <locked answer> | Inspection |
+
+## Assumptions
+
+| # | Assumption | If wrong |
+| :--- | :--- | :--- |
+| A1 | <unasked fact used> | <fallback / re-plan trigger> |
+
+## Prerequisites
+
+- [ ] <Access, file, branch, approval, or tool that must exist **now**>
+
+## Phase 1 — <name>
+
+> Exit check: <the single verifiable state that ends this phase>
+
+### P1.1 — <imperative action>
+
+- **Does**: <what happens>
+- **Touches**: `<path>`
+- **Depends on**: none
+- **Done when**: `<command>` → `<expected output>`
+- **Evidence**: <where the proof is recorded>
+
+### P1.2 — <imperative action>
+
+- **Does**: <what happens>
+- **Touches**: `<path>`
+- **Depends on**: P1.1
+- **Done when**: `<observable state>`
+- **Evidence**: <where the proof is recorded>
+- **Negative case**: <what must still be rejected or unchanged>
+
+## Phase 2 — <name>
+
+> Exit check: <the single verifiable state that ends this phase>
+
+### P2.1 — <imperative action>
+
+- **Does**: <what happens>
+- **Touches**: `<path>`
+- **Depends on**: P1.2
+- **Done when**: `<command>` → `<expected output>`
+- **Evidence**: <where the proof is recorded>
+
+## Phase 3 — Verify and hand off
+
+> Exit check: <full gate result>
+
+### P3.1 — Run the gate
+
+- **Does**: Run the documented verification commands and record real output.
+- **Depends on**: P2.1
+- **Done when**: `<gate command>` → all green, output pasted under Evidence.
+- **Evidence**: <path or chat quote>
+
+### P3.2 — Stage and present
+
+- **Does**: Stage only the files this plan touched and show `git diff --cached`
+  plus the proposed Conventional Commit message. Never commit without approval.
+- **Depends on**: P3.1
+- **Done when**: the staged diff and message are shown, and unrelated changes are
+  listed as intentionally unstaged.
+
+## Risks and rollback
+
+| Risk | Likelihood | Impact | Mitigation |
+| :--- | :--- | :--- | :--- |
+| <risk> | low/med/high | low/med/high | <mitigation> |
+
+**Rollback**: <exact restore path — revert commit, restore backup, flip flag>.
+
+## Open questions
+
+- [ ] <question> — owner: user \| agent — blocking: yes \| no
+
+## Execution log
+
+<!-- Append one line per completed step, newest last. Never delete lines. -->
+
+| Step | Completed | Evidence |
+| :--- | :--- | :--- |
+| | | |
+
+## Amendments
+
+<!-- A1 — P2.1 superseded because … ; insert P2.1a below. Never renumber. -->
+
+## Approval gate
+
+Approve this plan and I will start at `P1.1`.
+Reply **go** to execute, **go P2** to run a single phase, or tell me what to
+change and I will revise before starting.

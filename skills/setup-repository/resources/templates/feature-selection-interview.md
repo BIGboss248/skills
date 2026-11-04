@@ -33,11 +33,12 @@ Existing files:   <AGENTS.md, docs/project.json, .github/, Dockerfile, .husky/ �
 | F9 | Branch protection | off | existing CI check |
 | F10 | Code review gate (`reviewer` subagent + report standard) | on | F2 |
 | F11 | Next.js internationalization (`next-intl`, locale routing, dictionaries) | off | Next.js App Router project, F1 |
+| F12 | Planning workflow (`plan` skill + `/plan` command) | on | — |
 
 ## 3. Round 1 — Preset
 
 > Which preset should I use?
-> **Minimal** (F1, F2) · **Standard** (F1, F2, F4, F6, F7, F8, F10, plus F3 when installed) · **Full** (all except F9 unless a CI check exists, plus F11 for Next.js App Router projects) · **Custom**
+> **Minimal** (F1, F2) · **Standard** (F1, F2, F4, F6, F7, F8, F10, F12, plus F3 when installed) · **Full** (all except F9 unless a CI check exists, plus F11 for Next.js App Router projects) · **Custom**
 
 ## 4. Round 2 — Adjustments
 
@@ -53,6 +54,7 @@ Resolve every removal of a dependency:
 - F11 without F1 → scaffold the infrastructure and record the locale/dictionary intent in `.agents/setup-features.json`; the `docs/project.json` keys are added when F1 is enabled.
 - F11 on a non-Next.js or Pages Router project → out of scope; report `[SKIPPED]`.
 - F11 after `nextjs-dev-setup` already scaffolded `next-intl` → verify only and report `[UNTOUCHED]`.
+- F12 without F2 → the skill and `/plan` command still work; the `AGENTS.md` planning section is skipped and the convention is recorded only in `.agents/setup-features.json`.
 
 ## 5. Round 3 — Per-feature options (enabled only)
 
@@ -67,6 +69,7 @@ Ask only the questions for enabled features; each runbook lists them. Examples:
 - **F9**: team or solo; which CI check name; require reviews?
 - **F10**: install `/review`? which base branch do reviews compare against? archive reports under `docs/reviews/`?
 - **F11**: which locales and default locale; locale prefix `always` or `as-needed`; migrate existing routes into `app/[locale]/` now or later; which locales render right-to-left?
+- **F12**: plan location (`docs/plan/<slug>.md` or a single `PLAN.md`); commit plans? install `/plan`? stop after every phase or only at the end?
 
 ## 6. Confirmation
 
@@ -86,6 +89,7 @@ Ask only the questions for enabled features; each runbook lists them. Examples:
 | F9 Branch protection | DISABLED (no CI check yet) |
 | F10 Code review gate | ENABLED |
 | F11 Next.js i18n | DISABLED (single locale) |
+| F12 Planning workflow | ENABLED |
 
 Preset: Standard
 Degraded: none
@@ -110,6 +114,7 @@ Proceed with these features? (yes / adjust)
 | F9 Branch protection | branch rules / recorded deferral | … | … |
 | F10 Code review gate | `.opencode/agents/reviewer.md`, `.agents/rules/code-review-report.md`, `.opencode/commands/review.md`, `AGENTS.md` | … | base branch: … |
 | F11 Next.js i18n | `i18n/routing.ts`, `i18n/request.ts`, `i18n/navigation.ts`, `proxy.ts`/`middleware.ts`, `app/[locale]/layout.tsx`, `messages/<locale>.json`, `global.d.ts`, `docs/project.json` | … | locales: … |
+| F12 Planning workflow | `skills/plan/`, `.opencode/commands/plan.md`, `AGENTS.md` | … | plan location: … |
 
 Preset: <preset>
 Verification: <commands and result per enabled feature>

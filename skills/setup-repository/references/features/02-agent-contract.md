@@ -10,7 +10,8 @@ the same corrections.
 1. Which stack-specific mandatory skills apply? (For example
    `nextjs-component-dev` / `nextjs-page-dev` for App Router, or the Flutter
    equivalents.) Keep `self-repair` and `codebase-memory` regardless. Add
-   `github-triage` when GitHub Issues are enabled (F7).
+   `github-triage` when GitHub Issues are enabled (F7) and `plan` when the
+   planning workflow is enabled (F12).
 2. Should `.agents/autofix.json` be created if it does not exist?
 3. Should the engineering standards baseline
    (`.agents/rules/engineering-standards.md`) be deployed? Default yes — it is
@@ -25,7 +26,9 @@ the same corrections.
 3. Fill the mandatory-skills table with the answers from question 1; delete rows
    for stacks the repository does not use.
 4. Copy the "Issue logging (`github-triage`)" section from the template when
-   GitHub Issues are enabled; keep it next to the rule-capture section.
+   GitHub Issues are enabled; keep it next to the rule-capture section. Copy the
+   "Planning (`plan` skill)" section when F12 is enabled and record the plan
+   location and review gate from its runbook.
 5. Create `.agents/autofix.json` with `[]` if missing; the `self-repair` skill
    owns the schema and appends rules.
 6. Deploy [engineering-standards.md](../../resources/engineering-standards.md) to
@@ -45,8 +48,8 @@ the same corrections.
 
 ## Acceptance
 
-- [ ] `AGENTS.md` names `self-repair`, `codebase-memory`, the confirmed stack skills, and `github-triage` when GitHub Issues are enabled.
-- [ ] The issue-logging contract is present when `github-triage` is listed.
+- [ ] `AGENTS.md` names `self-repair`, `codebase-memory`, the confirmed stack skills, `github-triage` when GitHub Issues are enabled, and `plan` when F12 is enabled.
+- [ ] The issue-logging contract is present when `github-triage` is listed, and the planning contract plus plan location when `plan` is listed.
 - [ ] The commit-approval clause (stage, show `git diff --cached`, wait) is present in "Commit and quality gates".
 - [ ] No machine-owned block was removed or reworded.
 - [ ] `.agents/autofix.json` parses as a JSON array.
