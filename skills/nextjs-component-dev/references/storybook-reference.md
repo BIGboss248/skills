@@ -20,7 +20,7 @@ When invoked via `nextjs-storybook-story`:
 
 ### A. Main Component Scope Only
 * Micro leaf client helpers (e.g. inner icon buttons, inline toggle hooks) do NOT get individual stories.
-* Only the primary exported component (the feature section or composite UI block) receives a co-located `[ComponentName].stories.tsx`.
+* Only the primary exported component (the feature section or composite UI block) receives a co-located `<component_name>.stories.tsx` flat sibling in its surface folder.
 
 ### B. CSF3 Structure & Interactive Controls
 * Use Component Story Format 3 (CSF3) with `Meta<typeof ComponentName>` and `StoryObj<typeof ComponentName>`.

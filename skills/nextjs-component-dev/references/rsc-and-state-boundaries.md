@@ -52,7 +52,7 @@ When components require client-side caching, polling, or optimistic mutations:
 
 ## 3. Suspense Skeletons & Layout Stability (Zero CLS)
 
-- Every composite component must have a matching `[ComponentName]Skeleton.tsx`.
+- Every composite component must have a matching `<component_name>_skeleton.tsx` flat sibling in the same surface folder.
 - The skeleton must mirror the exact outer geometry, container padding, grid rows/columns, and responsive breakpoints (`sm:`, `md:`, `lg:`) of the real component to ensure **Cumulative Layout Shift (CLS) = 0**.
 - Use semantic token skeleton classes: `animate-pulse bg-muted rounded-md`.
 
@@ -140,9 +140,9 @@ const DataGrid = dynamic(() => import("./DataGrid").then((mod) => mod.DataGrid),
 ```
 
 ### Testing Considerations
-- **Jest Unit Tests (`[ComponentName].test.tsx`):**
+- **Jest Unit Tests (`<component_name>.test.tsx`):**
   - When testing parent components that import dynamic components, either mock `next/dynamic` or wrap the test in `await act(async () => ...)` to ensure dynamic chunk resolution.
   - Test both the initial skeleton state and the resolved dynamic component state.
-- **Playwright Verification (`[ComponentName].spec.ts`):**
+- **Playwright Verification (`<component_name>.spec.ts`):**
   - Verify that dynamic chunk scripts (`.js`) are only requested over the network when the trigger condition (e.g. click, scroll into view) occurs.
   - Verify zero hydration console warnings when using `ssr: false`.

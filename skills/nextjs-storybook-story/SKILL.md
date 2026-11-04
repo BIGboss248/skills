@@ -1,6 +1,6 @@
 ---
 name: nextjs-storybook-story
-description: Workflow and engineering standards for crafting co-located Storybook CSF3 stories ([ComponentName].stories.tsx) with interactive controls, action spies, and 4 canonical theme variants.
+description: Workflow and engineering standards for crafting co-located Storybook CSF3 stories (<component_name>.stories.tsx) with interactive controls, action spies, and 4 canonical theme variants.
 metadata:
   author: BIGboss248
   version: "1.1"
@@ -8,7 +8,7 @@ metadata:
 
 # Next.js Storybook CSF3 Story Generation (`nextjs-storybook-story`)
 
-Specialized workflow for generating and updating co-located Storybook stories (`[ComponentName].stories.tsx`) in Component Story Format 3 (CSF3).
+Specialized workflow for generating and updating co-located Storybook stories (`<component_name>.stories.tsx`) in Component Story Format 3 (CSF3).
 
 > [!TIP]
 > **Modular Assets:**
@@ -56,10 +56,10 @@ Specialized workflow for generating and updating co-located Storybook stories (`
 ## Workflow Steps
 
 - [ ] **Step 1: Inspect Component Contract & Props**
-  - Read `[ComponentName].tsx` and resolve all exported props, callback handlers, and visual states.
+  - Read `<component_name>.tsx` and resolve all exported props, callback handlers, and visual states.
 
-- [ ] **Step 2: Generate Co-Located Story (`[ComponentName].stories.tsx`)**
-  - Place `[ComponentName].stories.tsx` directly alongside `[ComponentName].tsx`.
+- [ ] **Step 2: Generate Co-Located Story (`<component_name>.stories.tsx`)**
+  - Place `<component_name>.stories.tsx` directly alongside `<component_name>.tsx` in the same surface folder (`<new_component_dir>/<surface>/`).
   - Implement CSF3 metadata, `argTypes`, `fn()` action spies, markdown docs, and the 4 canonical story variants.
 
 - [ ] **Step 3: Verification & Smoke Test Execution**
@@ -71,11 +71,11 @@ Specialized workflow for generating and updating co-located Storybook stories (`
   - Run verification script to check story presence and execute Storybook smoke test:
     * **Windows (PowerShell):**
       ```pwsh
-      pwsh .agents/skills/nextjs-storybook-story/scripts/verify-storybook.ps1 -ComponentPath <target_component_dir>
+      pwsh .agents/skills/nextjs-storybook-story/scripts/verify-storybook.ps1 -ComponentPath <new_component_dir>/<surface>/<component_name>.tsx
       ```
     * **Linux / macOS (Bash):**
       ```bash
-      bash .agents/skills/nextjs-storybook-story/scripts/verify-storybook.sh <target_component_dir>
+      bash .agents/skills/nextjs-storybook-story/scripts/verify-storybook.sh <new_component_dir>/<surface>/<component_name>.tsx
       ```
   - Fix any syntax collisions or missing export errors.
 

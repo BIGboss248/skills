@@ -3,7 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { NextIntlClientProvider } from "next-intl";
-import { [ComponentName] } from "./[ComponentName]";
+import { [ComponentName] } from "./[component_name]";
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({

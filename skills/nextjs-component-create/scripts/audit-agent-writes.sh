@@ -64,7 +64,7 @@ classify() {
     */package.json|package.json) echo "config"; return ;;
     *pnpm-lock.yaml|*package-lock.json|*yarn.lock|*bun.lockb) echo "config"; return ;;
     *jest.config.*|*jest.setup.*|*playwright.config.*|*next.config.*|*tsconfig*.json|*eslint.config.*|*vitest.config.*) echo "config"; return ;;
-    */test-plan.md|test-plan.md) echo "test-plan"; return ;;
+    *test-plan.md) echo "test-plan"; return ;;
     *.edge.test.ts|*.edge.test.tsx|*.edge.test.js|*.edge.test.jsx) echo "test-edge"; return ;;
     *.test.ts|*.test.tsx|*.test.js|*.test.jsx) echo "test-baseline"; return ;;
     */tests/e2e/pages/*) echo "test-e2e-page"; return ;;

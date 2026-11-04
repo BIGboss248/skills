@@ -31,8 +31,8 @@ files is expensive.
 
 ### Fast by definition
 
-- `<pm> test -- <path>/<ComponentName>.test.tsx`
-- `<pm> test -- <path>/<ComponentName>.edge.test.tsx`
+- `<pm> test -- <path>/<component_name>.test.tsx`
+- `<pm> test -- <path>/<component_name>.edge.test.tsx`
 - `verify-dev`, `verify-page`, `audit-agent-writes`, `verify-qa -NoRun` /
   `--no-run` (static audits, no runner).
 
@@ -115,10 +115,10 @@ Every agent return and every execution report states the tier outcome:
 ```json
 {
   "tier": "fast",
-  "executed": ["components/home/Hero/Hero.test.tsx (12 passed)"],
+  "executed": ["components/home/hero.test.tsx (12 passed)"],
   "deferred_expensive_tests": [
-    "tests/e2e/components/home/Hero.spec.ts",
-    "pnpm run test:e2e tests/e2e/components/home/Hero.spec.ts"
+    "tests/e2e/components/home/hero.spec.ts",
+    "pnpm run test:e2e tests/e2e/components/home/hero.spec.ts"
   ]
 }
 ```

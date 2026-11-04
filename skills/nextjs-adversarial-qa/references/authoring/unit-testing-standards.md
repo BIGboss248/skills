@@ -6,7 +6,7 @@ Fast, deterministic, jsdom-level verification for Next.js App Router components.
 
 ## 1. Core Rules
 
-1. **Co-location** — `[ComponentName].test.tsx` sits beside `[ComponentName].tsx`.
+1. **Co-location** — `<component_name>.test.tsx` sits beside `<component_name>.tsx`.
 2. **userEvent only** — `const user = userEvent.setup()`; never `fireEvent`.
 3. **Semantic queries** — `getByRole`, `getByLabelText`, `getByText` before `data-testid`.
 4. **Real providers** — `NextIntlClientProvider` with `messages/[locale].json`, `QueryClientProvider` for TanStack.

@@ -20,24 +20,33 @@ Before creating or modifying components, read the planning artifacts created by 
 
 1. **Server Components by default.** Keep components server-rendered; push `"use client"` down to interactive leaves.
 2. **RSC composition.** Pass Server Components as `children` or props into Client wrappers. Never import an RSC inside a `"use client"` file.
-3. **Dedicated folder per component** under `<new_component_dir>/<page_or_global>/<ComponentName>/`:
+3. **Flat file per component inside its owning surface folder** — `<new_component_dir>/<surface>/<component_name>.tsx`:
 
    ```text
-   <new_component_dir>/<page_or_global>/<ComponentName>/
-   ├── [ComponentName].tsx               # Primary component
-   ├── [ComponentName]Skeleton.tsx       # Suspense fallback matching geometry
-   ├── [ComponentName].stories.tsx       # Storybook (only when in scope)
-   ├── [ComponentName].test.tsx          # QA baseline suite
-   ├── [ComponentName].edge.test.tsx     # QA adversarial suite (immutable)
-   ├── test-plan.md                      # QA coverage matrix
-   ├── [ComponentName].types.ts          # Extracted interfaces (if complex)
-   └── index.ts                          # Barrel export
+   <new_component_dir>/
+   ├── header/                            # layout region
+   │   ├── navbar.tsx                     # Primary component (PascalCase export: Navbar)
+   │   ├── navbar_skeleton.tsx            # Suspense fallback matching geometry
+   │   ├── navbar.test.tsx                # QA baseline suite
+   │   ├── navbar.edge.test.tsx           # QA adversarial suite (immutable)
+   │   ├── navbar.test-plan.md            # QA coverage matrix
+   │   ├── navbar.stories.tsx             # Storybook (only when in scope)
+   │   └── theme_button.tsx
+   ├── footer/
+   │   └── site_footer.tsx
+   ├── home/                              # page-segment folder
+   │   ├── hero.tsx
+   │   ├── hero_skeleton.tsx
+   │   └── feature_grid.tsx
+   ├── shared/                            # reused by 2+ surfaces
+   └── ui/                                # design-system primitives
 
-   tests/e2e/components/<page>/[ComponentName].spec.ts   # QA Playwright suite
+   tests/e2e/components/<surface>/<component_name>.spec.ts   # QA Playwright suite
    ```
 
-4. **Category folders.** `global/` for shared chrome (header, footer, drawers); `<page-name>/` for page-scoped sections.
-5. **Responsive in-component.** Use Tailwind breakpoints (`sm:`, `md:`, `lg:`) rather than separate mobile components.
+4. **Category = owning surface, never the component's own name.** `<page-segment>/` for page-scoped sections, `<layout-region>/` (`header/`, `footer/`, `sidebar/`) for layout chrome, `shared/` for cross-surface reuse, `ui/` for primitives. The retired `global/` folder and per-component subfolders are forbidden.
+5. **Naming.** `snake_case.tsx` files with `PascalCase` exports (`theme_button.tsx` → `ThemeButton`). No per-component `index.ts`; an optional area-level `<surface>/index.ts` barrel may re-export a surface.
+6. **Responsive in-component.** Use Tailwind breakpoints (`sm:`, `md:`, `lg:`) rather than separate mobile components.
 
 ---
 
@@ -51,7 +60,7 @@ Before creating or modifying components, read the planning artifacts created by 
 
 ---
 
-## 4. Storybook CSF3 Standards (`[ComponentName].stories.tsx`)
+## 4. Storybook CSF3 Standards (`<component_name>.stories.tsx`)
 
 - **Main composite component only.** Never create stories for micro leaf helpers.
 - **Controls and spies.** Map props to `argTypes`; bind `fn()` from `storybook/test` to callback props so interactions log to Actions.
@@ -88,8 +97,8 @@ Before generating files, always audit whether the component already exists:
 
 1. **Mandatory scan.** Check `new_component_dir`, `component_library`, `components/ui/`, and root `components/`.
 2. **If the component exists → Companion Backfill Mode:**
-   - **Preserve code.** Never delete, recreate, or overwrite `[ComponentName].tsx`.
-   - **Audit companions.** `Skeleton.tsx`, `.test.tsx`, `test-plan.md`, `.edge.test.tsx`, Playwright spec, TSDoc, and `.stories.tsx` (only when Storybook is in scope).
+   - **Preserve code.** Never delete, recreate, or overwrite `<component_name>.tsx`.
+   - **Audit companions.** `<component_name>_skeleton.tsx`, `<component_name>.test.tsx`, `<component_name>.test-plan.md`, `<component_name>.edge.test.tsx`, Playwright spec, TSDoc, and `<component_name>.stories.tsx` (only when Storybook is in scope).
    - **Backfill only missing artifacts** that match the existing component contract.
 3. **If the component is missing** → run the full pipeline from Phase 0.
 

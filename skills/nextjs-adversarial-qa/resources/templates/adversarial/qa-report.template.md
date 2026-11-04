@@ -6,7 +6,7 @@
 | **Target** | `<path or route>` |
 | **Specification** | `<spec path>` |
 | **Author role** | Test Author Subagent / Adversarial Auditor Subagent |
-| **Plan** | `<test-plan.md path>` |
+| **Plan** | `<component_name>.test-plan.md` |
 | **Files created** | `<file list>` |
 | **Command(s)** | `pnpm test -- ...` |
 | **Exit code** | `0` |

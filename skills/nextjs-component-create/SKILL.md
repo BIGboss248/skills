@@ -75,8 +75,8 @@ Agents are installed by `nextjs-dev-setup` into `.opencode/agents/`. The orchest
 | :--- | :--- | :--- | :--- |
 | **0** | `nextjs-orchestrator` | Classify target, resolve paths, decide scratch vs backfill | plan, docs |
 | **1** | `nextjs-orchestrator` | Grilling, spec authoring, UX audit gate | `design-spec.md`, `page-spec.md` |
-| **2** | `nextjs-test-author` | `test-plan.md` + baseline unit suite, or page E2E suite | tests only |
-| **3** | `nextjs-dev` | Component/page, skeleton, boundaries, dictionaries, barrel | implementation only |
+| **2** | `nextjs-test-author` | `<component_name>.test-plan.md` + baseline unit suite, or page E2E suite | tests only |
+| **3** | `nextjs-dev` | Component/page, skeleton, boundaries, dictionaries, surface folders | implementation only |
 | **3b** | `nextjs-dev` | Storybook stories, only when the skill is invoked | `*.stories.tsx` |
 | **4** | `nextjs-qa-auditor` | Immutable edge suite + component E2E + audit report | edge tests only |
 | **5** | `nextjs-dev` | Repairs implementation from `code_fixes_required[]` | implementation only |
@@ -90,10 +90,11 @@ Test authoring standards live only in [`nextjs-adversarial-qa`](../nextjs-advers
 
 1. **Load context.** Read `docs/project.json`, `docs/plan/05-pages-and-components.md`, `docs/design/03-ui-design-tokens.md`, `docs/design/02-sitemap-and-routes.md`, `lib/routes.ts`, and `lib/site-config.ts`.
 2. **Resolve paths.** Never guess `new_component_dir`, `dictionaries_dir`, package manager, or locales.
-3. **Classify the target:**
+3. **Classify the target and its owning surface:**
    - `component` — a section, card, widget, or layout element.
    - `page` — a route under `app/[locale]/<route>/` including `page.tsx`, `loading.tsx`, `error.tsx`, metadata, and JSON-LD.
    - `page + components` — a page that needs new section components; run the page track and route each new component through Phases 2–4.
+   - **Surface** — every component target resolves to exactly one surface folder and lands there as a flat `snake_case` file: the layout region (`header/`, `footer/`, `sidebar/`) when a layout renders it, the page segment folder when exactly one page renders it, `shared/` when two or more surfaces render it, or `ui/` for design-system primitives. Target path is always `<new_component_dir>/<surface>/<component_name>.tsx`; never derive the folder from the component's own name and never use `global/` or per-component subfolders.
 4. **Decide the mode:**
    - **Scratch Mode** — target missing: run Phases 1 → 8.
    - **Companion Backfill Mode** — target exists: preserve the existing implementation, audit companions, and run only the phases that own missing artifacts.
@@ -130,7 +131,7 @@ Full rules: [`references/architecture-standards.md`](./references/architecture-s
 
 1. Delegate to `nextjs-test-author` in `baseline` mode (components) or `page` mode (routes).
 2. Pass: spec path, target paths, worktree path/branch, `docs/project.json`, package manager, locales, dictionaries dir, and the immutable-edge rule.
-3. The agent returns `test-plan.md`, the test files, and a JSON status. It cannot edit implementation.
+3. The agent returns `<component_name>.test-plan.md`, the test files, and a JSON status. It cannot edit implementation.
 4. **Gate (fast tier):**
    - `baseline` mode: the targeted Jest suite runs and fails **only** because the implementation does not exist yet. A syntax error, import failure, or broken provider setup is a blocker; do not proceed until the suite executes.
    - `page` mode: the Playwright suite is **authored and statically audited**, then deferred. Do not launch a browser in this phase.
@@ -143,7 +144,7 @@ Full rules: [`references/architecture-standards.md`](./references/architecture-s
 
 1. Delegate to `nextjs-dev` with the approved spec, `implementation_plan.md`, the worktree path, and (on a repair round) `code_fixes_required[]`.
 2. The agent must query local Next.js docs at `node_modules/next/dist/docs/` via `codebase-memory`, verify the dev server via `next-devtools` (`nextjs_index`), and populate `messages/[locale].json` for every supported language.
-3. It implements the component/page, skeleton or `loading.tsx`, `error.tsx`, barrel exports, metadata, and JSON-LD as the track requires — inside the worktree only.
+3. It implements the component/page, skeleton or `loading.tsx`, `error.tsx`, surface-folder placement, metadata, and JSON-LD as the track requires — inside the worktree only.
 4. **Gate (fast tier):** `verify-dev` / `verify-page` passes, the targeted Jest baseline suite passes, and the dev server reports no compilation or hydration errors. No Playwright, no full Jest project, no production build.
 5. **Backfill mode:** skip implementation; run only the missing companions.
 
@@ -155,7 +156,7 @@ Run only when in scope. Delegate `nextjs-storybook-story` to `nextjs-dev`, then 
 ## Phase 4: Adversarial Audit (`nextjs-qa-auditor`)
 
 1. Delegate in `adversarial` mode with the implementation, skeleton, baseline suite, spec §7, and the worktree path.
-2. The auditor diffs baseline coverage, then writes the immutable `[ComponentName].edge.test.tsx` and the component Playwright spec.
+2. The auditor diffs baseline coverage, then writes the immutable `<component_name>.edge.test.tsx` and the component Playwright spec.
 3. It returns `failures[]`, `code_fixes_required[]`, `deferred_expensive_tests[]`, and `immutable_edits[]` (must be empty).
 4. Run the edge suite in the fast tier: `pwsh verify-qa.ps1 -TargetPath <dir> -Mode adversarial` (Jest only). The Playwright spec is audited statically and deferred to pre-push — no browser launches in this phase.
 
@@ -177,9 +178,9 @@ Run only when in scope. Delegate `nextjs-storybook-story` to `nextjs-dev`, then 
 ## Phase 6: Final Verification, Write Audit & Plan Sync
 
 1. Run the end-to-end gate in the **fast tier**:
-   - **Component:** `powershell -ExecutionPolicy Bypass -File .agents/skills/nextjs-component-create/scripts/verify-component-create.ps1 -ComponentPath <target_dir>`
+   - **Component:** `powershell -ExecutionPolicy Bypass -File .agents/skills/nextjs-component-create/scripts/verify-component-create.ps1 -ComponentPath <new_component_dir>/<surface>/<component_name>.tsx`
    - **Page:** `... -ComponentPath <route_dir> -TargetKind page`
-   - **Linux / macOS:** `bash .agents/skills/nextjs-component-create/scripts/verify-component-create.sh <target_dir> [component|page]`
+   - **Linux / macOS:** `bash .agents/skills/nextjs-component-create/scripts/verify-component-create.sh <new_component_dir>/<surface>/<component_name>.tsx [component|page]`
    - It reports the expensive tier as `[DEFERRED]`. That is the expected result, not a failure.
 2. Run the write audit: `scripts/audit-agent-writes.ps1 -TargetKind <kind> -Since <pre-phase-ref>`. A violation means a role wrote outside its boundary; restore the file and report it.
 3. Check off completed items (`- [x]`) in `docs/plan/05-pages-and-components.md`; tick the parent page only when every sub-item is complete. Only the orchestrator does this.
@@ -233,7 +234,7 @@ Run only when in scope. Delegate `nextjs-storybook-story` to `nextjs-dev`, then 
 | :--------------------------- | :------------------------------------------------------------------- | :-------------------- | :---- |
 | **0. Classification**        | kind: `component` / `page`; mode: `scratch` / `companion_backfill`    | `[PASSED]`            | |
 | **1. Spec**                  | `design-spec.md` / `page-spec.md` §7                                  | `[PASSED]`            | |
-| **2. test-author**           | `test-plan.md`, `*.test.tsx` / `tests/e2e/pages/*.spec.ts`            | `[PASSED]`            | command + exit code |
+| **2. test-author**           | `<component_name>.test-plan.md`, `*.test.tsx` / `tests/e2e/pages/*.spec.ts`            | `[PASSED]`            | command + exit code |
 | **3. dev**                   | implementation, skeleton, `loading.tsx`/`error.tsx`, dictionaries     | `[PASSED]`            | |
 | **3b. Storybook**            | `*.stories.tsx`                                                       | `[PASSED]`/`[SKIPPED]`| only when in scope |
 | **4. qa-auditor**            | `*.edge.test.tsx`, `tests/e2e/components/**`                          | `[PASSED]`            | `immutable_edits: []` |
@@ -247,7 +248,7 @@ Deferred files, verbatim:
 
 ```text
 deferred_expensive_tests:
-  - tests/e2e/components/<page>/<ComponentName>.spec.ts
+  - tests/e2e/components/<surface>/<component_name>.spec.ts
   - .husky/pre-push → <pm> run test:all
 ```
 

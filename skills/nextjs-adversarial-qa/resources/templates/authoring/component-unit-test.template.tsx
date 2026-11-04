@@ -2,7 +2,7 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
-import { [ComponentName] } from "./[ComponentName]";
+import { [ComponentName] } from "./[component_name]";
 
 // Mock Next.js routing only — never mock next-intl.
 jest.mock("next/navigation", () => ({

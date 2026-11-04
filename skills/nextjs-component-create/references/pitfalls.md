@@ -7,7 +7,7 @@
 | Physical directional margins (`ml-4`, `pr-2`)       | Use logical properties (`ms-4`, `pe-2`, `start`, `end`)                                          |
 | Standard `<img>` tag                                | Use Next.js `<Image src="..." width={...} height={...} alt="..." />`                             |
 | Writing component code before unit tests            | Invoke `nextjs-adversarial-qa` in `baseline` mode first (TDD gate)                               |
-| Self-certifying quality without adversarial audit   | Spawn Adversarial Auditor subagent to write `[ComponentName].edge.test.tsx`                      |
+| Self-certifying quality without adversarial audit   | Spawn Adversarial Auditor subagent to write `<component_name>.edge.test.tsx`                      |
 | Guessing unspecific requirements                    | Interview user (suggest `/grill-me`) to clarify props and behavior first                         |
 | Transient plan in chat memory only                  | Save plan to `.agents/history/plan-[component-name].json` and update statuses                    |
 | Standard `next/link` for internal navigation        | Use `Link` from `@/i18n/navigation`; `next/link` only for hash anchors and the locale-less root `not-found.tsx` |

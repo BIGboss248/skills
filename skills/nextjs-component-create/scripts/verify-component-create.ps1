@@ -12,7 +12,8 @@
     user request. See nextjs-adversarial-qa/references/shared/test-execution-tiers.md.
 
 .PARAMETER ComponentPath
-    Target component directory.
+    Target component file (e.g. components/home/hero.tsx). Components are flat
+    files inside their page or layout-region folder; pass the file, not a folder.
 
 .PARAMETER ComponentName
     Optional explicit component name.
@@ -33,10 +34,10 @@
     Show this help text.
 
 .EXAMPLE
-    pwsh verify-component-create.ps1 -ComponentPath components/home/Hero
+    pwsh verify-component-create.ps1 -ComponentPath components/home/hero.tsx
 
 .EXAMPLE
-    pwsh verify-component-create.ps1 -ComponentPath components/home/Hero -SkipStorybook
+    pwsh verify-component-create.ps1 -ComponentPath components/home/hero.tsx -SkipStorybook
 
 .EXAMPLE
     pwsh verify-component-create.ps1 -ComponentPath app/[locale]/about -TargetKind page

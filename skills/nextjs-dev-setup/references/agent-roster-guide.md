@@ -53,7 +53,7 @@ Three boundaries remain load-bearing, now as contract:
 | Agent | Mode | Spawned by | Purpose |
 | :--- | :--- | :--- | :--- |
 | `nextjs-orchestrator` | primary | user (Tab / command) | Runs the pipeline, owns gates, briefs, audits, final report |
-| `nextjs-dev` | subagent | orchestrator | Components, pages, skeletons, dictionaries, barrel files |
+| `nextjs-dev` | subagent | orchestrator | Components, pages, skeletons, dictionaries, surface folders |
 | `nextjs-test-author` | subagent | orchestrator | Baseline unit tests, page E2E, test plan |
 | `nextjs-qa-auditor` | subagent | orchestrator | Immutable edge tests, component E2E, audit report |
 

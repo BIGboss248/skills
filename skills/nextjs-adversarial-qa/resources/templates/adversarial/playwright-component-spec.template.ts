@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { instant } from "@next/playwright";
 
-// Location: tests/e2e/components/<page>/[ComponentName].spec.ts
+// Location: tests/e2e/components/<surface>/<component_name>.spec.ts
 test.describe("[ComponentName] — browser contract", () => {
   test("HYD-1: zero SSR hydration warnings and console errors", async ({ page }) => {
     const errors: string[] = [];

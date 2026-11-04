@@ -1,6 +1,6 @@
 # Adversarial Test Matrix (Components & Pages)
 
-Edge-case taxonomy for the auditor subagent. Every spec §7 row must map to at least one ID below. IDs are stable; reference them in `test-plan.md` and test names.
+Edge-case taxonomy for the auditor subagent. Every spec §7 row must map to at least one ID below. IDs are stable; reference them in `<component_name>.test-plan.md` and test names.
 
 ---
 
@@ -60,7 +60,7 @@ Edge-case taxonomy for the auditor subagent. Every spec §7 row must map to at l
 ## 3. Authoring Rules for the Auditor
 
 1. **One ID per test name**: `it("BND-3: wraps a 240-character unbroken title", ...)`.
-2. **No duplicate coverage** of baseline tests — read `[ComponentName].test.tsx` first.
+2. **No duplicate coverage** of baseline tests — read `<component_name>.test.tsx` first.
 3. **Assert behavior, not implementation** — no Tailwind class equality unless geometry is the contract.
 4. **Deterministic fixtures** — no `Date.now()`, `Math.random()`, or network calls without stubbing.
 5. **Immutable output** — after writing, the edge file is read-only for the implementer.

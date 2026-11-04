@@ -11,6 +11,10 @@ Runs the phase gates in order: component infrastructure or page route files,
 Storybook (components only), then QA suites (baseline + adversarial, or the page
 suite). Stops at the first failure.
 
+  TargetPath         Component file (components/home/hero.tsx) or route
+                     directory (app/[locale]/about). Components are flat files
+                     inside their page or layout-region folder.
+
   --tier fast|full   Default: fast. 'fast' runs Jest only and defers Playwright
                      to the pre-push gate; 'full' runs every gate and belongs to
                      pre-push, CI, or an explicit user request.

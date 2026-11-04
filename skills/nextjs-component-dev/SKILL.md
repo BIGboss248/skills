@@ -4,7 +4,7 @@ description: >-
   Build Next.js App Router React components with Suspense skeletons, semantic OKLCH tokens, next-intl dictionaries, and Tailwind logical styling; test authoring is delegated to nextjs-adversarial-qa. MANDATORY SKILL: activate for every new component, UI section, card, widget, or layout element. Triggers on "/nextjs-component-dev", "create component", "new component", "build component", "develop component".
 metadata:
   author: BIGboss248
-  version: "1.9"
+  version: "2.0"
 ---
 
 # Next.js Component & Skeleton Development (`nextjs-component-dev`)
@@ -12,7 +12,7 @@ metadata:
 Specialized workflow for creating production-ready React Server Components (RSC) and Client Components with Suspense skeletons, next-intl dictionary-backed translations, semantic theme tokens, and live runtime diagnostics via `next-devtools` MCP. All test authoring and execution are delegated to `nextjs-adversarial-qa`.
 
 > [!CRITICAL]
-> **MANDATORY COMPONENT CREATION INVARIANT:** Whenever you create any new React or Next.js component (whether requested directly by the user, created as part of a page build, or executed from `docs/plan/`), you **MUST** strictly follow every architectural standard and workflow step in this skill. Never create ad-hoc `.tsx` component files without executing this workflow (Next.js local docs lookup, `implementation_plan.md`, `messages/[locale].json` dictionary sync, QA baseline `[ComponentName].test.tsx`, `[ComponentName]Skeleton.tsx`, `index.ts`, and `verify-dev` verification).
+> **MANDATORY COMPONENT CREATION INVARIANT:** Whenever you create any new React or Next.js component (whether requested directly by the user, created as part of a page build, or executed from `docs/plan/`), you **MUST** strictly follow every architectural standard and workflow step in this skill. Never create ad-hoc `.tsx` component files without executing this workflow (Next.js local docs lookup, `implementation_plan.md`, surface-folder placement (`<new_component_dir>/<surface>/<component_name>.tsx`), `messages/[locale].json` dictionary sync, QA baseline `<component_name>.test.tsx`, `<component_name>_skeleton.tsx`, and `verify-dev` verification).
 
 > [!TIP]
 > **Modular Assets & Templates:**
@@ -41,8 +41,10 @@ Specialized workflow for creating production-ready React Server Components (RSC)
 - Read `docs/project.json` to resolve `package_manager`, `new_component_dir`, `style_file_dir`, `component_library`, `dictionaries_dir` (default: `"messages"`), and `supported_languages`.
 - All internal routes MUST use `ROUTES` from `@/lib/routes`.
 - All author/site metadata MUST use `SITE_CONFIG` from `@/lib/site-config`.
-- Target path hierarchy: `<new_component_dir>/<page_or_global>/<ComponentName>/`
-  - Category: `global/` for shared layout chrome; `<page-name>/` (e.g. `home/`, `about/`, `lab/`) for page-scoped sections.
+- Target path: `<new_component_dir>/<surface>/<component_name>.tsx` — **flat files, categorized by the page or layout region that renders the component.** Resolve the surface in Phase 0 and record it in `implementation_plan.md`.
+  - Category: `<page-segment>/` (e.g. `home/`, `about/`, `lab/`) for page-scoped sections; `<layout-region>/` (`header/`, `footer/`, `sidebar/`) for layout chrome; `shared/` for cross-page reuse; `ui/` for design-system primitives.
+  - Never use a generic `global/` folder and never a per-component subfolder.
+  - Naming: `snake_case.tsx` files with `PascalCase` exports (`theme_button.tsx` → `ThemeButton`). Companions are flat siblings in the same surface folder: `<component_name>_skeleton.tsx`, `<component_name>.test.tsx`, `<component_name>.edge.test.tsx`, `<component_name>.test-plan.md`, `<component_name>.stories.tsx` (Storybook only when in scope). No per-component `index.ts`; an optional area-level `<surface>/index.ts` barrel is allowed.
 
 ### 2. Next.js Internal Docs Lookup (`node_modules/next/dist/docs`)
 
@@ -97,10 +99,10 @@ Specialized workflow for creating production-ready React Server Components (RSC)
 ### 8. Test Delegation (`nextjs-adversarial-qa`)
 
 - **No test authoring in this skill.** Jest + RTL and Playwright standards, templates, and execution live exclusively in [`nextjs-adversarial-qa`](../nextjs-adversarial-qa/SKILL.md).
-- **Agent boundaries:** tests are written by `nextjs-test-author` and `nextjs-qa-auditor`. A dev agent cannot edit `*.test.ts(x)`, `*.edge.test.tsx`, `tests/e2e/**`, or `test-plan.md`; permissions enforce it. Report a failing assertion instead of changing it.
+- **Agent boundaries:** tests are written by `nextjs-test-author` and `nextjs-qa-auditor`. A dev agent cannot edit `*.test.ts(x)`, `*.edge.test.tsx`, `tests/e2e/**`, or `<component_name>.test-plan.md`; permissions enforce it. Report a failing assertion instead of changing it.
 - **Fast tier only.** During development run the targeted Jest file(s) for the component. Never run Playwright, the full Jest project, `build`, or Storybook builds: that is the expensive tier and it runs at `git push` through `.husky/pre-push`.
 - **TDD gate:** Invoke QA in `baseline` mode after plan approval and before writing JSX. The gate is a green baseline Jest suite.
-- **Handoff:** After implementation, invoke QA in `adversarial` mode; the independent auditor owns `[ComponentName].edge.test.tsx`.
+- **Handoff:** After implementation, invoke QA in `adversarial` mode; the independent auditor owns `<component_name>.edge.test.tsx`.
 - **Deferral:** Playwright specs are authored now, audited statically, and declared in `deferred_expensive_tests[]`. A deferred suite is reported `DEFERRED (pre-push)`, never `PASS`.
 - **Repair:** If a fast suite fails, fix the component — never the assertions. Route `code_fixes_required[]` items back through implementation.
 
@@ -126,12 +128,12 @@ Specialized workflow for creating production-ready React Server Components (RSC)
 
 The implementation plan must cover:
 
-1. **Target Architecture & Path**: Full target directory (`<new_component_dir>/<page_or_global>/<ComponentName>/`) and classification (RSC, Eager Client leaf, Lazy Client leaf with `next/dynamic`, or Client-only with `ssr: false`).
+1. **Target Surface, Path & Classification**: The owning surface folder (`<page-segment>/`, `header/`, `footer/`, `sidebar/`, `shared/`, or `ui/`) with a one-line justification of which page or layout renders it, the exact flat file path `<new_component_dir>/<surface>/<component_name>.tsx`, and classification (RSC, Eager Client leaf, Lazy Client leaf with `next/dynamic`, or Client-only with `ssr: false`).
 2. **Next.js Local Docs Consulted**: Specific doc paths checked under `node_modules/next/dist/docs/` (e.g. `04-api-reference/04-components/image.md`, `03-directives/use-cache.md`, `04-api-reference/02-functions/use-router.md`).
 3. **TypeScript Contracts**: Prop interfaces and types with strict English TSDoc annotations.
 4. **Dictionary Strategy**: Explicit translation namespaces and keys to add to `messages/[locale].json` across all `supported_languages` in `docs/project.json` (zero hardcoded strings or in-file mock dictionaries).
 5. **Theme Tokens & Styling**: Identified semantic OKLCH CSS variables and logical layout classes.
-6. **Testing Strategy (delegated to `nextjs-adversarial-qa`)**: Reference the QA `test-plan.md` path and planned test files. Do not enumerate test cases here; the QA skill owns the coverage matrix.
+6. **Testing Strategy (delegated to `nextjs-adversarial-qa`)**: Reference the QA `<component_name>.test-plan.md` path and planned test files. Do not enumerate test cases here; the QA skill owns the coverage matrix.
 7. **Verification Gate**: `verify-dev.ps1`/`.sh` for companion files and i18n, plus the targeted Jest baseline suite. Playwright, the full Jest project, and builds are the expensive tier and run at `git push` (pre-push), not here.
 
 ---
@@ -164,23 +166,24 @@ The implementation plan must cover:
 
 - [ ] **Step 3: TDD Baseline Tests (Delegated to `nextjs-test-author`, `baseline` mode)**
   - Spawn the `nextjs-test-author` agent with the approved `implementation_plan.md` and design spec §7.
-  - It produces `test-plan.md` and `[ComponentName].test.tsx` BEFORE the component is implemented.
+  - It produces `<component_name>.test-plan.md` and `<component_name>.test.tsx` (flat siblings in the surface folder) BEFORE the component is implemented.
   - Do not author test code here; consult [`../nextjs-adversarial-qa/SKILL.md`](../nextjs-adversarial-qa/SKILL.md).
   - Gate: baseline suite green (or expected-red before implementation) before Step 4.
 
 - [ ] **Step 4: Component & Skeleton Implementation**
-  - Create primary component `[ComponentName].tsx` (RSC or Client Component) consuming translations via `next-intl` (`getTranslations` or `useTranslations`) with zero hardcoded placeholders or in-file mock dictionary objects. For heavy or conditionally rendered interactive leaves, wrap via `next/dynamic` with `loading: () => <[ComponentName]Skeleton />` (or `{ ssr: false }` for browser-only APIs). When building interactive cards or dense feed items with links, pair with `useLinkStatus` for contextual click feedback.
-  - Create matching Suspense skeleton `[ComponentName]Skeleton.tsx` mirroring layout geometry and classes to prevent CLS.
-  - Create clean barrel export `index.ts`.
+  - Create the primary component at the exact flat path resolved in Phase 0: `<new_component_dir>/<surface>/<component_name>.tsx`. Never invent a new top-level folder and never create a per-component subfolder.
+  - Implement it (RSC or Client Component) consuming translations via `next-intl` (`getTranslations` or `useTranslations`) with zero hardcoded placeholders or in-file mock dictionary objects. For heavy or conditionally rendered interactive leaves, wrap via `next/dynamic` with `loading: () => <ComponentNameSkeleton />` (or `{ ssr: false }` for browser-only APIs). When building interactive cards or dense feed items with links, pair with `useLinkStatus` for contextual click feedback.
+  - Create the matching Suspense skeleton `<component_name>_skeleton.tsx` alongside it, mirroring layout geometry and classes to prevent CLS.
+  - Follow the surface's existing naming; do not add a per-component `index.ts` barrel (an area-level `<surface>/index.ts` is optional).
 
 - [ ] **Step 5: Fast Verification Gate (no expensive suites)**
   - **Next DevTools Runtime Inspection & Navigation Inspector:** Use `next-devtools` MCP server (`nextjs_call`) to check for compilation errors, runtime exceptions, hydration issues, or broken routes. Use Navigation Inspector ("Pause on navigations") to verify the static shell and App Shell render instantly with granular fallbacks.
-  - **Companion & i18n Verification:** Run `verify-dev.ps1`/`.sh` (file presence + dictionary compliance; it does not execute tests):
-    - **Windows (PowerShell):** `pwsh .agents/skills/nextjs-component-dev/scripts/verify-dev.ps1 -ComponentPath <target_component_dir>`
-    - **Linux / macOS (Bash):** `bash .agents/skills/nextjs-component-dev/scripts/verify-dev.sh <target_component_dir>`
+  - **Companion & i18n Verification:** Run `verify-dev.ps1`/`.sh` (file presence + dictionary compliance; it does not execute tests) against the component file:
+    - **Windows (PowerShell):** `pwsh .agents/skills/nextjs-component-dev/scripts/verify-dev.ps1 -ComponentPath <new_component_dir>/<surface>/<component_name>.tsx`
+    - **Linux / macOS (Bash):** `bash .agents/skills/nextjs-component-dev/scripts/verify-dev.sh <new_component_dir>/<surface>/<component_name>.tsx`
   - **Fast Test Tier (mandatory):** run only the Jest files for this component — baseline first, then the edge file once it exists:
-    - `pnpm test -- <target_component_dir>/[ComponentName].test.tsx`
-    - `pnpm test -- <target_component_dir>/[ComponentName].edge.test.tsx`
+    - `pnpm test -- <new_component_dir>/<surface>/<component_name>.test.tsx`
+    - `pnpm test -- <new_component_dir>/<surface>/<component_name>.edge.test.tsx`
   - **Forbidden here:** `pnpm run test:e2e`, `pnpm exec playwright test`, bare `pnpm test`, `pnpm run test:all`, `pnpm build`, `storybook build`. These are expensive and belong to the pre-push gate.
   - **Declare deferrals:** list every authored-but-unrun Playwright file in `deferred_expensive_tests[]`. Report it as `DEFERRED (pre-push)`, never `PASS`.
   - Fix syntax errors, missing dictionary keys, or implementation defects until the fast gates pass.
@@ -200,6 +203,7 @@ The implementation plan must cover:
 
 ## Edge Cases & AI Pitfalls
 
+- **Surface-First Placement:** Never derive a component's folder from its own name, never resurrect the retired `global/` folder, and never nest a per-component folder. Decide the owning surface before the first write: layout region (`header/`, `footer/`, `sidebar/`) when a layout renders it, the page segment when exactly one page renders it, `shared/` when two or more surfaces do, `ui/` for design-system primitives. Promote a page-scoped component to `shared/` the moment a second surface imports it.
 - **Local Docs Verification via Codebase Memory MCP:** Always search `node_modules/next/dist/docs/` using `codebase-memory` MCP tools (`search_code`, `search_graph`) before authoring components. Never assume deprecated Next.js API signatures or outdated caching mechanisms; local docs reflect the exact runtime version installed.
 - **Zero In-File i18n Fallbacks:** Never hardcode dictionary objects or fallbacks (`const DEFAULT_CONTENT = {...}`) in TSX files. All text must come from `messages/[locale].json`.
 - **Hydration Warning Detection & Browser APIs:** Never access browser-only globals (`window`, `localStorage`) during SSR. Use `dynamic(() => import('./Widget'), { ssr: false, loading: () => <WidgetSkeleton /> })` instead of double-rendering `useEffect(mounted)` flags to eliminate hydration crashes cleanly.

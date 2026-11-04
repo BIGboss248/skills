@@ -94,7 +94,7 @@ function Get-FileClass {
         return "config"
     }
 
-    if ($p -match '(^|/)test-plan\.md$') { return "test-plan" }
+    if ($p -match '(^|/)[^/]*test-plan\.md$') { return "test-plan" }
     if ($p -match '\.edge\.test\.(ts|tsx|js|jsx)$') { return "test-edge" }
     if ($p -match '\.test\.(ts|tsx|js|jsx)$') { return "test-baseline" }
     if ($p -match '(^|/)tests/e2e/pages/') { return "test-e2e-page" }

@@ -10,8 +10,8 @@ The implementer cannot certify its own edge cases. A separate context also preve
 
 | Role | Agent | Modes | Writes |
 | :--- | :--- | :--- | :--- |
-| **Test Author** | `nextjs-test-author` | `baseline`, `page` | `test-plan.md`, `[ComponentName].test.tsx`, `tests/e2e/pages/<route>.spec.ts` |
-| **Adversarial Auditor** | `nextjs-qa-auditor` | `adversarial`, `audit` | `[ComponentName].edge.test.tsx`, `tests/e2e/components/<page>/[ComponentName].spec.ts` |
+| **Test Author** | `nextjs-test-author` | `baseline`, `page` | `<component_name>.test-plan.md`, `<component_name>.test.tsx`, `tests/e2e/pages/<route>.spec.ts` |
+| **Adversarial Auditor** | `nextjs-qa-auditor` | `adversarial`, `audit` | `<component_name>.edge.test.tsx`, `tests/e2e/components/<surface>/<component_name>.spec.ts` |
 
 Never let one agent perform both roles in the same run for the same target. This is enforced structurally: neither agent's `edit` allow-list covers the other's artifacts.
 
@@ -25,7 +25,7 @@ Never let one agent perform both roles in the same run for the same target. This
 | `*.edge.test.tsx` | deny | write (immutable after creation) | deny |
 | `tests/e2e/pages/**` | write | deny | deny |
 | `tests/e2e/components/**` | deny | write | deny |
-| `test-plan.md` | write | read | deny |
+| `<component_name>.test-plan.md` | write | read | deny |
 | `*.tsx`, `messages/**`, `app/**` | deny | deny | write |
 | `jest.config.*`, `playwright.config.*`, `package.json`, lockfiles | deny | deny | deny |
 | `docs/plan/05-pages-and-components.md` | deny | deny | deny (orchestrator only) |
@@ -41,7 +41,7 @@ mode: baseline | page | adversarial | audit
 target:
   kind: component | page
   name: ComponentName
-  path: <new_component_dir>/<page>/<ComponentName>/
+  path: <new_component_dir>/<surface>/<component_name>.tsx
   route: app/[locale]/<route>/        # page mode only
 spec:
   component: docs/design/components/<page>/<component>/design-spec.md
@@ -53,9 +53,9 @@ project:
   locales: [en, fa]
   dictionaries: messages
 conventions:
-  baseline_unit: <component_dir>/[ComponentName].test.tsx
-  edge_unit: <component_dir>/[ComponentName].edge.test.tsx
-  component_e2e: tests/e2e/components/<page>/<ComponentName>.spec.ts
+  baseline_unit: <component_dir>/<component_name>.test.tsx
+  edge_unit: <component_dir>/<component_name>.edge.test.tsx
+  component_e2e: tests/e2e/components/<surface>/<component_name>.spec.ts
   page_e2e: tests/e2e/pages/<route>.spec.ts
 rules:
   - Edge tests are immutable after creation.
@@ -84,7 +84,7 @@ Both agents return JSON only, with no prose before or after.
   "revision_reasons": ["BND-3 assertion targeted the wrong role"],
   "commands": ["pnpm test -- <file>"],
   "failures": [{ "test": "BND-3", "reason": "..." }],
-  "code_fixes_required": ["[ComponentName].tsx: handle null items"],
+  "code_fixes_required": ["<component_name>.tsx: handle null items"],
   "coverage_gaps": ["MOT-1 not applicable: no animation"]
 }
 ```
@@ -100,7 +100,7 @@ Both agents return JSON only, with no prose before or after.
   "tier": "fast",
   "files_created": ["..."],
   "commands": ["..."],
-  "deferred_expensive_tests": ["tests/e2e/components/<page>/<ComponentName>.spec.ts"],
+  "deferred_expensive_tests": ["tests/e2e/components/<surface>/<component_name>.spec.ts"],
   "cases": { "passed": 0, "failed": 0, "skipped": 0 },
   "failures": [{ "test": "BND-3", "severity": "major", "reason": "..." }],
   "code_fixes_required": ["..."],

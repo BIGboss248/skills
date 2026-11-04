@@ -17,18 +17,32 @@ $resolvedItem = Get-Item $ComponentPath
 
 if ($resolvedItem.PSIsContainer) {
     $resolvedDir = $resolvedItem.FullName
-    if ($ComponentName) {
-        $compName = $ComponentName
-    } else {
-        $compName = $resolvedItem.Name
+    if (-not $ComponentName) {
+        Write-Host "[FAIL] '$($resolvedItem.FullName)' is a surface folder (page or layout region), not a component folder." -ForegroundColor Red
+        Write-Host "       Components are flat files: <new_component_dir>/<surface>/<component_name>.tsx" -ForegroundColor Red
+        Write-Host "       Re-run with the component file path, or pass -ComponentName <component_name>." -ForegroundColor Red
+        exit 1
     }
+    $compName = $ComponentName
 } else {
     $resolvedDir = $resolvedItem.DirectoryName
     $compName = [System.IO.Path]::GetFileNameWithoutExtension($resolvedItem.Name)
+    $compName = $compName -replace '\.edge\.test$', '' -replace '\.test$', '' -replace '\.stories$', '' -replace '_skeleton$', ''
 }
 
 $componentFile = Join-Path $resolvedDir "$compName.tsx"
-$skeletonFile = Join-Path $resolvedDir "${compName}Skeleton.tsx"
+
+# Flat companion convention: <component_name>_skeleton.tsx. Legacy '<Name>Skeleton.tsx' is tolerated with a rename warning.
+$skeletonFile = Join-Path $resolvedDir "${compName}_skeleton.tsx"
+$legacySkeleton = $false
+if (-not (Test-Path $skeletonFile)) {
+    $legacySkeletonFile = Join-Path $resolvedDir "${compName}Skeleton.tsx"
+    if (Test-Path $legacySkeletonFile) {
+        $skeletonFile = $legacySkeletonFile
+        $legacySkeleton = $true
+    }
+}
+
 $testFile = Join-Path $resolvedDir "$compName.test.tsx"
 if (-not (Test-Path $testFile)) {
     $testFile = Join-Path $resolvedDir "$compName.spec.tsx"
@@ -36,7 +50,7 @@ if (-not (Test-Path $testFile)) {
 
 $missing = @()
 if (-not (Test-Path $componentFile)) { $missing += "$compName.tsx" }
-if (-not (Test-Path $skeletonFile))  { $missing += "${compName}Skeleton.tsx" }
+if (-not (Test-Path $skeletonFile))  { $missing += "${compName}_skeleton.tsx" }
 if (-not (Test-Path $testFile))      { $missing += "$compName.test.tsx" }
 
 if ($missing.Count -gt 0) {
@@ -47,11 +61,15 @@ if ($missing.Count -gt 0) {
     exit 1
 }
 
-Write-Host "[PASS] Files present: $compName.tsx, ${compName}Skeleton.tsx, $(Split-Path $testFile -Leaf)" -ForegroundColor Green
+Write-Host "[PASS] Files present: $compName.tsx, $(Split-Path $skeletonFile -Leaf), $(Split-Path $testFile -Leaf)" -ForegroundColor Green
+
+if ($legacySkeleton) {
+    Write-Host "[WARN] Legacy skeleton name found. Rename '${compName}Skeleton.tsx' to '${compName}_skeleton.tsx' (flat snake_case convention)." -ForegroundColor Yellow
+}
 
 # Test execution is delegated to nextjs-adversarial-qa.
 # Fast tier only: Playwright, the full Jest project, and builds run at 'git push' (pre-push).
-Write-Host "[INFO] Fast-tier execution is delegated. Run nextjs-adversarial-qa/scripts/verify-qa.ps1 -TargetPath `"$resolvedDir`" -Mode all (Jest only; Playwright deferred to pre-push)" -ForegroundColor Cyan
+Write-Host "[INFO] Fast-tier execution is delegated. Run nextjs-adversarial-qa/scripts/verify-qa.ps1 -TargetPath `"$(Join-Path $resolvedDir "$compName.tsx")`" -Mode all (Jest only; Playwright deferred to pre-push)" -ForegroundColor Cyan
 
 # Verify zero in-file i18n placeholders / mock translation dictionaries
 if (Test-Path $componentFile) {

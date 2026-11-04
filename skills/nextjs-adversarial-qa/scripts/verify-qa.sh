@@ -7,8 +7,9 @@ Usage: bash verify-qa.sh <TargetPath> [Mode] [--tier fast|full] [--no-run] [--he
 
 Verifies Next.js test artifacts and runs the targeted QA suites.
 
-  TargetPath   Component directory (components/home/Hero) or route directory
-               (app/[locale]/about).
+  TargetPath   Component file (components/home/hero.tsx) or route directory
+               (app/[locale]/about). Components are flat files; a surface
+               folder (components/home) needs an explicit component name.
   Mode         baseline | adversarial | page | all | audit   (default: all)
   --tier       fast | full (default: fast). 'fast' runs Jest only and defers
                Playwright to the pre-push gate; 'full' runs everything and is

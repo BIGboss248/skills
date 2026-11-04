@@ -52,13 +52,13 @@ Read `.agents/rules/agent-boundaries.md` first.
 
 ## Procedure
 
-1. Read the spec §7, `test-plan.md`, implementation, skeleton, and baseline suite.
+1. Read the spec §7, `<component_name>.test-plan.md`, implementation, skeleton, and baseline suite.
 2. Diff baseline coverage against the spec rows; list uncovered rows.
 3. Attack boundaries: empty/null/oversized input, error and retry paths, loading
    and empty states, i18n and RTL, keyboard and ARIA, hydration, network failure,
    and page boundaries (metadata, JSON-LD, 404/error, locale routing).
-4. Write `<ComponentName>.edge.test.tsx` with test names prefixed by IDs
-   (`BND-3: ...`). Write `tests/e2e/components/<page>/<ComponentName>.spec.ts`
+4. Write `<component_name>.edge.test.tsx` with test names prefixed by IDs
+   (`BND-3: ...`). Write `tests/e2e/components/<surface>/<component_name>.spec.ts`
    when browser behavior is the only way to observe the defect; it is deferred,
    not executed.
 5. Execute only the Jest files you wrote.
@@ -88,10 +88,10 @@ JSON only, no prose:
   "tier": "fast",
   "files_created": ["..."],
   "commands": ["..."],
-  "deferred_expensive_tests": ["tests/e2e/components/<page>/<ComponentName>.spec.ts"],
+  "deferred_expensive_tests": ["tests/e2e/components/<surface>/<component_name>.spec.ts"],
   "cases": { "passed": 0, "failed": 0, "skipped": 0 },
   "failures": [{ "test": "BND-3", "severity": "major", "reason": "..." }],
-  "code_fixes_required": ["[ComponentName].tsx: handle null items"],
+  "code_fixes_required": ["<component_name>.tsx: handle null items"],
   "coverage_gaps": ["..."],
   "immutable_edits": []
 }

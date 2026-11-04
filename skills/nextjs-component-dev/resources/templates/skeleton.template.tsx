@@ -1,3 +1,5 @@
+// File: <new_component_dir>/<surface>/<component_name>_skeleton.tsx
+// Flat sibling of <component_name>.tsx in the same page or layout-region folder.
 import React from "react";
 import { cn } from "@/lib/utils";
 

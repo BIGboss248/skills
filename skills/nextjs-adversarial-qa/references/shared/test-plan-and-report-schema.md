@@ -4,7 +4,7 @@ Structured outputs so the orchestrator never has to parse prose.
 
 ---
 
-## 1. `test-plan.md`
+## 1. `<component_name>.test-plan.md`
 
 Scaffold: [`../../resources/templates/authoring/test-plan.template.md`](../../resources/templates/authoring/test-plan.template.md)
 
@@ -21,7 +21,7 @@ Scaffold: [`../../resources/templates/authoring/test-plan.template.md`](../../re
 
 | ID | Spec Ref | Scenario | Layer | File | Input / State | Expected Assertion | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| BND-1 | §7 Empty State | Empty collection | Jest | `[ComponentName].test.tsx` | `items=[]` | empty-state role visible | PENDING |
+| BND-1 | §7 Empty State | Empty collection | Jest | `<component_name>.test.tsx` | `items=[]` | empty-state role visible | PENDING |
 ```
 
 Rules:
@@ -63,10 +63,10 @@ Schema: [`../../resources/test-plan.schema.json`](../../resources/test-plan.sche
 {
   "status": "PASS",
   "mode": "adversarial",
-  "target": { "kind": "component", "name": "Hero", "path": "components/home/Hero" },
-  "plan_path": "components/home/Hero/test-plan.md",
-  "files_created": ["components/home/Hero/Hero.edge.test.tsx"],
-  "commands": ["pnpm test -- components/home/Hero/Hero.edge.test.tsx"],
+  "target": { "kind": "component", "name": "Hero", "path": "components/home/hero.tsx" },
+  "plan_path": "components/home/hero.test-plan.md",
+  "files_created": ["components/home/hero.edge.test.tsx"],
+  "commands": ["pnpm test -- components/home/hero.edge.test.tsx"],
   "cases": { "passed": 8, "failed": 0, "skipped": 0 },
   "failures": [],
   "code_fixes_required": [],

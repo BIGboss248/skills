@@ -8,17 +8,17 @@ Decide the cheapest layer that can prove the behavior. Push assertions down to J
 
 | Behavior under test | Layer | File | Runner |
 | :--- | :--- | :--- | :--- |
-| Prop permutations, defaults, conditional UI | Jest + RTL | `<dir>/[ComponentName].test.tsx` | `pnpm test` |
-| Callback invocation, local state, toggles | Jest + RTL | `<dir>/[ComponentName].test.tsx` | `pnpm test` |
-| Empty / null / error fallback rendering | Jest + RTL | `<dir>/[ComponentName].edge.test.tsx` | `pnpm test` |
-| Keyboard navigation, ARIA state, focus order | Jest + RTL (`jest-axe`) | `<dir>/[ComponentName].edge.test.tsx` | `pnpm test` |
-| Unicode / RTL glyph rendering and `dir` | Jest + RTL | `<dir>/[ComponentName].edge.test.tsx` | `pnpm test` |
-| Timer teardown, rapid re-render, unmount | Jest + RTL | `<dir>/[ComponentName].edge.test.tsx` | `pnpm test` |
-| SSR hydration mismatches | Playwright | `tests/e2e/components/<page>/<ComponentName>.spec.ts` | `pnpm test:e2e` |
-| Async RSC / streamed content | Playwright | `tests/e2e/components/<page>/<ComponentName>.spec.ts` | `pnpm test:e2e` |
-| Instant shell / prefetched App Shell | Playwright (`instant()`) | `tests/e2e/components/<page>/<ComponentName>.spec.ts` | `pnpm test:e2e` |
-| Visual regression (light, dark, RTL) | Playwright snapshots | `tests/e2e/components/<page>/<ComponentName>.spec.ts` | `pnpm test:e2e` |
-| Slow network / 500 / Suspense geometry | Playwright (`page.route`) | `tests/e2e/components/<page>/<ComponentName>.spec.ts` | `pnpm test:e2e` |
+| Prop permutations, defaults, conditional UI | Jest + RTL | `<dir>/<component_name>.test.tsx` | `pnpm test` |
+| Callback invocation, local state, toggles | Jest + RTL | `<dir>/<component_name>.test.tsx` | `pnpm test` |
+| Empty / null / error fallback rendering | Jest + RTL | `<dir>/<component_name>.edge.test.tsx` | `pnpm test` |
+| Keyboard navigation, ARIA state, focus order | Jest + RTL (`jest-axe`) | `<dir>/<component_name>.edge.test.tsx` | `pnpm test` |
+| Unicode / RTL glyph rendering and `dir` | Jest + RTL | `<dir>/<component_name>.edge.test.tsx` | `pnpm test` |
+| Timer teardown, rapid re-render, unmount | Jest + RTL | `<dir>/<component_name>.edge.test.tsx` | `pnpm test` |
+| SSR hydration mismatches | Playwright | `tests/e2e/components/<surface>/<component_name>.spec.ts` | `pnpm test:e2e` |
+| Async RSC / streamed content | Playwright | `tests/e2e/components/<surface>/<component_name>.spec.ts` | `pnpm test:e2e` |
+| Instant shell / prefetched App Shell | Playwright (`instant()`) | `tests/e2e/components/<surface>/<component_name>.spec.ts` | `pnpm test:e2e` |
+| Visual regression (light, dark, RTL) | Playwright snapshots | `tests/e2e/components/<surface>/<component_name>.spec.ts` | `pnpm test:e2e` |
+| Slow network / 500 / Suspense geometry | Playwright (`page.route`) | `tests/e2e/components/<surface>/<component_name>.spec.ts` | `pnpm test:e2e` |
 | `generateMetadata`, canonical, hreflang | Playwright | `tests/e2e/pages/<route>.spec.ts` | `pnpm test:e2e` |
 | JSON-LD graph validity | Playwright | `tests/e2e/pages/<route>.spec.ts` | `pnpm test:e2e` |
 | `generateStaticParams` locale coverage | Playwright | `tests/e2e/pages/<route>.spec.ts` | `pnpm test:e2e` |
@@ -41,9 +41,9 @@ Decide the cheapest layer that can prove the behavior. Push assertions down to J
 
 | Mode | Gate | Tier | Blocks |
 | :--- | :--- | :--- | :--- |
-| `baseline` | `[ComponentName].test.tsx` green | fast | Component implementation may start |
+| `baseline` | `<component_name>.test.tsx` green | fast | Component implementation may start |
 | `page` | `tests/e2e/pages/<route>.spec.ts` authored + audited; execution at pre-push | fast (authoring) / expensive (execution) | Page marked complete in `docs/plan/05-pages-and-components.md` |
-| `adversarial` | `[ComponentName].edge.test.tsx` green; component E2E deferred | fast | Orchestrator Phase 3 handoff |
+| `adversarial` | `<component_name>.edge.test.tsx` green; component E2E deferred | fast | Orchestrator Phase 3 handoff |
 | `repair` | All targeted fast suites green | fast | Any completion claim |
 | `audit` | Report delivered, no code change | — | Nothing (advisory) |
 | `pre-push` | `test:all` (full Jest + Playwright) green | expensive | Pushing the branch |

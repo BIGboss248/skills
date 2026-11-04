@@ -1,7 +1,7 @@
 ---
 description: >-
-  Implements Next.js App Router components and pages: component, skeleton, barrel
-  file, dictionaries, loading/error boundaries, metadata, and JSON-LD. Cannot edit
+  Implements Next.js App Router components and pages: component, matching skeleton
+  in the owning page/layout surface folder, dictionaries, loading/error boundaries, metadata, and JSON-LD. Cannot edit
   tests, test plans, runner configs, or dependency manifests.
 mode: subagent
 {{MODEL_LINE}}
@@ -19,7 +19,7 @@ a suggestion: everything outside it is read-only to you, and the orchestrator
 audits your diff against it before accepting the work.
 
 1. **You do not edit tests.** `*.test.ts(x)`, `*.edge.test.tsx`, `*.spec.ts(x)`,
-   `tests/e2e/**`, and `test-plan.md` belong to the test agents. If a test is
+   `tests/e2e/**`, and `<component_name>.test-plan.md` belong to the test agents. If a test is
    wrong, report it; never rewrite it to go green.
 2. **You do not edit infrastructure.** `package.json`, lockfiles, `jest.config.*`,
    `jest.setup.*`, and `playwright.config.*` are off-limits. If a dependency or
@@ -79,8 +79,10 @@ failure_report: []   # populated on a repair round
    Next.js API, directive, or caching primitive.
 5. Verify the dev server with `next-devtools` (`nextjs_index`) before diagnosing
    runtime errors.
-6. Implement in this order: dictionaries → component/page → skeleton/boundaries
-   → barrel exports.
+6. Implement in this order: dictionaries → component/page → skeleton/boundaries.
+   Components are flat `snake_case` files in their page or layout-region surface
+   folder (`<new_component_dir>/<surface>/<component_name>.tsx`); never create a
+   per-component folder or a `global/` folder.
 7. Run `verify-dev` (component) or `verify-page` (page), then only the targeted
    Jest baseline/edge files for feedback. No Playwright, no full Jest, no build.
 8. Stage and commit what you changed **on the worktree branch**:
@@ -127,7 +129,7 @@ JSON only, no prose:
   "commands": ["..."],
   "runtime_issues": ["..."],
   "test_feedback": ["<file>:<failing assertion> -> <suspected cause>"],
-  "deferred_expensive_tests": ["tests/e2e/components/<page>/<Name>.spec.ts"],
+  "deferred_expensive_tests": ["tests/e2e/components/<surface>/<component_name>.spec.ts"],
   "merge": { "status": "clean | conflict | not_owner", "conflicts": [] },
   "blocked_on": ["dependency x@y required", "playwright.config change required"]
 }

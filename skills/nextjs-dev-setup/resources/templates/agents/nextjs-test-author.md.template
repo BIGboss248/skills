@@ -53,8 +53,8 @@ Read `.agents/rules/agent-boundaries.md` first.
 
 ## Modes
 
-- `baseline` — spec approved, implementation absent. Write `test-plan.md` and
-  `<ComponentName>.test.tsx` from the spec §7 edge cases.
+- `baseline` — spec approved, implementation absent. Write `<component_name>.test-plan.md` and
+  `<component_name>.test.tsx` from the spec §7 edge cases.
 - `page` — route implemented. Write `tests/e2e/pages/<route>.spec.ts` covering
   metadata, canonical/hreflang, JSON-LD, locale routing, loading/error boundaries,
   instant shell, RTL, and route boundaries.
@@ -63,7 +63,7 @@ Read `.agents/rules/agent-boundaries.md` first.
 
 1. Read `docs/project.json`, the spec, the approved `implementation_plan.md`, and
    the worktree from the brief.
-2. Build `test-plan.md`: map every §7 row to an ID, layer, input, and expectation.
+2. Build `<component_name>.test-plan.md`: map every §7 row to an ID, layer, input, and expectation.
 3. Author tests from the layer matrix. Real providers only; no translation mocks.
 4. Run only the Jest files you created. Mark each Playwright file
    `DEFERRED (pre-push)` and list it in `deferred_expensive_tests[]`.

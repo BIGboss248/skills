@@ -13,8 +13,8 @@ inside the scope they were given.
 | Agent | Mode | Purpose | Writes |
 | :--- | :--- | :--- | :--- |
 | `nextjs-orchestrator` | primary | Runs the pipeline, owns gates and the plan checklist | delegation, plan checklist, approved edge-test corrections |
-| `nextjs-dev` | subagent | Components and pages | implementation, skeletons, dictionaries, barrel files |
-| `nextjs-test-author` | subagent | Baseline and page suites | `*.test.ts(x)`, `tests/e2e/pages/**`, `test-plan.md` |
+| `nextjs-dev` | subagent | Components and pages | implementation, skeletons, dictionaries, surface folders |
+| `nextjs-test-author` | subagent | Baseline and page suites | `*.test.ts(x)`, `tests/e2e/pages/**`, `<component_name>.test-plan.md` |
 | `nextjs-qa-auditor` | subagent | Adversarial edge suites and audit | `*.edge.test.tsx`, `tests/e2e/components/**` |
 
 Every agent works in its **own git worktree** on branch `agent/<slug>`; nothing
@@ -36,7 +36,7 @@ in the skills hub.
 | `*.edge.test.tsx` | user-approved only | deny | deny | write |
 | `tests/e2e/pages/**` | escalate | deny | write | deny |
 | `tests/e2e/components/**` | escalate | deny | deny | write |
-| `test-plan.md` | approve | deny | write | read |
+| `<component_name>.test-plan.md` | approve | deny | write | read |
 | `jest.config.*`, `playwright.config.*`, `package.json`, lockfiles | user only | deny | deny | deny |
 
 `write` means the role owns the path. `approve` means the role coordinates the

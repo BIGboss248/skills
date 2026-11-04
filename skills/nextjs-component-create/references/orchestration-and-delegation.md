@@ -40,7 +40,7 @@ The orchestrator's `permission.task` allows only these three names. A role agent
 | `*.edge.test.tsx` | user-approved only | deny | deny | write |
 | `tests/e2e/pages/**` | escalate | deny | write | deny |
 | `tests/e2e/components/**` | escalate | deny | deny | write |
-| `test-plan.md` | approve | deny | write | read |
+| `<component_name>.test-plan.md` | approve | deny | write | read |
 | `package.json`, lockfiles, `jest.config.*`, `playwright.config.*`, `next.config.*` | user only | deny | deny | deny |
 
 `approve` = coordinates but does not perform. `escalate` = requires a user decision
@@ -57,7 +57,7 @@ mode: baseline | page | implement | adversarial | audit | repair
 target:
   kind: component | page
   name: ComponentName | <route>
-  path: <new_component_dir>/<page>/<ComponentName>/ | app/[locale]/<route>/
+  path: <new_component_dir>/<surface>/<component_name>.tsx | app/[locale]/<route>/
 spec: <design-spec.md | page-spec.md>
 plan: <implementation_plan.md | none>
 worktree:
@@ -92,7 +92,7 @@ for test agents and in the `nextjs-dev` agent prompt for implementation.
 | Gate | Owner | Tier | Pass condition |
 | :--- | :--- | :--- | :--- |
 | Spec complete | orchestrator | — | `design-spec.md` / `page-spec.md` §7 rows are explicit and verifiable |
-| Baseline authored | test-author | fast | `test-plan.md` maps every §7 row to an ID and layer |
+| Baseline authored | test-author | fast | `<component_name>.test-plan.md` maps every §7 row to an ID and layer |
 | Baseline green | orchestrator | fast | targeted Jest suite exits `0`, output recorded |
 | Page suite authored | test-author | fast (authoring) | spec exists, passes static audit, listed in `deferred_expensive_tests[]` |
 | Implementation clean | dev | fast | `verify-dev` / `verify-page` exits `0`, no dev-server errors |
@@ -149,7 +149,7 @@ Classes:
 | `test-edge` | `*.edge.test.tsx` |
 | `test-e2e-page` | `tests/e2e/pages/**` |
 | `test-e2e-component` | `tests/e2e/components/**` |
-| `test-plan` | `test-plan.md` |
+| `test-plan` | `<component_name>.test-plan.md` |
 | `plan` | `docs/plan/**` |
 | `design` | `docs/design/**` |
 | `config` | `package.json`, lockfiles, `jest*`, `playwright*`, `next.config.*`, `tsconfig*`, `eslint*` |

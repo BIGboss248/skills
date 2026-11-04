@@ -72,7 +72,7 @@
 
 ## 7. Edge Cases & Boundary States
 
-Every row maps to a test ID in `test-plan.md`. No row may be left unimplemented
+Every row maps to a test ID in `<component_name>.test-plan.md`. No row may be left unimplemented
 without an explicit `N/A` reason.
 
 | ID | Case | Expected behavior | Layer |

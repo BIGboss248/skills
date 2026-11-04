@@ -1,7 +1,8 @@
 # Implementation Plan: [ComponentName]
 
-- **Page / Scope**: `[page-name / global]`
-- **Component Path**: `[new_component_dir]/[page_or_global]/[ComponentName]/`
+- **Page / Scope**: `[page segment / header / footer / sidebar / shared / ui]`
+- **Component Path**: `[new_component_dir]/[surface]/[component_name].tsx` (flat file; `[surface]` = page segment, layout region, `shared`, or `ui`)
+- **Owning Surface**: `[page segment / header / footer / sidebar / shared / ui]` — rendered by `[page or layout file]`
 - **Component Classification**: `[RSC (Server Component) | Client Component (Interactive)]`
 - **Design Spec Reference**: `docs/design/components/[page]/[component]/design-spec.md`
 - **Next.js Docs Consulted**: `node_modules/next/dist/docs/01-app/...`
@@ -10,11 +11,12 @@
 
 ## 1. Target Directory & Planned Files
 
-- [ ] `[new_component_dir]/[page_or_global]/[ComponentName]/[ComponentName].tsx` (Primary Component)
-- [ ] `[new_component_dir]/[page_or_global]/[ComponentName]/[ComponentName]Skeleton.tsx` (Suspense Skeleton)
-- [ ] `[new_component_dir]/[page_or_global]/[ComponentName]/[ComponentName].test.tsx` (Baseline TDD Unit Tests)
-- [ ] `[new_component_dir]/[page_or_global]/[ComponentName]/[ComponentName].edge.test.tsx` (Adversarial Edge-Case Tests)
-- [ ] `[new_component_dir]/[page_or_global]/[ComponentName]/index.ts` (Barrel Export)
+- [ ] `[new_component_dir]/[surface]/[component_name].tsx` (Primary Component)
+- [ ] `[new_component_dir]/[surface]/[component_name]_skeleton.tsx` (Suspense Skeleton)
+- [ ] `[new_component_dir]/[surface]/[component_name].test.tsx` (Baseline TDD Unit Tests)
+- [ ] `[new_component_dir]/[surface]/[component_name].edge.test.tsx` (Adversarial Edge-Case Tests)
+
+> Flat files inside the surface folder. No per-component subfolder and no per-component `index.ts`; an optional area-level `[surface]/index.ts` barrel may re-export the surface.
 
 ---
 
@@ -54,7 +56,7 @@ export interface [ComponentName]Props {
 
 ## 5. Test Plan (owned by `nextjs-adversarial-qa`)
 
-> Do not author test code in this plan. Invoke the QA skill in `baseline` mode; it produces `test-plan.md` with the coverage matrix and `[ComponentName].test.tsx`. Mirror the test IDs below.
+> Do not author test code in this plan. Invoke the QA skill in `baseline` mode; it produces `<component_name>.test-plan.md` with the coverage matrix and `<component_name>.test.tsx`, both as flat siblings in the surface folder. Mirror the test IDs below.
 
 ### 5.1 Baseline Coverage (QA baseline mode)
 - **Default Rendering**: Translated strings and semantic ARIA landmarks.
@@ -81,11 +83,11 @@ Fast tier (run during development):
 
 - Companion files and i18n:
   ```pwsh
-  pwsh .agents/skills/nextjs-component-dev/scripts/verify-dev.ps1 -ComponentPath <target_component_dir>
+  pwsh .agents/skills/nextjs-component-dev/scripts/verify-dev.ps1 -ComponentPath <new_component_dir>/<surface>/<component_name>.tsx
   ```
 - Targeted Jest (baseline + adversarial):
   ```pwsh
-  pwsh .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.ps1 -TargetPath <target_component_dir> -Mode all
+  pwsh .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.ps1 -TargetPath <new_component_dir>/<surface>/<component_name>.tsx -Mode all
   ```
 
 Expensive tier (deferred to `git push` via `.husky/pre-push`; never run here):

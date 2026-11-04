@@ -12,8 +12,9 @@
     explicit user request. See references/shared/test-execution-tiers.md.
 
 .PARAMETER TargetPath
-    Component directory (e.g. components/home/Hero) or route directory
-    (e.g. app/[locale]/about).
+    Component file (e.g. components/home/hero.tsx) or route directory
+    (e.g. app/[locale]/about). Components are flat files, so pass the file
+    itself; passing a surface folder (components/home) requires -ComponentName.
 
 .PARAMETER Mode
     baseline | adversarial | page | all | audit. Default: all.
@@ -22,7 +23,7 @@
     fast | full. Default: fast. Never select 'full' during development.
 
 .PARAMETER ComponentName
-    Optional explicit component name. Defaults to the directory name.
+    Optional explicit component name. Required when TargetPath is a surface folder.
 
 .PARAMETER NoRun
     Audit files only; do not execute test runners.
@@ -31,10 +32,10 @@
     Show this help text.
 
 .EXAMPLE
-    pwsh verify-qa.ps1 -TargetPath components/home/Hero -Mode all
+    pwsh verify-qa.ps1 -TargetPath components/home/hero.tsx -Mode all
 
 .EXAMPLE
-    pwsh verify-qa.ps1 -TargetPath components/home/Hero -Mode all -Tier full
+    pwsh verify-qa.ps1 -TargetPath components/home/hero.tsx -Mode all -Tier full
 
 .EXAMPLE
     pwsh verify-qa.ps1 -TargetPath app/[locale]/about -Mode page

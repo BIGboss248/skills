@@ -44,7 +44,7 @@ Development runs the **fast** tier only. Expensive suites run **pre-push**.
 
 | Role | Agent | Modes | May write | Must never write |
 | :--- | :--- | :--- | :--- | :--- |
-| **Test Author** | `nextjs-test-author` | `baseline`, `page` | `test-plan.md`, `*.test.ts(x)`, `tests/e2e/pages/**` | components, pages, dictionaries, runner configs, `package.json` |
+| **Test Author** | `nextjs-test-author` | `baseline`, `page` | `<component_name>.test-plan.md`, `*.test.ts(x)`, `tests/e2e/pages/**` | components, pages, dictionaries, runner configs, `package.json` |
 | **QA Auditor** | `nextjs-qa-auditor` | `adversarial`, `audit` | `*.edge.test.tsx`, `tests/e2e/components/**`, QA report | components, pages, baseline tests, runner configs |
 | **Orchestrator** | `nextjs-orchestrator` | — | delegates, runs gates, ticks plan | test or implementation code |
 
@@ -56,9 +56,9 @@ Development runs the **fast** tier only. Expensive suites run **pre-push**.
 
 | Mode | Agent | Invoked when | Deliverables |
 | :--- | :--- | :--- | :--- |
-| `baseline` | `nextjs-test-author` | Spec approved, **before** JSX (TDD gate) | `test-plan.md` + `[ComponentName].test.tsx` |
+| `baseline` | `nextjs-test-author` | Spec approved, **before** JSX (TDD gate) | `<component_name>.test-plan.md` + `<component_name>.test.tsx` |
 | `page` | `nextjs-test-author` | Page spec approved and route implemented | `tests/e2e/pages/<route>.spec.ts` |
-| `adversarial` | `nextjs-qa-auditor` | Implementation and baseline complete | `[ComponentName].edge.test.tsx` (immutable) + `tests/e2e/components/<page>/[ComponentName].spec.ts` |
+| `adversarial` | `nextjs-qa-auditor` | Implementation and baseline complete | `<component_name>.edge.test.tsx` (immutable) + `tests/e2e/components/<surface>/<component_name>.spec.ts` |
 | `audit` | `nextjs-qa-auditor` | Existing suite review | Coverage-gap report against the spec, no rewrites |
 | `repair` | orchestrator-loop | Any suite fails | dev fixes code → auditor re-runs until exit `0` |
 
@@ -71,7 +71,7 @@ Never invent a mode. Infer from artifacts: no test file → `baseline`; test fil
 1. **`docs/project.json`** — `package_manager`, `new_component_dir`, `dictionaries_dir`, `supported_languages`, test scripts, agent roster.
 2. **Specification** — component `design-spec.md` §7 *Edge Cases & Boundary States*, or `page-spec.md` §7 for pages.
 3. **Implementation plan** — `implementation_plan.md` §5 (TDD matrix) when present.
-4. **Target source** — `[ComponentName].tsx`, `[ComponentName]Skeleton.tsx`, `page.tsx`, `loading.tsx`, `error.tsx`, `messages/[locale].json`.
+4. **Target source** — `<component_name>.tsx`, `<component_name>_skeleton.tsx`, `page.tsx`, `loading.tsx`, `error.tsx`, `messages/[locale].json`.
 5. **Existing suite** — to avoid duplicate coverage.
 
 If the spec is missing, stop and return `BLOCKED: missing specification` to the orchestrator. Never guess requirements.
@@ -83,7 +83,7 @@ If the spec is missing, stop and return `BLOCKED: missing specification` to the 
 1. **Unbiased Auditor Principle** — the agent that wrote the component or page must not certify its edge cases, and the author of the baseline suite must not author the edge suite.
 2. **Spec Traceability** — every §7 edge case maps to a test ID (`BND-1`, `PROP-2`, `PAGE-4`). Unmapped spec rows are a defect.
 3. **Immutable Adversarial Tests** — deleting, skipping, or weakening `*.edge.test.tsx` is forbidden; only an explicit user decision may change one, and the change is logged in the QA report.
-4. **Baseline Tests Are Mutable With a Reason** — `nextjs-test-author` may revise a baseline test when the spec changed or the assertion was wrong, recording the reason in `test-plan.md`. It may never weaken coverage to make a failing implementation pass.
+4. **Baseline Tests Are Mutable With a Reason** — `nextjs-test-author` may revise a baseline test when the spec changed or the assertion was wrong, recording the reason in `<component_name>.test-plan.md`. It may never weaken coverage to make a failing implementation pass.
 5. **Fix the Code, Not the Tests** — a failing assertion means the implementation is wrong until proven otherwise.
 6. **Targeted Execution** — run only the files under test. Never the full suite during iteration.
 7. **Fast Tier During Development** — Jest only; Playwright, the full Jest project, builds, and Storybook builds are deferred to the pre-push gate and declared in `deferred_expensive_tests[]`.
@@ -133,9 +133,9 @@ If the spec is missing, stop and return `BLOCKED: missing specification` to the 
 
 | Artifact | Suite | Path | Runner |
 | :--- | :--- | :--- | :--- |
-| Component props/state/a11y | Jest + RTL | `<component_dir>/[ComponentName].test.tsx` | `<pm> test` |
-| Component edge cases | Jest + RTL | `<component_dir>/[ComponentName].edge.test.tsx` | `<pm> test` |
-| Component hydration/visual/instant | Playwright | `tests/e2e/components/<page>/<ComponentName>.spec.ts` | `<pm> test:e2e` |
+| Component props/state/a11y | Jest + RTL | `<component_dir>/<component_name>.test.tsx` | `<pm> test` |
+| Component edge cases | Jest + RTL | `<component_dir>/<component_name>.edge.test.tsx` | `<pm> test` |
+| Component hydration/visual/instant | Playwright | `tests/e2e/components/<surface>/<component_name>.spec.ts` | `<pm> test:e2e` |
 | Page metadata/JSON-LD/routes/boundaries | Playwright | `tests/e2e/pages/<route>.spec.ts` | `<pm> test:e2e` |
 | Async RSC output | Playwright (only option) | same as above | `<pm> test:e2e` |
 
@@ -161,7 +161,7 @@ bash .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.sh <component_dir> a
 
 - [ ] Fast suites exit `0` with zero skipped tests.
 - [ ] Every deferred Playwright file is listed in `deferred_expensive_tests[]`; nothing deferred is reported as `PASS`.
-- [ ] Every `test-plan.md` row has a status of `PASS` or `DEFERRED`.
+- [ ] Every `<component_name>.test-plan.md` row has a status of `PASS` or `DEFERRED`.
 - [ ] `*.edge.test.tsx` exists and was authored by `nextjs-qa-auditor`.
 - [ ] No `test.only`, `it.skip`, or `test.fixme` in any created file.
 - [ ] No hardcoded English copy asserted in place of dictionary values.

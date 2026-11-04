@@ -12,10 +12,10 @@ Load and follow `skills/nextjs-adversarial-qa/SKILL.md` in mode `{{mode}}` (`adv
 Read only: `references/shared/`, `references/adversarial/`, `resources/templates/adversarial/`.
 
 ## Inputs
-- Implementation: {{component_dir}}/{{ComponentName}}.tsx
-- Skeleton: {{component_dir}}/{{ComponentName}}Skeleton.tsx
-- Baseline tests: {{component_dir}}/{{ComponentName}}.test.tsx
-- Stories (if present): {{component_dir}}/{{ComponentName}}.stories.tsx
+- Implementation: {{component_dir}}/{{component_name}}.tsx
+- Skeleton: {{component_dir}}/{{component_name}}_skeleton.tsx
+- Baseline tests: {{component_dir}}/{{component_name}}.test.tsx
+- Stories (if present): {{component_dir}}/{{component_name}}.stories.tsx
 - Specification: {{spec_path}} (focus on §7 Edge Cases & Boundary States)
 - Test plan: {{plan_path}}
 - Page sources (page mode): {{route_path}}/page.tsx, loading.tsx, error.tsx

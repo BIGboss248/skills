@@ -51,7 +51,7 @@ Specialized workflow for creating production-ready Next.js App Router pages with
 - Consult [`references/streaming-and-boundaries.md`](./references/streaming-and-boundaries.md) for streaming patterns.
 
 ### 6. Child Component Delegation (`nextjs-component-dev`)
-- Never write complex section components inline inside `page.tsx` or create ad-hoc component files without tests/skeletons. Whenever a page requires new section or UI components under `<new_component_dir>/<page-name>/`, activate and strictly execute [`.agents/skills/nextjs-component-dev/SKILL.md`](../nextjs-component-dev/SKILL.md) for each component.
+- Never write complex section components inline inside `page.tsx` or create ad-hoc component files without tests/skeletons. Whenever a page requires new section or UI components, place them as flat `snake_case` files in the page's surface folder (`<new_component_dir>/<page-segment>/<component_name>.tsx`) by activating and strictly executing [`.agents/skills/nextjs-component-dev/SKILL.md`](../nextjs-component-dev/SKILL.md) for each component.
 - When orchestrated, every new section component routes through the component track (spec → `nextjs-test-author` baseline → `nextjs-dev` implementation → `nextjs-qa-auditor` edge suite).
 
 ### 7. Agent Boundaries & Source Isolation
@@ -81,7 +81,7 @@ Specialized workflow for creating production-ready Next.js App Router pages with
     1. Define async props interface (`params: Promise<{ locale: string, ... }>`, `searchParams`).
     2. Export `generateMetadata()` resolving dynamic titles and canonical alternates.
     3. Export `generateStaticParams()` for localized/dynamic routes.
-    4. Implement page RSC composing section components from `<new_component_dir>/<page-name>/` (using `nextjs-component-dev` for any new components).
+    4. Implement page RSC composing section components from the page's surface folder (`<new_component_dir>/<page-segment>/`; using `nextjs-component-dev` for any new components).
     5. Render `<JsonLd>` structured data component.
 
 - [ ] **Step 4: Page Test Suite (Delegated to `nextjs-test-author`, `page` mode)**

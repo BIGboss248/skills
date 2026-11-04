@@ -8,7 +8,7 @@ Browser-level verification for SSR, hydration, streaming, and visual behavior. S
 
 ```text
 tests/e2e/
-├── components/<page>/<ComponentName>.spec.ts
+├── components/<surface>/<component_name>.spec.ts
 └── pages/<route>.spec.ts
 ```
 

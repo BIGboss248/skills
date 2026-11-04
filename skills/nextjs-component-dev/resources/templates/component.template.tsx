@@ -1,3 +1,6 @@
+// File: <new_component_dir>/<surface>/<component_name>.tsx
+// Example: src/components/home/hero.tsx  |  src/components/header/theme_button.tsx
+// Files are snake_case; the exported React component is PascalCase (theme_button.tsx -> ThemeButton).
 import React from "react";
 import { getTranslations } from "next-intl/server";
 import { cn } from "@/lib/utils";

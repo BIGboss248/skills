@@ -212,7 +212,7 @@ const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
 
 ## 5. Testing & Verification Checklist
 
-Form components must satisfy the following tests in their companion `[ComponentName].test.tsx`:
+Form components must satisfy the following tests in their companion `<component_name>.test.tsx`:
 - [ ] Accessible form controls (`getByLabelText`, `getByRole('button')`).
 - [ ] Disabled submit button and visible pending state during active submission.
 - [ ] Error messages properly linked via `aria-describedby` and announced with `aria-live="polite"`.
