@@ -1,0 +1,19 @@
+---
+description: Interview me in up to three rounds, then write an executable step-by-step plan to docs/plan/<slug>.md
+---
+
+Plan the following request: $ARGUMENTS
+
+Follow the `plan` skill — load it with the skill tool (ID: `plan`).
+
+Rules for this run:
+
+1. Inspect the workspace first — never ask what the repository already answers.
+2. Interview in up to three rounds (max 5 questions each), waiting between
+   rounds. Offer one recommendation per question.
+3. Write the plan to `docs/plan/<slug>.md` using the skill's template.
+4. Print only the skill's output summary, then ask the approval question and
+   **stop**. Do not begin implementation, do not touch source files while
+   planning.
+
+If no request was given above, ask: "What should I plan?"
