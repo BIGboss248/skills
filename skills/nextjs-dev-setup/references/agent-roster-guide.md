@@ -1,21 +1,37 @@
-# Agent Roster & Permission Boundaries
+# Agent Roster & Delegation Boundaries
 
 Guide for feature N9 of `nextjs-dev-setup`. Installs the OpenCode agents that keep
-implementation and test authorship in separate, permission-bounded contexts.
+implementation and test authorship in separate contexts.
+
+The roster is **instruction-scoped, not permission-locked**: the subagents carry no
+`permission` block, run their own commands, and verify their own work. The
+orchestrator writes an explicit brief before every spawn and audits the diff when
+the agent returns.
 
 ---
 
-## 1. Why Permissions, Not Prompts
+## 1. Why Briefs + Audit, Not Permission Blocks
 
-A prompt telling an agent "do not edit tests" is a suggestion. OpenCode's
-`permission` block is enforcement: with `edit` denied on a path, the `write`,
-`edit`, and `apply_patch` tools are unavailable for that path, so a confused or
-manipulated model cannot touch it.
+A `permission` block that denies `edit` also removes the tools a role needs to do
+its job well: no dependency install, no config fix, no runner workaround, and no
+self-verification. The result is a pipeline that stops on breadcrumbs and asks the
+user for every shell command.
 
-Three boundaries are load-bearing:
+This roster inverts that: **trust the agent, verify the result.**
 
-1. **Dev cannot edit tests** → a failing suite cannot be silenced by rewriting it.
-2. **Test agents cannot edit implementation** → a test cannot be "fixed" by
+1. **The orchestrator briefs.** Every spawn names the role, objective, mode,
+   `write_scope`, `read_scope`, `forbidden`, expected commands, and definition of
+   done.
+2. **The subagent runs.** It has full tool access, runs its own build/lint/type
+   check/tests, and returns real command output.
+3. **The orchestrator audits.** `git status --short` + `git diff --stat` against
+   `write_scope`; anything outside the brief is restored and reported. The suite
+   is re-run, not trusted.
+
+Three boundaries remain load-bearing, now as contract:
+
+1. **Dev does not edit tests** → a failing suite cannot be silenced by rewriting it.
+2. **Test agents do not edit implementation** → a test cannot be "fixed" by
    changing product code.
 3. **Edge tests are owned only by the auditor** → the baseline author cannot grade
    its own coverage.
@@ -26,58 +42,64 @@ Three boundaries are load-bearing:
 
 | Agent | Mode | Spawned by | Purpose |
 | :--- | :--- | :--- | :--- |
-| `nextjs-orchestrator` | primary | user (Tab / command) | Runs the pipeline, owns gates, plan checklist, final report |
+| `nextjs-orchestrator` | primary | user (Tab / command) | Runs the pipeline, owns gates, briefs, audits, final report |
 | `nextjs-dev` | subagent | orchestrator | Components, pages, skeletons, dictionaries, barrel files |
 | `nextjs-test-author` | subagent | orchestrator | Baseline unit tests, page E2E, test plan |
 | `nextjs-qa-auditor` | subagent | orchestrator | Immutable edge tests, component E2E, audit report |
 
 The orchestrator's `permission.task` allows only these three names, so it cannot
-wander into unrelated subagents.
+wander into unrelated subagents. That is the only permission rule in the roster:
+delegation gating, not work gating.
 
 ---
 
-## 3. Permission Model (verified behavior)
+## 3. Brief Contract
 
-Agent frontmatter uses the documented map form:
+Every spawn starts with this block, filled in. A subagent that receives a task
+without a brief returns `BLOCKED: missing brief`.
 
-```yaml
-permission:
-  edit:
-    "*": allow
-    "**/*.test.tsx": deny
-  bash:
-    "*": deny
-    "pnpm test *": allow
+```text
+role: nextjs-test-author | nextjs-dev | nextjs-qa-auditor
+objective: <one sentence; the artifact to produce>
+mode: baseline | page | implementation | repair | adversarial | audit
+write_scope: <explicit globs, e.g. "src/components/**" or "e2e/pages/**">
+read_scope: <paths, plus the spec and plan documents>
+forbidden: <paths owned by another role + package.json, lockfiles, runner configs>
+commands: <exact expected commands, e.g. "pnpm test src/components/Foo.test.tsx">
+done_when: <acceptance evidence: green suite, build output, file list>
+report: the agent's JSON return block, no prose
 ```
 
-Verified against OpenCode V2:
+Brief rules:
 
-- Rules are appended **after** the global defaults and evaluated **last match
-  wins**, so a broad `"*"` rule first and narrow exceptions after is correct.
-- `bash` is compiled to the internal action **`shell`**; command patterns match
-  the whole command string.
-- `edit` gates `write`, `edit`, and `apply_patch` together.
-- `task` gates subagent spawning; `deny` removes the target from the task tool.
-- The CLI's `opencode debug agents` prints the resolved permission list — use it
-  to confirm ordering instead of trusting the YAML by eye.
-- The list form (`permissions: [{ action, resource, effect }]`) also resolves, but
-  the map form is the documented agent field. New files use the map form.
-
-### Shell write vectors
-
-`edit: deny` does not stop a shell from writing a file. Every template therefore
-denies, after its allows:
-
-`*>*`, `*<*`, `*;*`, `*&&*`, `*&*`, `*|*`, `` *`* ``, `*$(*`,
-`*Set-Content*`, `*Add-Content*`, `*Out-File*`, `*New-Item*`, `*Remove-Item*`,
-`*Copy-Item*`, `*Move-Item*`, `*Invoke-WebRequest*`, `*Invoke-RestMethod*`.
-
-This trades some legitimate compound commands for a real write boundary. Agents
-run one command per call, which is also the repository convention (Rule 12).
+- One owner per artifact; never split a single test file between two roles.
+- Name the spec (`design-spec.md` / `page-spec.md`) and `implementation_plan.md`.
+- Point at the skill path; do not restate the runbook in the brief.
+- Never widen `forbidden` to dodge a decision, and never narrow `write_scope` to a
+  single file when the role legitimately needs a directory.
+- Re-brief on repair rounds; route the same failing test back to its owner.
 
 ---
 
-## 4. Placeholders
+## 4. Review Loop
+
+```
+brief -> subagent runs + self-verifies -> orchestration audits diff + re-runs suite
+      -> accept | re-brief with failures -> repeat
+```
+
+The orchestrator, on every return:
+
+1. `git status --short` and `git diff --stat`; compare with `write_scope`.
+2. Restore any out-of-scope path, then report the violation.
+3. Re-run the claimed-green command and compare counts.
+4. Run `audit-agent-writes` (when installed) and `verify-component-create` /
+   `verify-page`.
+5. Accept only with the command output that proves the claim.
+
+---
+
+## 5. Placeholders
 
 Never deploy a template verbatim. Substitute:
 
@@ -87,57 +109,49 @@ Never deploy a template verbatim. Substitute:
 | `{{PM_RUN}}` | `pnpm` | `npm run` | `yarn` | `bun run` |
 | `{{MODEL_LINE}}` | `model: <provider>/<model>` or an empty line | same | same | same |
 
-Then reconcile the shell allow-list with the real `package.json` scripts. If a
-repository names its scripts differently (`check`, `e2e`, `vitest`), add the exact
-commands; do not widen `"*"`.
+Also update the `commands:` examples in the orchestrator brief and the
+verification commands in the review step to the repository's real script names
+(`test:all`, `e2e`, `check`, ...). Do not invent a script.
 
 ---
 
-## 5. Deployment Checklist
+## 6. Deployment Checklist
 
-- [ ] `.opencode/agents/nextjs-dev.md`
-- [ ] `.opencode/agents/nextjs-test-author.md`
-- [ ] `.opencode/agents/nextjs-qa-auditor.md`
-- [ ] `.opencode/agents/nextjs-orchestrator.md`
+- [ ] `.opencode/agents/nextjs-dev.md` — no `permission` block
+- [ ] `.opencode/agents/nextjs-test-author.md` — no `permission` block
+- [ ] `.opencode/agents/nextjs-qa-auditor.md` — no `permission` block
+- [ ] `.opencode/agents/nextjs-orchestrator.md` — `task` allows only the three
+      roles; brief + review sections present
 - [ ] `.agents/rules/agent-boundaries.md`
 - [ ] `.opencode/commands/create-nextjs-component.md`
 - [ ] `.opencode/commands/create-nextjs-page.md`
 - [ ] `docs/project.json` → `project_context_and_metadata.agents`
 - [ ] `AGENTS.md` → Agent Roster & Delegation section
 - [ ] No `{{TOKEN}}` remains in any deployed file
-- [ ] `opencode debug agents` lists all four with expected rules
+- [ ] `opencode debug agents` lists all four with the expected modes
 
 ---
 
-## 6. Smoke Tests
+## 7. Smoke Tests
 
-Run these once after installation, in a throwaway branch. Each must be **refused**,
-and the agent must report the restriction rather than work around it.
+Run once after installation, in a throwaway branch. These check *behavior*, not
+tool locks:
 
 | Test | Agent | Expected |
 | :--- | :--- | :--- |
-| Edit an existing `Foo.test.tsx` | `nextjs-dev` | Denied by permission |
-| Edit `Foo.tsx` | `nextjs-test-author` | Denied by permission |
-| Edit `Foo.test.tsx` | `nextjs-qa-auditor` | Denied by permission |
-| Edit `Foo.edge.test.tsx` | `nextjs-qa-auditor` | Allowed |
-| Write a file through `Set-Content` / `echo >` | any | Denied by shell rule |
-| Spawn `@general` | any role agent | Denied by `task` |
-| Ask the user a question | any role agent | Denied; must return `BLOCKED` |
-
-**Verified on OpenCode V2 (Nov 2026)** with `ollama/gemma4:e4b` in a scratch
-repository: `nextjs-test-author` → component `write` was rejected with
-`Permission denied: edit`; `nextjs-dev` → `Foo.test.tsx` was rejected;
-`nextjs-dev` → `Foo.tsx` succeeded; `nextjs-qa-auditor` → `Foo.test.tsx` was
-rejected and `Foo.edge.test.tsx` succeeded; `nextjs-dev` running
-`Set-Content -Path …` was rejected with `Permission denied: shell`. Re-run the
-same matrix after changing any pattern.
+| Ask it to edit `Foo.test.tsx` during implementation | `nextjs-dev` | Refuses, reports the file as owned by the test author; `git diff` clean for that path |
+| Ask it to fix `Foo.tsx` to make a suite pass | `nextjs-test-author` | Refuses, returns `code_fixes_required`; `git diff` clean for `Foo.tsx` |
+| Ask it to weaken an existing edge assertion | `nextjs-qa-auditor` | Refuses, returns `immutable_edits` |
+| Spawn `@general` | any role agent | Refuses; only the orchestrator delegates |
+| Run its own suite | any role agent | Executes it directly, no approval prompt from the user |
+| Return `PASS` without output | any role agent | Rejected by the orchestrator review step |
 
 New agent files register on the **next** session. A session already running will
 not see them.
 
 ---
 
-## 7. Repair Ownership
+## 8. Repair Ownership
 
 ```
 suite fails
@@ -147,20 +161,20 @@ suite fails
   -> repeat until exit 0
 ```
 
-- Baseline assertion wrong → `nextjs-test-author` may fix it, and must record the
+- Baseline assertion wrong -> `nextjs-test-author` may fix it, and must record the
   reason. This is the only permitted test edit during repair.
-- Edge assertion wrong → requires an explicit user decision; the orchestrator
+- Edge assertion wrong -> requires an explicit user decision; the orchestrator
   applies it and logs it. No test agent may edit an edge test.
-- Implementation wrong → dev fixes it. Always the default assumption.
+- Implementation wrong -> dev fixes it. Always the default assumption.
 
 ---
 
-## 8. Degraded Mode
+## 9. Harnesses Without a Roster
 
 Repositories without `.opencode/agents/` (or non-OpenCode harnesses) can still run
 the pipeline, but the orchestrator must:
 
 1. Announce `DEGRADED: agent permissions unavailable`.
 2. Use the prompts in `nextjs-adversarial-qa/resources/prompts/`.
-3. Run the write audit (`audit-agent-writes`) before reporting success, since
-   boundaries are no longer enforced at write time.
+3. Run the write audit (`audit-agent-writes`) before reporting success — it is
+   the only boundary check in that mode.

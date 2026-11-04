@@ -90,7 +90,7 @@ Whenever you are asked to create, scaffold, build, or implement **any new Next.j
 
 ## 4. Agent Roster & Delegation
 
-This repository installs four OpenCode agents. Permissions enforce the boundaries; assume a denied write is intentional.
+This repository installs four OpenCode agents. The subagents have no tool-level permission blocks: the orchestrator briefs them with an explicit write scope, they run and verify their own work, and the orchestrator audits the diff on return.
 
 | Agent | Mode | Owns | Never touches |
 | :--- | :--- | :--- | :--- |
@@ -105,10 +105,11 @@ Rules:
 2. **Failing test means failing code.** Report `code_fixes_required`; never weaken an assertion.
 3. **Edge tests are immutable.** Only an explicit user decision changes one, applied by the orchestrator.
 4. **Baseline tests are mutable with a reason.** `nextjs-test-author` records every revision.
-5. **Subagents cannot delegate or ask.** `task` and `question` are denied; return `BLOCKED` with the missing input.
-6. **No shell write workarounds.** Redirects, compound commands, and `Set-Content`/`Out-File` are denied.
-7. **The orchestrator audits the diff** before reporting success.
-8. **Command shortcuts**: `/create-nextjs-component` and `/create-nextjs-page` route to `nextjs-orchestrator`.
+5. **Only the orchestrator delegates, and subagents do not ask.** A subagent returns `BLOCKED` with the missing input instead of pausing the pipeline.
+6. **A brief scopes every spawn.** Role, objective, mode, `write_scope`, `read_scope`, `forbidden`, expected commands, definition of done.
+7. **Subagents verify themselves** — they run their own build, lint, type check, and targeted suites and return real command output.
+8. **The orchestrator audits the diff** before reporting success: touched paths vs `write_scope`, then re-runs the claimed-green suite.
+9. **Command shortcuts**: `/create-nextjs-component` and `/create-nextjs-page` route to `nextjs-orchestrator`.
 
 Full contract: [`.agents/rules/agent-boundaries.md`](./.agents/rules/agent-boundaries.md).
 

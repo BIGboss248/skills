@@ -61,7 +61,7 @@ be detected.
 | | N6 Playwright E2E & instant navigation | on | N2 |
 | | N7 Storybook workshop | off | N2 |
 | | N8 Design-system lint (`@shadcn/lint`) | on | N2 |
-| **C — Agents** | N9 Agent roster & permission boundaries | on | N2 |
+| **C — Agents** | N9 Agent roster & delegation boundaries | on | N2 |
 | **D — Delivery & Operations** | N10 MCP servers & codebase memory | on if installed | N1 |
 | | N11 Docker & reverse proxy | off | N2 |
 | | N12 Git hooks, triage & CI/CD | on | N2, N5/N6 for the gate |
@@ -144,7 +144,7 @@ of re-scaffolding and report `[UNTOUCHED]`:
     `docs/project.json → nextjs_setup_features`) and reports unchecked features
     as `SKIPPED`. Pass `-AllFeatures` / `--all` to audit the whole repository.
 - [ ] Re-run each enabled feature's runbook acceptance list; the script cannot
-      certify the build, the browser, or the agent permissions.
+      certify the build, the browser, or the agent boundaries.
 - [ ] Fix reported errors and re-verify until the enabled set is clean.
 - [ ] Confirm disabled features were left untouched.
 
@@ -172,6 +172,10 @@ Produce the report from
   report `[UNTOUCHED]`; rewriting loses route migrations.
 - **N9 placeholders** — a deployed agent file containing `{{MODEL_LINE}}`,
   `{{PM}}`, or `{{PM_RUN}}` is invalid; substitute before writing.
+- **N9 permissions** — never ship `permission` blocks on the subagents. They turn
+  every command into an approval prompt and block self-verification. Scope comes
+  from the orchestrator's brief and the diff audit; only `permission.task` on the
+  orchestrator is kept.
 - **N9 discovery timing** — new `.opencode/agents/*.md` files register on the next
   session; do not claim the roster is active inside the creating session.
 - **N10 selection** — never enable every MCP server silently; each one adds tool

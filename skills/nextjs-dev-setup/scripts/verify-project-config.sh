@@ -79,7 +79,7 @@ check_feature() {
     "Next.js Core Dependency (next@latest)"|"Agent Instructions & Docs Notice"*) echo "N2" ;;
     "Navigation Pending Feedback (useLinkStatus)") echo "N2" ;;
     "Theming & Dark Mode (next-themes)") echo "N13" ;;
-    "Agent Roster & Permission Boundaries") echo "N9" ;;
+    "Agent Roster"*) echo "N9" ;;
     *) echo "" ;;
   esac
 }
@@ -448,11 +448,11 @@ else
   AUTOMATION_CHECKS+=("WARN:Next.js Core Dependency (next@latest):Missing 'next' dependency in package.json. Run '<pkg_mgr> add next@latest'.")
 fi
 
-# 14. Agent Roster & Permission Boundaries (.opencode/agents)
+# 14. Agent Roster & Delegation Boundaries (.opencode/agents)
 AGENT_MISSING=()
 AGENT_INVALID=()
 check_agent() {
-  local name="$1"; local file="$2"; local mode="$3"; local needles="$4"
+  local name="$1"; local file="$2"; local mode="$3"; local needles="$4"; local forbidden="${5:-}"
   if [ ! -f "$file" ]; then
     AGENT_MISSING+=("$file")
     return
@@ -464,14 +464,20 @@ check_agent() {
   for needle in "${NEEDLES[@]}"; do
     grep -Fq "$needle" "$file" || problems="$problems missing '$needle';"
   done
+  if [ -n "$forbidden" ]; then
+    IFS='|' read -ra BANNED <<< "$forbidden"
+    for banned in "${BANNED[@]}"; do
+      grep -Fq "$banned" "$file" && problems="$problems subagents must not carry permission blocks (found '$banned');"
+    done
+  fi
   [ -n "$problems" ] && AGENT_INVALID+=("$file:$problems")
   return 0
 }
 
-check_agent "nextjs-dev" ".opencode/agents/nextjs-dev.md" "subagent" "*.test.tsx|task: deny"
-check_agent "nextjs-test-author" ".opencode/agents/nextjs-test-author.md" "subagent" "edit:|task: deny"
-check_agent "nextjs-qa-auditor" ".opencode/agents/nextjs-qa-auditor.md" "subagent" "edge.test.tsx|task: deny"
-check_agent "nextjs-orchestrator" ".opencode/agents/nextjs-orchestrator.md" "primary" "nextjs-dev|nextjs-test-author|nextjs-qa-auditor"
+check_agent "nextjs-dev" ".opencode/agents/nextjs-dev.md" "subagent" "You do not edit tests" "permission:"
+check_agent "nextjs-test-author" ".opencode/agents/nextjs-test-author.md" "subagent" "You do not edit implementation" "permission:"
+check_agent "nextjs-qa-auditor" ".opencode/agents/nextjs-qa-auditor.md" "subagent" "You do not edit implementation" "permission:"
+check_agent "nextjs-orchestrator" ".opencode/agents/nextjs-orchestrator.md" "primary" "nextjs-dev|nextjs-test-author|nextjs-qa-auditor|Delegation brief"
 
 COMMANDS_MISSING=()
 for cmd in ".opencode/commands/create-nextjs-component.md" ".opencode/commands/create-nextjs-page.md"; do
@@ -479,7 +485,7 @@ for cmd in ".opencode/commands/create-nextjs-component.md" ".opencode/commands/c
 done
 
 if [ ${#AGENT_MISSING[@]} -eq 0 ] && [ ${#AGENT_INVALID[@]} -eq 0 ] && [ -f ".agents/rules/agent-boundaries.md" ] && [ ${#COMMANDS_MISSING[@]} -eq 0 ]; then
-  AUTOMATION_CHECKS+=("OK:Agent Roster & Permission Boundaries:Found 4 agents in .opencode/agents with enforced write boundaries, .agents/rules/agent-boundaries.md, and both command shortcuts.")
+  AUTOMATION_CHECKS+=("OK:Agent Roster & Delegation Boundaries:Found 4 agents in .opencode/agents (subagents unrestricted, brief + diff audit), .agents/rules/agent-boundaries.md, and both command shortcuts.")
 else
   if feature_enabled N9; then
     if [ ${#AGENT_MISSING[@]} -gt 0 ]; then
@@ -493,7 +499,7 @@ else
       WARNINGS+=("Missing command shortcut(s): ${COMMANDS_MISSING[*]}.")
     fi
   fi
-  AUTOMATION_CHECKS+=("MISS:Agent Roster & Permission Boundaries:Agent roster incomplete or invalid.")
+  AUTOMATION_CHECKS+=("MISS:Agent Roster & Delegation Boundaries:Agent roster incomplete or invalid.")
 fi
 
 # 15. Navigation Pending Feedback (useLinkStatus)

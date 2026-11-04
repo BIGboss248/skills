@@ -95,7 +95,7 @@ function Get-CheckFeature([string]$Name) {
         "Agent Instructions & Docs Notice*" { return "N2" }
         "Navigation Pending Feedback*" { return "N2" }
         "Theming & Dark Mode*" { return "N13" }
-        "Agent Roster & Permission Boundaries" { return "N9" }
+        "Agent Roster*" { return "N9" }
         default { return $null }
     }
 }
@@ -543,12 +543,12 @@ if (Test-Path $pkgPath) {
     } catch {}
 }
 
-# 14. Agent Roster & Permission Boundaries (.opencode/agents)
+# 14. Agent Roster & Delegation Boundaries (.opencode/agents)
 $agentSpecs = @(
-    @{ Name = "nextjs-dev"; File = ".opencode/agents/nextjs-dev.md"; Mode = "subagent"; Required = @("*.test.tsx", "task: deny") },
-    @{ Name = "nextjs-test-author"; File = ".opencode/agents/nextjs-test-author.md"; Mode = "subagent"; Required = @("edit:", "task: deny") },
-    @{ Name = "nextjs-qa-auditor"; File = ".opencode/agents/nextjs-qa-auditor.md"; Mode = "subagent"; Required = @("edge.test.tsx", "task: deny") },
-    @{ Name = "nextjs-orchestrator"; File = ".opencode/agents/nextjs-orchestrator.md"; Mode = "primary"; Required = @("nextjs-dev", "nextjs-test-author", "nextjs-qa-auditor") }
+    @{ Name = "nextjs-dev"; File = ".opencode/agents/nextjs-dev.md"; Mode = "subagent"; Required = @("You do not edit tests"); Forbidden = @("permission:") },
+    @{ Name = "nextjs-test-author"; File = ".opencode/agents/nextjs-test-author.md"; Mode = "subagent"; Required = @("You do not edit implementation"); Forbidden = @("permission:") },
+    @{ Name = "nextjs-qa-auditor"; File = ".opencode/agents/nextjs-qa-auditor.md"; Mode = "subagent"; Required = @("You do not edit implementation"); Forbidden = @("permission:") },
+    @{ Name = "nextjs-orchestrator"; File = ".opencode/agents/nextjs-orchestrator.md"; Mode = "primary"; Required = @("nextjs-dev", "nextjs-test-author", "nextjs-qa-auditor", "Delegation brief"); Forbidden = @() }
 )
 
 $missingAgents = @()
@@ -566,6 +566,9 @@ foreach ($spec in $agentSpecs) {
     foreach ($needle in $spec.Required) {
         if (-not $agentContent.Contains($needle)) { $problems += "missing required token '$needle'" }
     }
+    foreach ($needle in $spec.Forbidden) {
+        if ($agentContent.Contains($needle)) { $problems += "subagents must not carry permission blocks (found '$needle')" }
+    }
     if ($problems.Count -gt 0) { $invalidAgents += "$($spec.File): $($problems -join '; ')" }
 }
 
@@ -576,7 +579,7 @@ foreach ($cmd in @(".opencode/commands/create-nextjs-component.md", ".opencode/c
 }
 
 if ($missingAgents.Count -eq 0 -and $invalidAgents.Count -eq 0 -and (Test-Path $boundariesRule) -and $commandsMissing.Count -eq 0) {
-    $automationChecks.Add(@{ name = "Agent Roster & Permission Boundaries"; status = "configured"; details = "Found 4 agents in .opencode/agents with enforced write boundaries, .agents/rules/agent-boundaries.md, and both command shortcuts." })
+    $automationChecks.Add(@{ name = "Agent Roster & Delegation Boundaries"; status = "configured"; details = "Found 4 agents in .opencode/agents: subagents run unrestricted (brief + diff audit), orchestrator gates delegation to the three roles, .agents/rules/agent-boundaries.md and both command shortcuts present." })
 } else {
     if (Test-FeatureEnabled "N9") {
         if ($missingAgents.Count -gt 0) { $errors.Add("Missing agent file(s): $($missingAgents -join ', '). Enable N9 (agent roster) or remove it from the selection.") }
@@ -584,7 +587,7 @@ if ($missingAgents.Count -eq 0 -and $invalidAgents.Count -eq 0 -and (Test-Path $
         if (-not (Test-Path $boundariesRule)) { $errors.Add("Missing .agents/rules/agent-boundaries.md.") }
         if ($commandsMissing.Count -gt 0) { $warnings.Add("Missing command shortcut(s): $($commandsMissing -join ', ').") }
     }
-    $automationChecks.Add(@{ name = "Agent Roster & Permission Boundaries"; status = "missing"; details = "Agent roster incomplete. Missing: $($missingAgents -join ', '); invalid: $($invalidAgents.Count); boundaries rule: $(Test-Path $boundariesRule)." })
+    $automationChecks.Add(@{ name = "Agent Roster & Delegation Boundaries"; status = "missing"; details = "Agent roster incomplete. Missing: $($missingAgents -join ', '); invalid: $($invalidAgents.Count); boundaries rule: $(Test-Path $boundariesRule)." })
 }
 
 # 15. Navigation Pending Feedback (useLinkStatus) Check

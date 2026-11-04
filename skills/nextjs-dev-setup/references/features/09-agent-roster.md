@@ -1,9 +1,13 @@
-# N9 — Agent Roster & Permission Boundaries
+# N9 — Agent Roster & Delegation Boundaries
 
 **Category:** Agents · **Default:** on · **Depends on:** N2
 
-Installs the four OpenCode agents that enforce implementation/test separation,
-their boundary rule, and the two command shortcuts.
+Installs the four OpenCode agents that keep implementation and test authorship in
+separate contexts, their boundary contract, and the two command shortcuts.
+
+Subagents run unrestricted: no `permission` block, no shell allowlist. The
+orchestrator briefs each spawn with an explicit write scope and audits the diff on
+return.
 
 ## Enable when
 
@@ -19,9 +23,12 @@ delegation and accept the documented degraded mode.
    auditor), or inherit the primary agent's model (`null`)?
 3. **Command shortcuts** — install `/create-nextjs-component` and
    `/create-nextjs-page`? Default yes.
-4. **Boundary acknowledgement** — the operator confirms the implementation agent
-   cannot edit tests, test agents cannot edit implementation, and edge tests are
-   immutable once created.
+4. **Verification commands** — confirm the exact script names the brief and review
+   step should name (`test`, `test:all`, `lint`, `e2e`, `check`). Do not invent
+   one.
+5. **Boundary acknowledgement** — the operator confirms the model: dev does not
+   edit tests, test agents do not edit implementation, edge tests are immutable
+   once created, and the orchestrator audits the diff.
 
 ## Steps
 
@@ -34,31 +41,40 @@ delegation and accept the documented degraded mode.
    - [nextjs-qa-auditor.md.template](../../resources/templates/agents/nextjs-qa-auditor.md.template)
    - [nextjs-orchestrator.md.template](../../resources/templates/agents/nextjs-orchestrator.md.template)
    - [agent-boundaries.md.template](../../resources/templates/rules/agent-boundaries.md.template)
-3. Substitute every placeholder — `{{PM}}`, `{{PM_RUN}}`, `{{MODEL_LINE}}`. A
-   deployed file containing a `{{TOKEN}}` is invalid.
-4. Deploy the commands from [commands/](../../resources/templates/commands/).
-5. Record the roster in `docs/project.json` under
+3. **Do not add `permission` blocks to the three subagents.** Only the orchestrator
+   keeps `permission.task` (allow the three roles, deny everything else). Any other
+   rule reintroduces approval prompts and blocks self-verification.
+4. Substitute every placeholder — `{{PM}}`, `{{PM_RUN}}`, `{{MODEL_LINE}}` — and
+   replace the sample commands in the orchestrator's brief/review sections with
+   the repository's real scripts. A deployed file containing a `{{TOKEN}}` is
+   invalid.
+5. Deploy the commands from [commands/](../../resources/templates/commands/).
+6. Record the roster in `docs/project.json` under
    `project_context_and_metadata.agents`.
-6. Update `AGENTS.md` with the Agent Roster & Delegation section from
+7. Update `AGENTS.md` with the Agent Roster & Delegation section from
    [AGENTS.md.template](../../resources/templates/AGENTS.md.template).
-7. Run `opencode debug agents` where the CLI is available and confirm all four
+8. Run `opencode debug agents` where the CLI is available and confirm all four
    load. New agent files register on the next session, not the current one.
 
 ## Acceptance
 
 - [ ] All four agent files exist with the expected `mode`.
-- [ ] `nextjs-dev` denies `**/*.test.tsx`; both test agents deny `edit`; all
-      three subagents deny `task`.
-- [ ] `.agents/rules/agent-boundaries.md` exists.
+- [ ] `nextjs-dev`, `nextjs-test-author`, and `nextjs-qa-auditor` contain **no**
+      `permission:` block.
+- [ ] `nextjs-orchestrator` gates `task` to the three role agents and documents
+      the delegation brief and the review/audit step.
+- [ ] `.agents/rules/agent-boundaries.md` exists and describes brief + audit
+      enforcement.
 - [ ] Both command shortcuts exist.
 - [ ] No `{{TOKEN}}` placeholder remains.
 - [ ] `opencode debug agents` lists the roster (when available).
 
 ## Notes
 
-- `edit: deny` removes the write/edit tools but does not block shell
-  redirection, which is why the templates also deny `*>*`, `*;*`, `Set-Content`,
-  and `Out-File`.
+- The briefs name explicit paths; the orchestrator restores anything written
+  outside `write_scope` before accepting the work.
+- `git diff` is the audit surface. For that reason the contract prefers
+  `write`/`edit` over shell redirection.
 - Other harnesses fall back to prompt-level roles plus the orchestrator's write
   audit (`DEGRADED: agent permissions unavailable`).
 - Details: [agent-roster-guide.md](../agent-roster-guide.md).

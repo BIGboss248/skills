@@ -1,8 +1,10 @@
 # Agent Boundaries & Delegation
 
 Per-repository contract for the Next.js role agents installed in
-`.opencode/agents/`. Permissions enforce the boundaries; this file explains them
-so every agent and the human operator share one model.
+`.opencode/agents/`. The orchestrator scopes each task with a written brief and
+audits the resulting diff. Subagents carry **no tool-level permission blocks**:
+they run their own commands, verify their own work, and are trusted to stay
+inside the scope they were given.
 
 ---
 
@@ -32,9 +34,25 @@ so every agent and the human operator share one model.
 | `test-plan.md` | approve | deny | write | read |
 | `jest.config.*`, `playwright.config.*`, `package.json`, lockfiles | user only | deny | deny | deny |
 
-`write` means the agent's `edit` permission covers the path. `approve` means the
-agent coordinates the change but does not perform it. `deny` means the tool is
-unavailable — the agent must report the need instead of working around it.
+`write` means the role owns the path. `approve` means the role coordinates the
+change but does not perform it. `deny` means the role must report the need
+instead of doing it — it is an instruction, not a tool lock.
+
+---
+
+## Enforcement
+
+1. **Brief before spawn.** The orchestrator passes role, objective, mode,
+   `write_scope`, `read_scope`, `forbidden`, expected commands, and the definition
+   of done. A subagent without a brief must return `BLOCKED: missing brief`.
+2. **Self-verification.** Subagents run their own builds, linters, type checks,
+   and targeted suites and return the real command output. They never wait for
+   the user to approve a command.
+3. **Audit on return.** The orchestrator runs `git status --short` and `git diff
+   --stat`, compares the touched paths against `write_scope`, and restores
+   anything outside it before accepting the work.
+4. **No silent widening.** If the brief was wrong, the orchestrator re-briefs and
+   logs the change; the subagent never expands its own scope.
 
 ---
 
@@ -47,14 +65,17 @@ unavailable — the agent must report the need instead of working around it.
    every revision in `revision_reasons`.
 4. **Failing test means failing code.** The default response is a
    `code_fixes_required` entry, not an assertion change.
-5. **Subagents cannot delegate.** `task` is denied, so no hidden spawn trees.
-6. **Subagents cannot ask.** `question` is denied; they return `BLOCKED` with the
-   exact missing input.
-7. **No shell workarounds.** Redirects, compound commands, and
-   `Set-Content`/`Out-File`/`New-Item` are denied, so a file write cannot bypass
-   the `edit` boundary.
+5. **Only the orchestrator delegates.** The three role agents work directly and
+   return their result; they never spawn each other.
+6. **Subagents do not ask.** They return `BLOCKED` with the exact missing input
+   instead of pausing the pipeline for a question.
+7. **Writes go through the file tools.** Prefer `write`/`edit` over shell
+   redirection so every change appears in `git diff` for the audit. Shell
+   redirection is not forbidden, but it is not auditable and is treated as a
+   boundary risk.
 8. **The orchestrator audits the diff.** Before reporting success it verifies that
-   each agent touched only its allowed classes of files.
+   each agent touched only its allowed classes of files, and re-runs the suite it
+   claims is green.
 
 ---
 
@@ -70,15 +91,14 @@ suite fails
 
 Escalation:
 
-- Baseline wrong → `nextjs-test-author` fixes it, logs the reason.
-- Edge wrong → user decision; orchestrator edits and logs it.
-- Spec ambiguous → `BLOCKED: ambiguous specification` with the rows in question.
+- Baseline wrong -> `nextjs-test-author` fixes it, logs the reason.
+- Edge wrong -> user decision; orchestrator edits and logs it.
+- Spec ambiguous -> `BLOCKED: ambiguous specification` with the rows in question.
 
 ---
 
-## Degraded Mode
+## Harnesses Without a Roster
 
-If `.opencode/agents/` is absent (different harness), the pipeline may still run
-with prompt-level roles, but the orchestrator must announce
-`DEGRADED: agent permissions unavailable` and run the write audit before
-reporting success.
+When `.opencode/agents/` is absent, run the same pipeline with prompt-level roles
+and announce `DEGRADED: agent permissions unavailable`. The write audit is not
+optional in that mode: it is the only boundary check.

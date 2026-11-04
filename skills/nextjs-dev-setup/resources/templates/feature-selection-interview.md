@@ -34,7 +34,7 @@ categories the user keeps. Any feature can also be named explicitly by ID.
 | | N6 Playwright E2E & instant navigation | on | N2 |
 | | N7 Storybook workshop | off | N2 |
 | | N8 Design-system lint (`@shadcn/lint`) | on | N2 |
-| **C — Agents** | N9 Agent roster & permission boundaries | on | N2 |
+| **C — Agents** | N9 Agent roster & delegation boundaries | on | N2 |
 | **D — Delivery & Operations** | N10 MCP servers & codebase memory | on if installed | N1 |
 | | N11 Docker & reverse proxy | off | N2 |
 | | N12 Git hooks, triage & CI/CD | on | N2, N5/N6 for the gate |
