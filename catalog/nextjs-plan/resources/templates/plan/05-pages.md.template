@@ -1,0 +1,109 @@
+# Phase 5: Pages & Component Implementation Checklists
+
+> [!IMPORTANT]
+> **Single Source of Truth**: this file is the canonical inventory of pages,
+> sections, child components, and page-level support files. No other file tracks
+> page/component progress.
+>
+> **Page Completion Rule**: tick a page (`- [x]`) **if and only if** every child
+> component and every page-level task is complete and verified.
+
+## Page-level mandatory tasks
+
+Every page must include all six:
+
+1. `page.tsx` — view and layout assembly
+2. `loading.tsx` — streaming skeleton
+3. `error.tsx` — nested boundary with a recovery action
+4. `generateMetadata` / `metadata` — title, description, OG/Twitter
+5. JSON-LD structured data appropriate to the page type
+6. `generateStaticParams()` — when the route is dynamic or localized
+
+## Component acceptance (applies to every component)
+
+- [ ] Renders all states: default, loading, empty, error.
+- [ ] Keyboard reachable; `axe` scan clean.
+- [ ] All visible copy comes from the dictionary (no hard-coded strings).
+- [ ] Works in RTL; mixed-direction values use `dir="auto"`.
+- [ ] No overflow at the smallest and largest breakpoint.
+- [ ] Unit test (or story) covers the happy path and one edge case.
+- [ ] Uses semantic tokens only — no raw palette class, arbitrary value, or
+      inline style.
+
+---
+
+## Feature pack page overlays
+
+Only when the pack is enabled. Add these lines inside the matching page block; do
+not create a second inventory.
+
+### `woocommerce`
+
+- [ ] `/products`, `/products/[slug]`: ISR (`revalidate: 300`,
+      `tags: ['products']`), inline `SimpleProduct`/`VariableProduct` fragments,
+      price HTML-entity decoding, `Product` JSON-LD, `generateStaticParams()`.
+- [ ] `/cart`: empty and populated states; `woocommerce-session` forwarded on every
+      mutation; adding then re-querying retains the item.
+- [ ] `/login`, `/register`, `/account`: auth reads scoped to these subtrees (never
+      the root layout); expired JWT is cleared; missing session redirects instead
+      of rendering account data.
+- [ ] Checkout handoff: absolute WordPress URLs with trailing slashes rendered as
+      plain `<a>` tags (no SPA interception).
+
+---
+
+## Canonical Page & Component Inventory
+
+> Replace this example with the project's real pages. One block per route.
+
+- [ ] **Page: Home (`/`)**
+  - [ ] **Page Infrastructure & SEO**
+    - [ ] `page.tsx` — view and layout assembly
+    - [ ] `loading.tsx` — streaming skeleton
+    - [ ] `error.tsx` — nested boundary
+    - [ ] `generateMetadata` — title, description, OG/Twitter
+    - [ ] JSON-LD (`WebSite` / `Organization`)
+    - [ ] `generateStaticParams()` — locale params
+  - [ ] **Section: Global Header**
+    - [ ] `SiteHeader` — brand, navigation
+    - [ ] `MobileNav` — slide-out menu
+    - [ ] `LocaleSwitcher`
+    - [ ] `ThemeToggle`
+  - [ ] **Section: Hero**
+    - [ ] `HeroHeadline`
+    - [ ] `PrimaryActions`
+    - [ ] `HeroVisual`
+  - [ ] **Section: Primary Content**
+    - [ ] `ContentGrid`
+    - [ ] `ContentCard`
+  - [ ] **Section: Global Footer**
+    - [ ] `SiteFooter`
+
+- [ ] **Page: Detail (`/[slug]`)**
+  - [ ] **Page Infrastructure & SEO**
+    - [ ] `page.tsx`
+    - [ ] `loading.tsx`
+    - [ ] `error.tsx`
+    - [ ] `generateMetadata` — per-entity title/description
+    - [ ] JSON-LD (`Article` / `Product` / entity type)
+    - [ ] `generateStaticParams()` — entity slugs
+  - [ ] **Section: Detail Body**
+    - [ ] `DetailHeader`
+    - [ ] `DetailContent`
+    - [ ] `RelatedItems`
+  - [ ] **Route behaviour**
+    - [ ] Unknown slug renders `not-found`, not a 500.
+    - [ ] `generateMetadata` returns a fallback when the entity is missing.
+
+- [ ] **Page: System & Error Surfaces**
+  - [ ] `not-found.tsx` with recovery navigation
+  - [ ] `error.tsx` / `global-error.tsx` with reset
+  - [ ] 401/403 pages if the app has protected routes
+
+---
+
+**Phase 5 gate:** every page in `02-sitemap-and-routes.md` renders with its
+loading/error/metadata/JSON-LD tasks complete, and `test:all` is green.
+
+> **Gate verified YYYY-MM-DD (pages ×N, components ×M):** [route checks,
+> a11y results, unit count, e2e count].

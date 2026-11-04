@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "seo": {
+      "command": "npx",
+      "args": ["-y", "seo", "mcp", "serve"],
+      "env": {}
+    }
+  }
+}

@@ -1,0 +1,43 @@
+import { NextResponse } from "next/server";
+import { ZodError } from "zod";
+
+export interface ProblemDetails {
+  type?: string;
+  title: string;
+  status: number;
+  detail: string;
+  instance?: string;
+  invalid_params?: Array<{ name: string; reason: string }>;
+  [key: string]: unknown;
+}
+
+/**
+ * Creates an RFC 9457 compliant application/problem+json response.
+ */
+export function createProblemResponse(problem: ProblemDetails): NextResponse {
+  return new NextResponse(JSON.stringify(problem), {
+    status: problem.status,
+    headers: {
+      "Content-Type": "application/problem+json",
+    },
+  });
+}
+
+/**
+ * Converts a ZodError into an RFC 9457 422 Unprocessable Content response.
+ */
+export function handleValidationError(error: ZodError, instance?: string): NextResponse {
+  const invalid_params = error.issues.map((issue) => ({
+    name: issue.path.join("."),
+    reason: issue.message,
+  }));
+
+  return createProblemResponse({
+    type: "https://api.example.com/errors/validation-failed",
+    title: "Unprocessable Content",
+    status: 422,
+    detail: "The request payload failed validation against the schema.",
+    instance,
+    invalid_params,
+  });
+}

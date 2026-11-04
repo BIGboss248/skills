@@ -1,0 +1,117 @@
+# Master Implementation Plan
+
+A modular, chronological roadmap **and execution ledger** from empty workspace to
+production release. This file is the single source of truth for progress: any
+agent must be able to resume from it without reading git history.
+
+---
+
+## Current status
+
+| Field | Value |
+| :--- | :--- |
+| Last completed item | `—` |
+| Next item | `1.1` |
+| Blocker | None |
+| Active amendments | None |
+| Gate status | 0 / 7 phases verified |
+| Open decisions | None |
+
+---
+
+## Feature packs
+
+Capability tracks composed into the phases above. Disabled packs stay listed with
+their revisit trigger; pack items are labeled `(pack: <id>)` inside the phase files.
+
+| Pack | Enabled | Home phases | Gate | Evidence |
+| :--- | :---: | :--- | :--- | :--- |
+| `health-monitoring` | [x] | 3, 7 | Phase 3 | Pending |
+| `opentelemetry` | [ ] | 4, 7 | Phase 4 | Deferred: [revisit trigger] |
+| `woocommerce` | [ ] | 1, 2, 5, 6, 7 | Phase 7 | Deferred: [revisit trigger] |
+
+---
+
+## Continuation protocol
+
+1. Read **Current status** and **Next action**.
+2. Open the phase file containing the next item and read it top to bottom.
+3. Take the **first unchecked item**; implement only that item.
+4. Run its acceptance check and capture the evidence.
+5. Record the short commit hash in the item and fill `Result`.
+6. Commit code and plan separately:
+   `feat(scope): …` (`Refs: 4.2`) then `docs(plan): mark 4.2 complete (abc1234)`.
+7. Update **Current status**, **Next action**, and the execution log; push.
+
+The hash in a checklist always points to the **code** commit. Non-code work uses
+`manual`.
+
+---
+
+## Phase Summary & Progress Dashboard
+
+| Phase | Milestone | File | Gate | Status |
+| :---: | :--- | :--- | :---: | :--- |
+| **01** | Discovery & Route Architecture | [01-discovery-and-architecture.md](./01-discovery-and-architecture.md) | Pending | Pending |
+| **02** | Environment, Testing & CI/CD | [02-environment-and-cicd.md](./02-environment-and-cicd.md) | Pending | Pending |
+| **03** | System Health Monitoring Probe | [03-system-health-probe.md](./03-system-health-probe.md) | Pending | Pending |
+| **04** | Core Foundations & Runtime | [04-core-foundations.md](./04-core-foundations.md) | Pending | Pending |
+| **05** | Pages & Component Checklists | [05-pages-and-components.md](./05-pages-and-components.md) | Pending | Pending |
+| **06** | Server Functions & Global SEO | [06-server-functions-and-metadata.md](./06-server-functions-and-metadata.md) | Pending | Pending |
+| **07** | Integrations & Production Release | [07-integrations-and-release.md](./07-integrations-and-release.md) | Pending | Pending |
+
+Gate values: `Pending`, `In progress`, `Verified <date>`, `Verified with amendments`.
+
+---
+
+## Amendments
+
+Append one entry per change to scope or order. Never renumber completed items;
+insert with a letter suffix (`4b`, `4c`) and state downstream impact.
+
+- **YYYY-MM-DD — [phase/item change].** Trigger: [what forced it]. Adds
+  [items]. Supersedes [items]. [Downstream phases/items affected].
+
+---
+
+## Definition of done
+
+- [ ] Every checklist item has a commit hash or `manual`.
+- [ ] Every phase gate is verified with dated evidence.
+- [ ] Every enabled pack has labeled items and gate evidence; every disabled pack
+      has a reason and a revisit trigger.
+- [ ] Every locked decision is recorded in `docs/project.json`.
+- [ ] Every deferred item has a reason and a revisit trigger.
+- [ ] All routes in `02-sitemap-and-routes.md` exist and are owned per
+      `04-architecture-contracts.md`.
+- [ ] The full gate passes: [fast, full, edge, build commands].
+- [ ] No secrets, dumps, uploads, or local state committed.
+- [ ] A fresh clone reproduces the setup with the documented commands.
+
+---
+
+## Execution log
+
+| Item | Commit | Date | One-line result |
+| :--- | :--- | :--- | :--- |
+| — | — | — | — |
+
+---
+
+## Next action
+
+**Next item:** `1.1` — [title].
+
+Carry into it: [constraints, decisions, and pitfalls that apply].
+
+---
+
+## Quick Navigation
+
+- **Phase 1**: [Discovery, Contracts & Route Registry](./01-discovery-and-architecture.md)
+- **Phase 2**: [Dev Setup, Testing & CI/CD](./02-environment-and-cicd.md)
+- **Phase 3**: [System Health Probe Verification](./03-system-health-probe.md)
+- **Phase 4**: [Env Vars, i18n, Theme Tokens, Layouts & OTel](./04-core-foundations.md)
+- **Phase 5**: [Pages, Components, SEO & Support Files](./05-pages-and-components.md)
+- **Phase 6**: [Server Actions, Route Handlers & Global Metadata](./06-server-functions-and-metadata.md)
+- **Phase 7**: [Integrations, Release & Operations](./07-integrations-and-release.md)

@@ -1,0 +1,94 @@
+// instrumentation.ts
+// Standard OpenTelemetry registration with @vercel/otel bug safeguard and onRequestError
+
+import { registerOTel } from "@vercel/otel";
+import { trace, SpanStatusCode } from "@opentelemetry/api";
+
+export interface RequestErrorContext {
+  routerKind: "Pages Router" | "App Router";
+  routePath: string;
+  routeType: "render" | "route" | "action" | "proxy";
+  renderSource?:
+    | "react-server-components"
+    | "react-server-components-payload"
+    | "server-rendering";
+  revalidateReason?: "on-demand" | "stale" | undefined;
+  renderType?: "dynamic" | "dynamic-resume";
+}
+
+export interface ErrorRequestInfo {
+  path: string;
+  method: string;
+  headers: Record<string, string | string[] | undefined>;
+}
+
+/**
+ * Checks if OpenTelemetry should be completely disabled via environment variables.
+ * Follows standard OpenTelemetry specification: OTEL_SDK_DISABLED=true disables the SDK.
+ */
+function isOtelDisabled(): boolean {
+  return process.env.OTEL_SDK_DISABLED === "true";
+}
+
+export function register() {
+  if (isOtelDisabled()) {
+    console.log(
+      "[OTel] Instrumentation hook skipped (OTEL_SDK_DISABLED=true).",
+    );
+    return;
+  }
+
+  // Workaround for @vercel/otel bug: @vercel/otel checks `!!process.env.OTEL_SDK_DISABLED`,
+  // which treats the string "false" as truthy and disables the SDK.
+  if (process.env.OTEL_SDK_DISABLED !== "true") {
+    delete process.env.OTEL_SDK_DISABLED;
+  }
+
+  console.log(
+    "[OTel] Initializing OpenTelemetry for service:",
+    process.env.OTEL_SERVICE_NAME || "nextjs-app",
+  );
+  registerOTel({
+    serviceName: process.env.OTEL_SERVICE_NAME || "nextjs-app",
+  });
+}
+
+export async function onRequestError(
+  err: unknown,
+  request: ErrorRequestInfo,
+  context: RequestErrorContext,
+): Promise<void> {
+  if (isOtelDisabled()) {
+    return;
+  }
+
+  const span = trace.getActiveSpan();
+  if (span) {
+    if (err instanceof Error) {
+      span.recordException(err);
+    } else {
+      span.recordException(String(err));
+    }
+
+    span.setStatus({
+      code: SpanStatusCode.ERROR,
+      message: err instanceof Error ? err.message : String(err),
+    });
+
+    const digest =
+      typeof err === "object" && err !== null && "digest" in err
+        ? String((err as { digest?: unknown }).digest)
+        : undefined;
+
+    if (digest) span.setAttribute("next.error.digest", digest);
+    if (context?.routerKind)
+      span.setAttribute("next.error.router_kind", context.routerKind);
+    if (context?.routePath)
+      span.setAttribute("next.error.route_path", context.routePath);
+    if (context?.routeType)
+      span.setAttribute("next.error.route_type", context.routeType);
+    if (request?.path) span.setAttribute("http.target", request.path);
+    if (request?.method) span.setAttribute("http.method", request.method);
+  }
+}
+

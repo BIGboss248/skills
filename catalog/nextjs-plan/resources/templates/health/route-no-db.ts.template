@@ -1,0 +1,92 @@
+import { NextResponse } from "next/server";
+import v8 from "v8";
+import { monitorEventLoopDelay } from "perf_hooks";
+
+export const dynamic = "force-dynamic";
+
+// Continuous event loop lag monitoring
+const histogram = monitorEventLoopDelay({ resolution: 10 });
+histogram.enable();
+
+interface MetricCheck {
+  status: "healthy" | "degraded" | "unhealthy";
+  details?: Record<string, unknown>;
+}
+
+function evaluateMemory(): MetricCheck {
+  const heapStats = v8.getHeapStatistics();
+  const memoryUsage = process.memoryUsage();
+
+  const usedHeapPercent = (heapStats.used_heap_size / heapStats.heap_size_limit) * 100;
+
+  let status: MetricCheck["status"] = "healthy";
+  if (usedHeapPercent > 90) {
+    status = "unhealthy";
+  } else if (usedHeapPercent > 80) {
+    status = "degraded";
+  }
+
+  return {
+    status,
+    details: {
+      heapUtilization: `${usedHeapPercent.toFixed(1)}%`,
+      usedHeapMB: Math.round(heapStats.used_heap_size / 1024 / 1024),
+      totalHeapMB: Math.round(heapStats.total_heap_size / 1024 / 1024),
+      heapLimitMB: Math.round(heapStats.heap_size_limit / 1024 / 1024),
+      rssMB: Math.round(memoryUsage.rss / 1024 / 1024),
+    },
+  };
+}
+
+function evaluateEventLoop(): MetricCheck {
+  const p99LagMs = histogram.percentile(99) / 1e6;
+
+  let status: MetricCheck["status"] = "healthy";
+  if (p99LagMs > 500) {
+    status = "unhealthy";
+  } else if (p99LagMs > 100) {
+    status = "degraded";
+  }
+
+  return {
+    status,
+    details: {
+      meanLagMs: Number((histogram.mean / 1e6).toFixed(2)),
+      p99LagMs: Number(p99LagMs.toFixed(2)),
+    },
+  };
+}
+
+export async function GET() {
+  const memory = evaluateMemory();
+  const eventLoop = evaluateEventLoop();
+
+  const isHealthy = memory.status !== "unhealthy" && eventLoop.status !== "unhealthy";
+  const isDegraded = memory.status === "degraded" || eventLoop.status === "degraded";
+
+  const overallStatus: "healthy" | "degraded" | "unhealthy" = !isHealthy
+    ? "unhealthy"
+    : isDegraded
+      ? "degraded"
+      : "healthy";
+
+  const payload = {
+    status: overallStatus,
+    timestamp: new Date().toISOString(),
+    uptimeSeconds: Math.floor(process.uptime()),
+    environment: process.env.NODE_ENV || "development",
+    version: process.env.npm_package_version || "1.0.0",
+    checks: {
+      memory,
+      eventLoop,
+    },
+  };
+
+  return NextResponse.json(payload, {
+    status: overallStatus === "unhealthy" ? 503 : 200,
+    headers: {
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+    },
+  });
+}
+

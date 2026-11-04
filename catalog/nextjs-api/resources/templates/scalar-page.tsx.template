@@ -1,0 +1,23 @@
+// app/api/docs/page.tsx or custom route
+// Renders an interactive OpenAPI explorer using Scalar via fast script tag (zero extra npm bundle cost)
+
+export const dynamic = "force-static";
+
+export default function ApiDocsPage() {
+  return (
+    <html lang="en">
+      <head>
+        <title>API Documentation</title>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </head>
+      <body style={{ margin: 0, padding: 0 }}>
+        <script
+          id="api-reference"
+          data-url="/api/openapi.json"
+          src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"
+        />
+      </body>
+    </html>
+  );
+}

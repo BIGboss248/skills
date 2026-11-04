@@ -1,0 +1,219 @@
+openapi: 3.1.0
+info:
+  title: "Order Management API"
+  version: "1.0.0"
+  description: "Reference REST API conforming to OpenAPI 3.1 and RFC 9457 standards."
+
+servers:
+  - url: "https://api.store.example.com/v1"
+    description: "Production"
+
+security:
+  - BearerAuth: []
+
+paths:
+  /orders:
+    get:
+      summary: "List customer orders"
+      operationId: "listOrders"
+      tags: ["Orders"]
+      parameters:
+        - name: "status"
+          in: "query"
+          schema:
+            type: "string"
+            enum: ["pending", "processing", "shipped", "delivered", "cancelled"]
+        - name: "page"
+          in: "query"
+          schema:
+            type: "integer"
+            default: 1
+        - name: "limit"
+          in: "query"
+          schema:
+            type: "integer"
+            default: 20
+      responses:
+        "200":
+          description: "List of orders."
+          content:
+            application/json:
+              schema:
+                type: "object"
+                required: ["data", "pagination"]
+                properties:
+                  data:
+                    type: "array"
+                    items:
+                      $ref: "#/components/schemas/Order"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+
+    post:
+      summary: "Create order"
+      operationId: "createOrder"
+      tags: ["Orders"]
+      parameters:
+        - name: "Idempotency-Key"
+          in: "header"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderRequest"
+      responses:
+        "201":
+          description: "Order created successfully."
+          headers:
+            Location:
+              schema:
+                type: "string"
+                example: "/api/v1/orders/ord_9901"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /orders/{orderId}/cancel:
+    post:
+      summary: "Cancel an existing order"
+      description: "State transition controller endpoint to cancel a pending order."
+      operationId: "cancelOrder"
+      tags: ["Orders"]
+      parameters:
+        - name: "orderId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "object"
+              required: ["reason"]
+              properties:
+                reason:
+                  type: "string"
+                  example: "Customer requested cancellation"
+      responses:
+        "200":
+          description: "Order cancelled successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "409":
+          description: "Order cannot be cancelled because it has already shipped."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: "http"
+      scheme: "bearer"
+      bearerFormat: "JWT"
+
+  schemas:
+    Order:
+      type: "object"
+      required: ["id", "status", "totalAmount", "createdAt"]
+      properties:
+        id:
+          type: "string"
+          example: "ord_9901"
+        status:
+          type: "string"
+          enum: ["pending", "processing", "shipped", "delivered", "cancelled"]
+          example: "pending"
+        totalAmount:
+          type: "number"
+          format: "float"
+          example: 129.50
+        createdAt:
+          type: "string"
+          format: "date-time"
+          example: "2026-10-23T18:30:00Z"
+
+    CreateOrderRequest:
+      type: "object"
+      required: ["items", "shippingAddress"]
+      properties:
+        items:
+          type: "array"
+          minItems: 1
+          items:
+            type: "object"
+            required: ["productId", "quantity"]
+            properties:
+              productId:
+                type: "string"
+              quantity:
+                type: "integer"
+                minimum: 1
+        shippingAddress:
+          type: "string"
+          minLength: 5
+
+    Pagination:
+      type: "object"
+      required: ["page", "limit", "total"]
+      properties:
+        page:
+          type: "integer"
+        limit:
+          type: "integer"
+        total:
+          type: "integer"
+
+    ProblemDetails:
+      type: "object"
+      required: ["title", "status"]
+      properties:
+        type:
+          type: "string"
+          default: "about:blank"
+        title:
+          type: "string"
+        status:
+          type: "integer"
+        detail:
+          type: "string"
+        instance:
+          type: "string"
+        invalid_params:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              name:
+                type: "string"
+              reason:
+                type: "string"
+
+  responses:
+    NotFoundError:
+      description: "Resource not found."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    ValidationError:
+      description: "Validation error."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"

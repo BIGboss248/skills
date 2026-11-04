@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CreationPlan",
+  "type": "object",
+  "required": ["goal", "target_kind", "mode", "history_file", "subtasks", "eval_metrics"],
+  "properties": {
+    "goal": { "type": "string" },
+    "target_kind": {
+      "type": "string",
+      "enum": ["component", "page", "page_with_components"]
+    },
+    "mode": { "type": "string", "enum": ["scratch", "companion_backfill"] },
+    "existing_component_path": { "type": "string" },
+    "missing_files_detected": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "history_file": { "type": "string" },
+    "worktree": {
+      "type": "object",
+      "properties": {
+        "branch": { "type": "string", "pattern": "^agent/[a-z0-9]+(-[a-z0-9]+)*$" },
+        "path": { "type": "string" },
+        "base": { "type": "string" },
+        "merge_status": { "type": "string", "enum": ["pending", "clean", "conflict", "not_owner"] }
+      }
+    },
+    "tier": { "type": "string", "enum": ["fast", "full"] },
+    "deferred_expensive_tests": { "type": "array", "items": { "type": "string" } },
+    "agent_assignments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["phase", "agent"],
+        "properties": {
+          "phase": { "type": "string" },
+          "agent": {
+            "type": "string",
+            "enum": [
+              "nextjs-orchestrator",
+              "nextjs-dev",
+              "nextjs-test-author",
+              "nextjs-qa-auditor"
+            ]
+          },
+          "mode": { "type": "string" },
+          "allowed_write_classes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "impl",
+                "test-baseline",
+                "test-edge",
+                "test-e2e-page",
+                "test-e2e-component",
+                "test-plan",
+                "plan",
+                "design"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "subtasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "description",
+          "workflow_phase_ref",
+          "tool_intents",
+          "verification_criteria",
+          "status"
+        ],
+        "properties": {
+          "id": { "type": "integer" },
+          "description": { "type": "string" },
+          "workflow_phase_ref": { "type": "string" },
+          "tool_intents": { "type": "array", "items": { "type": "string" } },
+          "verification_criteria": { "type": "string" },
+          "status": { "type": "string", "enum": ["pending", "completed"] }
+        }
+      }
+    },
+    "permission_audit": {
+      "type": "object",
+      "properties": {
+        "base_ref": { "type": "string" },
+        "phase": {
+          "type": "string",
+          "enum": ["baseline", "page", "implementation", "adversarial", "final", "all"]
+        },
+        "result": { "type": "string", "enum": ["pass", "violation", "skipped"] },
+        "violations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": { "type": "string" },
+              "class": { "type": "string" },
+              "expected_agent": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "eval_metrics": { "type": "array", "items": { "type": "string" } },
+    "risk_factors": { "type": "array", "items": { "type": "string" } }
+  }
+}

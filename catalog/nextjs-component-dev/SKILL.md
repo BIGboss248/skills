@@ -1,0 +1,214 @@
+---
+name: nextjs-component-dev
+description: >-
+  Build Next.js App Router React components with Suspense skeletons, semantic OKLCH tokens, next-intl dictionaries, and Tailwind logical styling; test authoring is delegated to nextjs-adversarial-qa. MANDATORY SKILL: activate for every new component, UI section, card, widget, or layout element. Triggers on "/nextjs-component-dev", "create component", "new component", "build component", "develop component".
+metadata:
+  author: BIGboss248
+  version: "2.0"
+---
+
+# Next.js Component & Skeleton Development (`nextjs-component-dev`)
+
+Specialized workflow for creating production-ready React Server Components (RSC) and Client Components with Suspense skeletons, next-intl dictionary-backed translations, semantic theme tokens, and live runtime diagnostics via `next-devtools` MCP. All test authoring and execution are delegated to `nextjs-adversarial-qa`.
+
+> [!CRITICAL]
+> **MANDATORY COMPONENT CREATION INVARIANT:** Whenever you create any new React or Next.js component (whether requested directly by the user, created as part of a page build, or executed from `docs/plan/`), you **MUST** strictly follow every architectural standard and workflow step in this skill. Never create ad-hoc `.tsx` component files without executing this workflow (Next.js local docs lookup, `implementation_plan.md`, surface-folder placement (`<new_component_dir>/<surface>/<component_name>.tsx`), `messages/[locale].json` dictionary sync, QA baseline `<component_name>.test.tsx`, `<component_name>_skeleton.tsx`, and `verify-dev` verification).
+
+> [!TIP]
+> **Modular Assets & Templates:**
+>
+> - Next.js Docs Search & Context: [`references/nextjs-docs-lookup.md`](./references/nextjs-docs-lookup.md)
+> - Forms & Server Actions Guide: [references/form-server-actions.md](./references/form-server-actions.md)
+> - Test Authoring & Adversarial QA (delegated): [`../nextjs-adversarial-qa/SKILL.md`](../nextjs-adversarial-qa/SKILL.md)
+> - Storybook Standards & Separation: [`references/storybook-reference.md`](./references/storybook-reference.md)
+> - Instant Navigation & Prefetching: [`references/instant-navigation-and-prefetching.md`](./references/instant-navigation-and-prefetching.md)
+> - Next DevTools Debugging Guide: [`references/next-devtools-debugging.md`](./references/next-devtools-debugging.md)
+> - Caching & Revalidation: [`references/caching-and-revalidation.md`](./references/caching-and-revalidation.md)
+> - RSC, State Boundaries & Lazy Loading: [`references/rsc-and-state-boundaries.md`](./references/rsc-and-state-boundaries.md)
+> - Code Templates: [`resources/templates/`](./resources/templates/) ([Component](./resources/templates/component.template.tsx), [Form Component](./resources/templates/form-component.template.tsx), [Skeleton](./resources/templates/skeleton.template.tsx), [Link Status Button](./resources/templates/link-status-button.template.tsx))
+> - Source Tree Isolation & Merge: [`../nextjs-dev-setup/references/agent-worktree-isolation.md`](../nextjs-dev-setup/references/agent-worktree-isolation.md)
+> - Test Execution Tiers (fast vs pre-push): [`../nextjs-adversarial-qa/references/shared/test-execution-tiers.md`](../nextjs-adversarial-qa/references/shared/test-execution-tiers.md)
+> - Test Templates (owned by QA): [`../nextjs-adversarial-qa/resources/templates/`](../nextjs-adversarial-qa/resources/templates/)
+> - Reference Implementations: [`examples/`](./examples/)
+> - Verification Scripts: [`scripts/verify-dev.ps1`](./scripts/verify-dev.ps1) (Windows) / [`scripts/verify-dev.sh`](./scripts/verify-dev.sh) (Linux)
+
+---
+
+## Architectural Rules & Standards
+
+### 1. Planning Context & Paths
+
+- Read `docs/project.json` to resolve `package_manager`, `new_component_dir`, `style_file_dir`, `component_library`, `dictionaries_dir` (default: `"messages"`), and `supported_languages`.
+- All internal routes MUST use `ROUTES` from `@/lib/routes`.
+- All author/site metadata MUST use `SITE_CONFIG` from `@/lib/site-config`.
+- Target path: `<new_component_dir>/<surface>/<component_name>.tsx` — **flat files, categorized by the page or layout region that renders the component.** Resolve the surface in Phase 0 and record it in `implementation_plan.md`.
+  - Category: `<page-segment>/` (e.g. `home/`, `about/`, `lab/`) for page-scoped sections; `<layout-region>/` (`header/`, `footer/`, `sidebar/`) for layout chrome; `shared/` for cross-page reuse; `ui/` for design-system primitives.
+  - Never use a generic `global/` folder and never a per-component subfolder.
+  - Naming: `snake_case.tsx` files with `PascalCase` exports (`theme_button.tsx` → `ThemeButton`). Companions are flat siblings in the same surface folder: `<component_name>_skeleton.tsx`, `<component_name>.test.tsx`, `<component_name>.edge.test.tsx`, `<component_name>.test-plan.md`, `<component_name>.stories.tsx` (Storybook only when in scope). No per-component `index.ts`; an optional area-level `<surface>/index.ts` barrel is allowed.
+
+### 2. Next.js Internal Docs Lookup (`node_modules/next/dist/docs`)
+
+- **Search Local Docs via Codebase Memory MCP:** For any component creation, actively query and inspect the local Next.js distribution docs at `node_modules/next/dist/docs/` using `codebase-memory` MCP tools (`search_code`, `search_graph`, `get_code_snippet`) for relevant API signatures, directives (`'use cache'`, `'use client'`, `'use server'`), built-in components (`next/image`, `next/link`, `next/font`, `<Form>`), navigation hooks (`useRouter`, `usePathname`), and caching policies (`cacheLife`, `cacheTag`).
+- **Eliminate Deprecations & Hallucinations:** Never rely on assumptions or outdated Next.js patterns; the local `node_modules/next/dist/docs` matching the installed package version is the primary source of truth. Consult [`references/nextjs-docs-lookup.md`](./references/nextjs-docs-lookup.md).
+
+### 3. Dev Server & Next DevTools Protocol
+
+- **Dev Server Check & Tune-In:** Before/during component development, check if the Next.js dev server is running via `next-devtools` MCP server (`nextjs_index`).
+- **If Server Running:** Tune into the running server and port immediately; do not restart.
+- **If Server Not Running:** Start the dev server in the background (`pnpm dev`, `IsDaemon: true`) and verify connection via `nextjs_index`.
+- **Runtime Debugging:** After implementing components, query `next-devtools` (`nextjs_call`) to inspect errors, check build status, and diagnose runtime issues immediately. Consult [`references/next-devtools-debugging.md`](./references/next-devtools-debugging.md).
+
+### 4. RSC Boundaries & Leaf Client Push-Down
+
+1. **Server Components by Default:** Keep components server-rendered (`async function`).
+2. **Push `"use client"` Down:** Isolate interactive handlers (buttons, toggles, form inputs) into small leaf Client Components.
+3. **RSC Composition:** Pass Server Components as `children` or props into Client wrappers. Never import Server Components inside `"use client"` files.
+4. **Lazy Client Loading (`next/dynamic`):** For heavy, conditionally rendered, or below-the-fold Client Components (rich text editors, dialogs/modals, charts, heavy pickers), dynamically load them via `next/dynamic` with `loading: () => <[ComponentName]Skeleton />`. Consult [`references/rsc-and-state-boundaries.md`](./references/rsc-and-state-boundaries.md).
+5. **Client-Only Leaf (`ssr: false`):** When client components rely strictly on browser APIs (`window`, canvas, `localStorage`), disable SSR via `{ ssr: false }` to eliminate hydration mismatches while rendering the skeleton during SSR.
+6. **Action-Driven Library Loading:** Dynamically import heavy libraries (`await import(...)`) inside event handlers rather than top-level module imports.
+
+### 5. Styling, Logical Properties & Theme Tokens
+
+- **Semantic Tokens:** Exclusively use semantic CSS variables defined in `app/globals.css` (`bg-background`, `text-foreground`, `border-border`, `text-muted-foreground`). Hardcoded hex colors (`#FAFAFA`) or raw color scales (`bg-blue-500`) are FORBIDDEN.
+- **Class Merging:** Always merge classes using `cn(...)` (`clsx` + `tailwind-merge`).
+- **Logical Properties (BiDi):** Exclusively use Tailwind logical properties (`ms-`, `pe-`, `ps-`, `me-`, `start`, `end`). Physical directional classes (`ml-`, `mr-`, `pl-`, `pr-`, `left-`, `right-`) are FORBIDDEN.
+- **Localized Links & Contextual Feedback:** Every internal `<Link>` comes from `@/i18n/navigation` (next-intl `createNavigation`), which applies the active locale prefix automatically; a raw `next/link` href loses the prefix and forces a proxy redirect. `next/link` is permitted only for hash anchors, external URLs, and the locale-less root `not-found.tsx`. For pending navigation feedback, render a child that calls `useLinkStatus()` from `next/link` (see [`link-status-button.template.tsx`](./resources/templates/link-status-button.template.tsx)); never add a global progress-bar package.
+- **Images:** Always use `next/image` with explicit dimensions or `fill`, responsive `sizes`, and `priority` for above-the-fold LCP assets.
+
+### 6. Instant Navigation, Granular Suspense & Caching Architecture
+
+- **The Three Levers for Instant Components**:
+  1. **Push Down**: Extract request-specific async operations (`await params`, `await searchParams`, `cookies()`, `headers()`, uncached DB/API calls) into leaf sub-components wrapped in `<Suspense>`. Static parents and siblings lift directly into the static/App Shell.
+  2. **Cache**: Pair `'use cache'` with `cacheLife` and `cacheTag` at function/component level. Use Session Bridging patterns:
+     - **Pattern A (Extract & Pass)**: Extract session attributes (e.g. `team_id`, `role`, `tier`) from `cookies()` outside and pass as arguments to `'use cache'` functions so cached data is shared across all users with matching attributes (cost scales with team/attribute count, not user session count).
+     - **Pattern B (`"use cache: private"`)**: For strictly user-specific session lookups, use browser-only session caching with `stale >= 5m` that travels with the App Shell.
+  3. **Prefetching Strategy & Dense Grids**:
+     - **Default App Shell Prefetching (`<Link>` / `prefetch={null}`)**: Prefetches one shared static/App Shell per route. Bounded cost ($O(\text{routes})$), zero server invocations per link. Use for dense feeds, card grids (50+ cards), and bulk navigation.
+     - **Per-Link Prefetching (`<Link prefetch={true}>`)**: Resolves dynamic URL data (`params`, `searchParams`) before navigation with 1 server invocation per visible link. Use sparingly for high-intent primary CTAs, hero actions, or master-detail list items where skeleton flashing must be eliminated.
+     - **Dense Card Grids & Scoped Link Feedback:** NEVER use blanket `prefetch={true}` across dozens of cards in feeds. Retain default `<Link>` or use hover/focus intent prefetching (`router.prefetch()`), and pair with `useLinkStatus` to provide instant localized feedback when un-prefetched dynamic links are clicked.
+- **Granular Loading States (Anti-Full-Page Flash)**: Never wrap an entire component or page in a single top-level `<Suspense>` boundary that flashes full skeletons. Keep titles, layout frames, and cached content visible immediately; place `<Suspense>` strictly around dynamic streaming slots.
+- **Native Next.js 16 Caching Directives**: Consult [`references/instant-navigation-and-prefetching.md`](./references/instant-navigation-and-prefetching.md) and [`references/caching-and-revalidation.md`](./references/caching-and-revalidation.md).
+
+### 7. TanStack Query & Server Prefetching
+
+- **Unified Cache Contract:** Define `key`, `tag`, and `queryOptions` with explicit `staleTime` (e.g. `30_000` ms).
+- **Server Prefetch:** Trigger unawaited prefetch (`void queryClient.prefetchQuery(...)`) calling internal DB functions directly (zero relative fetch on server). Dehydrate with `<HydrationBoundary>`.
+- **Streamed Components:** Use `useSuspenseQuery` inside `<Suspense fallback={<[ComponentName]Skeleton />}>`.
+- **Optimistic Mutations:** Use `useMutation` with `onMutate` cache snapshots and `onError` rollbacks; call Server Actions with `updateTag(cache.tag)`.
+
+### 8. Test Delegation (`nextjs-adversarial-qa`)
+
+- **No test authoring in this skill.** Jest + RTL and Playwright standards, templates, and execution live exclusively in [`nextjs-adversarial-qa`](../nextjs-adversarial-qa/SKILL.md).
+- **Agent boundaries:** tests are written by `nextjs-test-author` and `nextjs-qa-auditor`. A dev agent cannot edit `*.test.ts(x)`, `*.edge.test.tsx`, `tests/e2e/**`, or `<component_name>.test-plan.md`; permissions enforce it. Report a failing assertion instead of changing it.
+- **Fast tier only.** During development run the targeted Jest file(s) for the component. Never run Playwright, the full Jest project, `build`, or Storybook builds: that is the expensive tier and it runs at `git push` through `.husky/pre-push`.
+- **TDD gate:** Invoke QA in `baseline` mode after plan approval and before writing JSX. The gate is a green baseline Jest suite.
+- **Handoff:** After implementation, invoke QA in `adversarial` mode; the independent auditor owns `<component_name>.edge.test.tsx`.
+- **Deferral:** Playwright specs are authored now, audited statically, and declared in `deferred_expensive_tests[]`. A deferred suite is reported `DEFERRED (pre-push)`, never `PASS`.
+- **Repair:** If a fast suite fails, fix the component — never the assertions. Route `code_fixes_required[]` items back through implementation.
+
+### 9. Source Tree Isolation (Worktrees)
+
+- **Your own worktree.** Implementation agents do not write in the user's working tree. Create a worktree on branch `agent/<kebab-task-slug>` off `main` before the first write:
+  ```powershell
+  pwsh .agents/skills/nextjs-dev-setup/scripts/agent-worktree.ps1 -Action create -Slug hero-card
+  ```
+  ```bash
+  bash .agents/skills/nextjs-dev-setup/scripts/agent-worktree.sh create hero-card
+  ```
+- **One task, one worktree, one branch.** Never reuse another agent's worktree and never write in the main tree while the worktree task is open.
+- **Run the fast gates inside the worktree**, commit there, then merge into `main` (`--no-ff`).
+- **Conflicts are not yours to resolve.** Abort the merge, keep the branch, and ask the user how to resolve it. Full contract: [`agent-worktree-isolation.md`](../nextjs-dev-setup/references/agent-worktree-isolation.md).
+
+---
+
+## Phase 0: Implementation Plan & Approval Gate
+
+> [!IMPORTANT]
+> **Plan Before Execution:** Always generate and present an `implementation_plan.md` artifact detailing all planned file creations, modifications, TypeScript contracts, translation dictionary additions, and TDD test cases before executing any write operations, modifying dictionaries, or creating components in the repository. Wait for user confirmation/approval before proceeding with execution.
+
+The implementation plan must cover:
+
+1. **Target Surface, Path & Classification**: The owning surface folder (`<page-segment>/`, `header/`, `footer/`, `sidebar/`, `shared/`, or `ui/`) with a one-line justification of which page or layout renders it, the exact flat file path `<new_component_dir>/<surface>/<component_name>.tsx`, and classification (RSC, Eager Client leaf, Lazy Client leaf with `next/dynamic`, or Client-only with `ssr: false`).
+2. **Next.js Local Docs Consulted**: Specific doc paths checked under `node_modules/next/dist/docs/` (e.g. `04-api-reference/04-components/image.md`, `03-directives/use-cache.md`, `04-api-reference/02-functions/use-router.md`).
+3. **TypeScript Contracts**: Prop interfaces and types with strict English TSDoc annotations.
+4. **Dictionary Strategy**: Explicit translation namespaces and keys to add to `messages/[locale].json` across all `supported_languages` in `docs/project.json` (zero hardcoded strings or in-file mock dictionaries).
+5. **Theme Tokens & Styling**: Identified semantic OKLCH CSS variables and logical layout classes.
+6. **Testing Strategy (delegated to `nextjs-adversarial-qa`)**: Reference the QA `<component_name>.test-plan.md` path and planned test files. Do not enumerate test cases here; the QA skill owns the coverage matrix.
+7. **Verification Gate**: `verify-dev.ps1`/`.sh` for companion files and i18n, plus the targeted Jest baseline suite. Playwright, the full Jest project, and builds are the expensive tier and run at `git push` (pre-push), not here.
+
+---
+
+## Workflow Steps
+
+- [ ] **Step 0: Implementation Plan Generation & Approval Gate**
+  - Search and inspect `node_modules/next/dist/docs` via `codebase-memory` MCP (`search_code`, `search_graph`) for any Next.js APIs, directives, hooks, or components utilized by the planned component to ensure up-to-date context.
+  - Synthesize component requirements, scan `docs/project.json`, and generate `implementation_plan.md` documenting consulted docs and contracts.
+  - Set `request_feedback = true` and `user_facing = true` on the artifact.
+  - Wait for user review and explicit approval before writing any code.
+  - **Form / Mutation Component Routing Gate**: If the component renders a form or accepts user mutations, read references/form-server-actions.md. Grill the user on whether to include useOptimistic and document the recommendation in implementation_plan.md.
+
+- [ ] **Step 0.5: Create the Isolated Worktree**
+  - Create branch `agent/<kebab-task-slug>` off `main` with `agent-worktree.ps1` / `.sh` (`-Action create`).
+  - Install dependencies inside the worktree; it shares `.git` but not `node_modules`.
+  - Do all reads, writes, and commands from the worktree path for the rest of the task.
+
+- [ ] **Step 1: Dev Server Verification & Next DevTools Connection**
+  - Query `next-devtools` MCP via `nextjs_index` to detect running Next.js dev server instances.
+  - **If Dev Server is running:** Tune into the active port and server instance; continue developing without restarting.
+  - **If Dev Server is NOT running:** Start the dev server in the background (`pnpm dev`, `IsDaemon: true`) and verify connection via `nextjs_index`.
+
+- [ ] **Step 2: Dictionary Population & TypeScript Contract Definition**
+  - Read `docs/project.json` to resolve `dictionaries_dir` (`messages` is default) and `supported_languages`.
+  - Define the component's translation namespace and keys.
+  - **Populate all dictionary files** (`messages/en.json`, `messages/fa.json`, etc.) with authentic translations for every supported language before writing JSX.
+  - Define prop interfaces with strict **English TSDoc** annotations (`@param`, `@defaultValue`, `@returns`).
+  - If there are more than one supported language, component must fetch the translation first and if failed use fallbacks.
+
+- [ ] **Step 3: TDD Baseline Tests (Delegated to `nextjs-test-author`, `baseline` mode)**
+  - Spawn the `nextjs-test-author` agent with the approved `implementation_plan.md` and design spec §7.
+  - It produces `<component_name>.test-plan.md` and `<component_name>.test.tsx` (flat siblings in the surface folder) BEFORE the component is implemented.
+  - Do not author test code here; consult [`../nextjs-adversarial-qa/SKILL.md`](../nextjs-adversarial-qa/SKILL.md).
+  - Gate: baseline suite green (or expected-red before implementation) before Step 4.
+
+- [ ] **Step 4: Component & Skeleton Implementation**
+  - Create the primary component at the exact flat path resolved in Phase 0: `<new_component_dir>/<surface>/<component_name>.tsx`. Never invent a new top-level folder and never create a per-component subfolder.
+  - Implement it (RSC or Client Component) consuming translations via `next-intl` (`getTranslations` or `useTranslations`) with zero hardcoded placeholders or in-file mock dictionary objects. For heavy or conditionally rendered interactive leaves, wrap via `next/dynamic` with `loading: () => <ComponentNameSkeleton />` (or `{ ssr: false }` for browser-only APIs). When building interactive cards or dense feed items with links, pair with `useLinkStatus` for contextual click feedback.
+  - Create the matching Suspense skeleton `<component_name>_skeleton.tsx` alongside it, mirroring layout geometry and classes to prevent CLS.
+  - Follow the surface's existing naming; do not add a per-component `index.ts` barrel (an area-level `<surface>/index.ts` is optional).
+
+- [ ] **Step 5: Fast Verification Gate (no expensive suites)**
+  - **Next DevTools Runtime Inspection & Navigation Inspector:** Use `next-devtools` MCP server (`nextjs_call`) to check for compilation errors, runtime exceptions, hydration issues, or broken routes. Use Navigation Inspector ("Pause on navigations") to verify the static shell and App Shell render instantly with granular fallbacks.
+  - **Companion & i18n Verification:** Run `verify-dev.ps1`/`.sh` (file presence + dictionary compliance; it does not execute tests) against the component file:
+    - **Windows (PowerShell):** `pwsh .agents/skills/nextjs-component-dev/scripts/verify-dev.ps1 -ComponentPath <new_component_dir>/<surface>/<component_name>.tsx`
+    - **Linux / macOS (Bash):** `bash .agents/skills/nextjs-component-dev/scripts/verify-dev.sh <new_component_dir>/<surface>/<component_name>.tsx`
+  - **Fast Test Tier (mandatory):** run only the Jest files for this component — baseline first, then the edge file once it exists:
+    - `pnpm test -- <new_component_dir>/<surface>/<component_name>.test.tsx`
+    - `pnpm test -- <new_component_dir>/<surface>/<component_name>.edge.test.tsx`
+  - **Forbidden here:** `pnpm run test:e2e`, `pnpm exec playwright test`, bare `pnpm test`, `pnpm run test:all`, `pnpm build`, `storybook build`. These are expensive and belong to the pre-push gate.
+  - **Declare deferrals:** list every authored-but-unrun Playwright file in `deferred_expensive_tests[]`. Report it as `DEFERRED (pre-push)`, never `PASS`.
+  - Fix syntax errors, missing dictionary keys, or implementation defects until the fast gates pass.
+
+- [ ] **Step 6: Implementation Plan Checklist Synchronization**
+  - When orchestrated, the orchestrator checks off the completed component item (`- [x]`) in `docs/plan/05-pages-and-components.md`.
+  - If all sub-components and page infrastructure tasks for the parent page are completed, the orchestrator checks off the parent page item (`- [x]`).
+  - When invoked directly without the orchestrator, perform this step yourself.
+
+- [ ] **Step 7: Commit in the Worktree and Merge into `main`**
+  - `git add <changed paths>` and commit on `agent/<slug>` (scoped commits inside the worktree are the only permitted commits).
+  - Merge from the main worktree: `agent-worktree.ps1 -Action merge -Slug <slug>` / `agent-worktree.sh merge <slug>`.
+  - **On a merge conflict:** do not resolve it. The helper aborts the merge, keeps the branch, prints the conflicting paths, and exits `3`. Report `BLOCKED: merge conflict` and ask the user to choose rebase / keep main / manual resolution.
+  - Merging is local only. Never `git push`, never `--no-verify`; the expensive tier runs at push from `.husky/pre-push`.
+
+---
+
+## Edge Cases & AI Pitfalls
+
+- **Surface-First Placement:** Never derive a component's folder from its own name, never resurrect the retired `global/` folder, and never nest a per-component folder. Decide the owning surface before the first write: layout region (`header/`, `footer/`, `sidebar/`) when a layout renders it, the page segment when exactly one page renders it, `shared/` when two or more surfaces do, `ui/` for design-system primitives. Promote a page-scoped component to `shared/` the moment a second surface imports it.
+- **Local Docs Verification via Codebase Memory MCP:** Always search `node_modules/next/dist/docs/` using `codebase-memory` MCP tools (`search_code`, `search_graph`) before authoring components. Never assume deprecated Next.js API signatures or outdated caching mechanisms; local docs reflect the exact runtime version installed.
+- **Zero In-File i18n Fallbacks:** Never hardcode dictionary objects or fallbacks (`const DEFAULT_CONTENT = {...}`) in TSX files. All text must come from `messages/[locale].json`.
+- **Hydration Warning Detection & Browser APIs:** Never access browser-only globals (`window`, `localStorage`) during SSR. Use `dynamic(() => import('./Widget'), { ssr: false, loading: () => <WidgetSkeleton /> })` instead of double-rendering `useEffect(mounted)` flags to eliminate hydration crashes cleanly.
+- **Strict Logical Styling (BiDi):** Never use physical directions (`ml-`, `mr-`, `pl-`, `pr-`, `left-`, `right-`). Always use logical alternatives (`ms-`, `pe-`, `ps-`, `me-`, `start`, `end`).
+- **Targeted Test Execution:** Run only the specific Jest files for the component. Never the full suite, Playwright, or a production build during development — those are the expensive tier and run at `git push`.
+- **Isolation Before Code:** Never start a component in the user's working tree. Create the `agent/<slug>` worktree first and write there.
+- **Merge Conflicts Are a Stop Signal:** Abort the merge, keep the branch, and ask the user. Never `-X ours`/`-X theirs`, never force-push, never rewrite history.
+- **Storybook Story Separation:** Do not author `.stories.tsx` or run Storybook builds during standard component development unless the `nextjs-storybook-story` skill is specifically requested. Consult [`references/storybook-reference.md`](./references/storybook-reference.md).

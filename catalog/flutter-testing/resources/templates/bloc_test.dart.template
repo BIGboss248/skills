@@ -1,0 +1,24 @@
+import 'package:bloc_test/bloc_test.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+// Replace with actual BLoC, Event, State imports
+
+void main() {
+  group('FeatureBloc', () {
+    test('initial state is correct', () {
+      // expect(FeatureBloc().state, equals(FeatureInitial()));
+    });
+
+    /*
+    blocTest<FeatureBloc, FeatureState>(
+      'emits [FeatureLoading, FeatureSuccess] when ProcessRequested is added',
+      build: () => FeatureBloc(),
+      act: (bloc) => bloc.add(const ProcessRequested()),
+      expect: () => [
+        isA<FeatureLoading>(),
+        isA<FeatureSuccess>(),
+      ],
+    );
+    */
+  });
+}

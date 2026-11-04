@@ -1,0 +1,19 @@
+# Local Traefik edge for a headless WooCommerce stack.
+# No ACME: .local domains use Traefik's built-in self-signed default certificate.
+log:
+  level: INFO
+
+api:
+  dashboard: false
+
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: my_network

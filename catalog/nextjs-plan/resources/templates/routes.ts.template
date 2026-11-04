@@ -1,0 +1,28 @@
+/**
+ * Centralized Application Route Registry
+ * Single source of truth for type-safe routing across the application.
+ */
+
+export const ROUTES = {
+  home: "/",
+  about: "/about",
+  projects: {
+    root: "/projects",
+    detail: (slug: string) => `/projects/${slug}` as const,
+  },
+  resume: "/resume",
+  lab: {
+    root: "/lab",
+    doh: "/lab/doh",
+    ipInfo: "/lab/ipinfo",
+    fingerprint: "/lab/fingerprint",
+  },
+  contact: "/contact",
+  api: {
+    health: "/api/health",
+    telemetry: "/api/telemetry/vitals",
+  },
+} as const;
+
+export type RouteKey = keyof typeof ROUTES;
+

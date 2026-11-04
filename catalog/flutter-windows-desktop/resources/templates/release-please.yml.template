@@ -1,0 +1,76 @@
+name: Release & Build Windows
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      releases_created: ${{ steps.release.outputs.releases_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - name: Run Release Please
+        id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  build-windows:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.releases_created == 'true' }}
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Enable Windows Desktop Support
+        run: flutter config --enable-windows-desktop
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Run Code Analysis
+        run: flutter analyze
+
+      - name: Run Unit & Widget Tests
+        run: flutter test
+
+      - name: Build Windows Executable (Release & Obfuscated)
+        run: flutter build windows --release --obfuscate --split-debug-info=build/windows/symbols
+
+      - name: Compress Release Archive
+        shell: powershell
+        run: |
+          $Version = "${{ needs.release-please.outputs.version }}"
+          $SourceDir = "build/windows/x64/runner/Release"
+          $ZipPath = "ft_file_sorter-windows-v$Version.zip"
+          Compress-Archive -Path "$SourceDir\*" -DestinationPath $ZipPath -Force
+
+      - name: Upload Release Asset to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: powershell
+        run: |
+          $Tag = "${{ needs.release-please.outputs.tag_name }}"
+          $Version = "${{ needs.release-please.outputs.version }}"
+          $ZipPath = "ft_file_sorter-windows-v$Version.zip"
+          gh release upload $Tag $ZipPath --clobber

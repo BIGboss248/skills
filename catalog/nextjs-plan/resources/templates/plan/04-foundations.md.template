@@ -1,0 +1,84 @@
+# Phase 4: Core Foundations & Runtime Configuration
+
+> **Precondition:** Phase 3 gate verified (health probe is live).
+> **Outputs:** env contract, i18n, theme tokens, layout shell, telemetry, global
+> error boundaries.
+
+---
+
+## Deliverables & Tasks
+
+- [ ] **4.1 Environment contract**
+  - Author `.env.example` as the production template and `.env.development` for
+    local work; document load order and categories; ignore every `.env*` except
+    the committed templates.
+  - **Acceptance:** `git check-ignore` ignores `.env`, `.env.local`, and
+    `.env.production` while the two templates stay tracked; `pnpm build` reads
+    the expected values.
+  - **Negative:** no secret has a production-valid default; startup fails fast
+    when a required value is missing.
+  - **Drift check:** every variable referenced in code appears in both templates.
+  - **Evidence:** variable count, ignored-file check
+  - **Result:** —
+
+- [ ] **4.2 Localization**
+  - Configure request negotiation and routing; dictionaries in root `messages/`;
+    LTR/RTL layout direction; font pairings per locale.
+  - **Acceptance:** the default locale renders; switching locale changes copy and
+    `dir`; build passes.
+  - **Negative:** an unknown locale falls back to the default instead of 500.
+  - **Evidence:** locale list, dictionary key count
+  - **Result:** —
+
+- [ ] **4.3 Theme tokens**
+  - Define semantic tokens in the global stylesheet (light + dark), a provider
+    with system preference and persistence, and a toggle.
+  - **Acceptance:** toggling changes tokens, persists on reload, and respects
+    `prefers-color-scheme` on first visit.
+  - **Negative:** no raw palette class or arbitrary value is used in components;
+    the design-system lint passes.
+  - **Evidence:** token count, contrast check result
+  - **Result:** —
+
+- [ ] **4.4 Layout shell**
+  - Root layout with locale-aware `lang`/`dir` and fonts; providers; header and
+    footer; zero-CLS font loading.
+  - **Acceptance:** every page renders inside the shell; CLS is 0 in a local
+    Lighthouse/Playwright run.
+  - **Negative:** the shell renders without a provider crash when telemetry is
+    disabled.
+  - **Evidence:** CLS value, viewport checks
+  - **Result:** —
+
+- [ ] **4.5 Telemetry (pack: opentelemetry)**
+  - Dependencies `@vercel/otel` + `@opentelemetry/api`, root `src/`-aware
+    `instrumentation.ts`, error context on `onRequestError`, and `OTEL_*` keys in
+    both env templates.
+  - **Acceptance:** a request produces a span at the mock collector
+    (`POST /v1/traces` → 200, > 0 bytes); `pnpm exec tsc --noEmit` → 0.
+  - **Negative (mandatory):** `OTEL_SDK_DISABLED=true` logs the skip line and
+    exports **0** traces; `OTEL_SDK_DISABLED=false` must still export (the
+    `@vercel/otel` truthiness bug).
+  - **Evidence:** collector log, span name, kill-switch run
+  - **Result:** —
+  - _If the pack is disabled: mark `Skipped on purpose` with a revisit trigger._
+
+
+- [ ] **4.6 Global error boundaries**
+  - Root `global-error.tsx`, localized `error.tsx`, `not-found.tsx`, and the
+    authorization pages the app needs (401/403).
+  - **Acceptance:** a thrown error renders the boundary with a working reset; an
+    unknown route renders the not-found page.
+  - **Negative:** error pages leak no stack trace or secret in production mode.
+  - **Evidence:** screenshots or route checks
+  - **Result:** —
+
+---
+
+**Phase 4 gate:** a page can render inside the shell in both directions, with a
+persisted theme, localized copy, working boundaries, a live health probe, and
+traces proven active **and** silenced by the kill switch (or the OTel pack marked
+skipped with a revisit trigger).
+
+> **Gate verified YYYY-MM-DD (4.1–4.6):** [locale/dir checks, CLS, boundary
+> checks, env drift check].

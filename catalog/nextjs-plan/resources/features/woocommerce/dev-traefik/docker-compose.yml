@@ -1,0 +1,22 @@
+# Start with:
+#   docker network create my_network
+#   docker compose -f dev-traefik/docker-compose.yml up -d
+services:
+  traefik:
+    image: traefik:v3
+    container_name: project-traefik
+    restart: unless-stopped
+    command:
+      - "--configFile=/etc/traefik/traefik.yml"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+    networks:
+      - my_network
+
+networks:
+  my_network:
+    external: true

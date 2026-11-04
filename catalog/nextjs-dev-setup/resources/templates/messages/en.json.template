@@ -1,0 +1,12 @@
+{
+  "metadata": {
+    "title": "Next.js Application",
+    "description": "High-performance bilingual Next.js application."
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "backToHome": "Back to Home"
+  }
+}
+

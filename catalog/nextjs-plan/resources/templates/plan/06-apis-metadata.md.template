@@ -1,0 +1,67 @@
+# Phase 6: Server Functions, Route Handlers & Global SEO
+
+> **Precondition:** Phase 5 gate verified (pages render).
+> **Outputs:** mutations, non-page routes, caching policy, global metadata,
+> robots/sitemap.
+
+---
+
+## Deliverables & Tasks
+
+- [ ] **6.1 Server actions**
+  - Implement form mutations with `'use server'` and schema validation.
+  - **Acceptance:** the happy path persists; invalid input returns field errors
+    without a 500.
+  - **Negative:** unauthenticated or unauthorized calls are rejected server-side,
+    not only hidden in the UI.
+  - **Evidence:** action names, validation result
+  - **Result:** —
+
+- [ ] **6.2 Route handlers**
+  - Implement every non-page route from `02-sitemap-and-routes.md` §4: redirect
+    handlers (`/login`, `/logout`), webhooks, and callback bridges.
+  - **Acceptance:** each route answers with its documented status and headers
+    (`307` for redirects, `200`/`4xx` for webhooks with signature verification).
+  - **Negative:** redirect targets outside the allowlist fall back to a safe
+    path; an unsigned webhook is rejected.
+  - **Evidence:** status/header matrix per route
+  - **Result:** —
+
+- [ ] **6.3 Caching & revalidation**
+  - Define cache lifetime, tags, and invalidation points.
+  - **Acceptance:** a revalidation call refreshes the affected route; the
+    production build shows the intended static/dynamic split.
+  - **Negative:** a dynamic route reading request state is not silently
+    prerendered with stale data.
+  - **Evidence:** build route table, revalidation check
+  - **Result:** —
+
+- [ ] **6.4 File-based metadata & icons**
+  - `favicon`, `icon`, `apple-icon`, OG/Twitter images, programmatic `icons`
+    fallback.
+  - **Acceptance:** rendered HTML contains the expected `link`/`meta` tags.
+  - **Evidence:** tag list
+  - **Result:** —
+
+- [ ] **6.5 Robots & sitemap**
+  - `app/robots.ts` and `app/sitemap.ts`.
+  - **Acceptance:** `/robots.txt` and `/sitemap.xml` return 200 with valid
+    content and absolute URLs.
+  - **Negative:** staging/preview is excluded from indexing.
+  - **Evidence:** response excerpts
+  - **Result:** —
+
+- [ ] **6.6 Global structured data**
+  - Site-level JSON-LD via `schema-dts`.
+  - **Acceptance:** the graph validates and includes the organization/site
+    entity.
+  - **Evidence:** validator result
+  - **Result:** —
+
+---
+
+**Phase 6 gate:** every mutation and non-page route is implemented, authorized,
+and covered by a positive and a negative test; global SEO endpoints are live.
+
+> **Gate verified YYYY-MM-DD (6.1–6.6):** [route matrix, validation results,
+> robots/sitemap status].

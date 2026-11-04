@@ -1,0 +1,37 @@
+# Docker Compose Healthcheck Configuration Snippet
+# Add this block inside the Next.js service definition in docker-compose.yml or docker-compose.prod.yml
+
+healthcheck:
+  test:
+    [
+      "CMD-SHELL",
+      'node -e "fetch(''http://127.0.0.1:'' + (process.env.PORT || 3000) + ''/api/health'').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"',
+    ]
+  interval: 30s
+  timeout: 5s
+  retries: 3
+  start_period: 10s
+
+# Example: Complete Service in docker-compose.yml
+# services:
+#   nextjs-app:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+#       args:
+#         - PORT=${PORT:-3000}
+#     image: nextjs-app:latest
+#     container_name: nextjs-standalone-app
+#     restart: unless-stopped
+#     ports:
+#       - "${PORT:-3000}:${PORT:-3000}"
+#     environment:
+#       - NODE_ENV=production
+#       - PORT=${PORT:-3000}
+#     healthcheck:
+#       test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:' + (process.env.PORT || 3000) + '/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""]
+#       interval: 30s
+#       timeout: 5s
+#       retries: 3
+#       start_period: 10s
+

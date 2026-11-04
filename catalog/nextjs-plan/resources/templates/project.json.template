@@ -1,0 +1,120 @@
+{
+  "project_context_and_metadata": {
+    "package_manager": "pnpm",
+    "new_component_dir": "app/components",
+    "style_file_dir": "app/globals.css",
+    "component_library": "shadcn/ui",
+    "animation_library": ["motion"],
+    "testing_library": [
+      "jest",
+      "playwright",
+      "@testing-library/react",
+      "@testing-library/jest-dom"
+    ],
+    "supported_languages": [
+      {
+        "language_code": "en",
+        "country_code": "US",
+        "currency_code": "USD",
+        "direction": "ltr",
+        "native_name": "English",
+        "calendar_type": "gregorian"
+      }
+    ],
+    "dictionaries_dir": "messages",
+    "dictionary_file_pattern": "[locale].json"
+  },
+  "deployment": {
+    "target": "self-hosted-docker",
+    "edge": "traefik",
+    "tls": "cloudflare-resolver",
+    "registry": "ghcr.io/<owner>",
+    "platforms": ["linux/amd64", "linux/arm64"],
+    "persistence": "bind-mounts",
+    "deploy_method": "copy-directory"
+  },
+  "runtime_topology": {
+    "services": ["app", "backend", "database"],
+    "ownership": [
+      { "path": "/", "owner": "app", "priority": 10 },
+      { "path": "/admin", "owner": "backend", "priority": 100 },
+      { "path": "/api/health", "owner": "app", "priority": null }
+    ]
+  },
+  "auth": {
+    "provider": "backend",
+    "session_transport": "cookie",
+    "cookie_prefixes": ["app_session_"],
+    "requires_single_hostname": true,
+    "invariants": [
+      "cookie presence is not authentication",
+      "the app never mints a second session",
+      "logout nonce is minted by the provider"
+    ]
+  },
+  "locale_policy": {
+    "default_locale": "en",
+    "timezone": "UTC",
+    "currency": "USD",
+    "currency_display": "$",
+    "decimals": 2,
+    "calendar": "gregorian",
+    "direction": "ltr"
+  },
+  "integrations": {
+    "pinning": "exact",
+    "integrity": "sha256",
+    "activation_order_matters": false,
+    "items": []
+  },
+  "feature_packs": [
+    {
+      "id": "health-monitoring",
+      "enabled": true,
+      "rationale": "compose stack needs a liveness/readiness signal",
+      "artifacts": ["app/api/health/route.ts", "docker-compose.yml"],
+      "gate": "Phase 3",
+      "revisit_if": null
+    },
+    {
+      "id": "opentelemetry",
+      "enabled": false,
+      "rationale": "no collector endpoint provisioned yet",
+      "artifacts": [],
+      "gate": "Phase 4",
+      "revisit_if": "a collector (Tempo/Jaeger/OTLP) is available"
+    },
+    {
+      "id": "woocommerce",
+      "enabled": false,
+      "rationale": "not a commerce project",
+      "artifacts": [],
+      "gate": "Phase 7",
+      "revisit_if": "a headless WooCommerce storefront is required"
+    }
+  ],
+  "quality_gates": {
+    "fast": ["pnpm lint", "pnpm exec tsc --noEmit", "pnpm test"],
+    "build": ["pnpm build"],
+    "full": ["pnpm test:all"],
+    "edge": ["pnpm test:e2e:edge"]
+  },
+  "constraints": {
+    "platform": "windows",
+    "tool_versions": { "node": ">=22", "pnpm": "10" },
+    "reserved_ports": [[2929, 3028]],
+    "must_not_touch": []
+  },
+  "decisions": [
+    {
+      "id": "deploy-target",
+      "decision": "Self-hosted Docker behind an edge proxy",
+      "rationale": "portable, reproducible, no vendor lock-in",
+      "locked_at": "YYYY-MM-DD",
+      "supersedes": null,
+      "revisit_if": "traffic requires managed multi-node hosting"
+    }
+  ],
+  "pitfalls": [],
+  "non_goals": ["High availability", "Live payment credentials"]
+}

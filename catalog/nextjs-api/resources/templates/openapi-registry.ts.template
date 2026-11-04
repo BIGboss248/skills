@@ -1,0 +1,40 @@
+import {
+  extendZodWithOpenApi,
+  OpenAPIRegistry,
+  OpenApiGeneratorV31,
+} from "@asteasolutions/zod-to-openapi";
+import { z } from "zod";
+
+// Extend Zod with .openapi() metadata methods
+extendZodWithOpenApi(z);
+
+export const registry = new OpenAPIRegistry();
+
+// Register Bearer Token Security Scheme
+registry.registerComponent("securitySchemes", "BearerAuth", {
+  type: "http",
+  scheme: "bearer",
+  bearerFormat: "JWT",
+});
+
+/**
+ * Compiles registered endpoints and schemas into an OpenAPI 3.1 Document.
+ */
+export function generateOpenApiDocument() {
+  const generator = new OpenApiGeneratorV31(registry.definitions);
+
+  return generator.generateDocument({
+    openapi: "3.1.0",
+    info: {
+      title: "Next.js App Router API",
+      version: "1.0.0",
+      description: "Production RESTful API conforming to OpenAPI 3.1 standards.",
+    },
+    servers: [
+      {
+        url: process.env.NEXT_PUBLIC_APP_URL || "/",
+        description: "Primary Application API Server",
+      },
+    ],
+  });
+}

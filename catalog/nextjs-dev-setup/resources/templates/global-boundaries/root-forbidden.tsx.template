@@ -1,0 +1,25 @@
+import { getTranslations } from "next-intl/server";
+import { Link } from "@/components/Link";
+import { ROUTES } from "@/lib/routes";
+
+export default async function Forbidden() {
+  const t = await getTranslations("errors.forbidden");
+
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center p-6 text-center">
+      <h1 className="text-4xl font-extrabold text-foreground tracking-tight">403</h1>
+      <h2 className="mt-2 text-xl font-semibold text-foreground">
+        {t("title") || "Access Denied"}
+      </h2>
+      <p className="mt-2 text-sm text-muted-foreground max-w-md">
+        {t("description") || "You do not have permission to access this resource."}
+      </p>
+      <Link
+        href={ROUTES.HOME}
+        className="mt-6 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition hover:opacity-90"
+      >
+        {t("backHome") || "Return Home"}
+      </Link>
+    </div>
+  );
+}

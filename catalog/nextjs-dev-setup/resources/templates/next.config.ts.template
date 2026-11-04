@@ -1,0 +1,50 @@
+import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
+import { execSync } from "child_process";
+import pkg from "./package.json";
+
+const withNextIntl = createNextIntlPlugin();
+
+function getGitCommitHash(): string {
+  if (process.env.GITHUB_SHA) {
+    return process.env.GITHUB_SHA.slice(0, 7);
+  }
+  try {
+    return execSync("git rev-parse --short HEAD").toString().trim();
+  } catch {
+    return "dev";
+  }
+}
+
+const gitHash = getGitCommitHash();
+const deploymentId = `${pkg.version}-${gitHash}`;
+
+const nextConfig: NextConfig = {
+  output: "standalone",
+  deploymentId,
+  env: {
+    NEXT_PUBLIC_APP_VERSION: pkg.version,
+    NEXT_PUBLIC_GIT_COMMIT_HASH: gitHash,
+  },
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          {
+            key: "X-Accel-Buffering",
+            value: "no",
+          },
+        ],
+      },
+    ];
+  },
+  experimental: {
+    serverActions: {
+      allowedOrigins: ["localhost:3000"],
+    },
+  },
+};
+
+export default withNextIntl(nextConfig);
+

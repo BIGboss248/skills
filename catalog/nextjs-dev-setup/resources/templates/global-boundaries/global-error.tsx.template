@@ -1,0 +1,32 @@
+"use client";
+
+import * as React from "react";
+
+export default function GlobalError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  React.useEffect(() => {
+    console.error("[GlobalError]", error);
+  }, [error]);
+
+  return (
+    <html lang="en">
+      <body className="flex min-h-screen flex-col items-center justify-center p-6 text-center bg-background text-foreground font-sans">
+        <h1 className="text-3xl font-bold tracking-tight">Something went critically wrong</h1>
+        <p className="mt-3 text-muted-foreground max-w-md">
+          An unexpected application error occurred. You can try refreshing the view.
+        </p>
+        <button
+          onClick={() => reset()}
+          className="mt-6 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition hover:opacity-90"
+        >
+          Try again
+        </button>
+      </body>
+    </html>
+  );
+}

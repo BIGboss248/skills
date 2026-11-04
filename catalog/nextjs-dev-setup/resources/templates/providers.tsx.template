@@ -1,0 +1,38 @@
+"use client";
+
+import * as React from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider } from "next-themes";
+
+/**
+ * App-wide client providers.
+ *
+ * Navigation pending feedback is not a provider concern: it is driven per link
+ * by Next's built-in `useLinkStatus` inside the link itself (see
+ * `Link.tsx.template`). Do not add a global progress-bar provider here.
+ *
+ * The theme wrapper below belongs to N13. Adjust `attribute` to the selector the
+ * project's token layer actually uses (class | data-theme | data-mode) and keep
+ * `disableTransitionOnChange` unless an animated theme change was requested.
+ */
+ */
+export function Providers({ children }: { children: React.ReactNode }) {
+  const [queryClient] = React.useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 60 * 1000,
+          },
+        },
+      })
+  );
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        {children}
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+}

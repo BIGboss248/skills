@@ -1,0 +1,39 @@
+import type { MetadataRoute } from 'next'
+
+/**
+ * Web App Manifest.
+ *
+ * `theme_color` / `background_color` are literal hex values (the manifest cannot
+ * read CSS variables). Derive them from the project's palette — the light-theme
+ * `background` value and the brand `primary` (or splash background) — instead of
+ * leaving placeholders. A manifest carries a single colour: installs/splash
+ * screens keep it even when the app is in dark mode.
+ */
+export default function manifest(): MetadataRoute.Manifest {
+  return {
+    name: 'Next.js App',
+    short_name: 'NextApp',
+    description: 'A modern Progressive Web Application built with Next.js',
+    start_url: '/',
+    display: 'standalone',
+    background_color: '#ffffff',
+    theme_color: '#000000',
+    icons: [
+      {
+        src: '/favicon.ico',
+        sizes: 'any',
+        type: 'image/x-icon',
+      },
+      {
+        src: '/icon.png',
+        sizes: 'any',
+        type: 'image/png',
+      },
+      {
+        src: '/apple-icon.png',
+        sizes: 'any',
+        type: 'image/png',
+      },
+    ],
+  }
+}

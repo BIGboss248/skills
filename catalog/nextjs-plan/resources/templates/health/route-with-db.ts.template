@@ -1,0 +1,123 @@
+import { NextResponse } from "next/server";
+import v8 from "v8";
+import { monitorEventLoopDelay } from "perf_hooks";
+// import { db } from "@/lib/db"; // Adjust import to your database client convention
+
+export const dynamic = "force-dynamic";
+
+const histogram = monitorEventLoopDelay({ resolution: 10 });
+histogram.enable();
+
+interface DependencyCheck {
+  status: "healthy" | "degraded" | "unhealthy";
+  latencyMs?: number;
+  error?: string;
+  details?: Record<string, unknown>;
+}
+
+async function checkDatabaseConnectivity(): Promise<DependencyCheck> {
+  const start = performance.now();
+  try {
+    // Wrap database ping with a strict 2-second timeout
+    await Promise.race([
+      // Replace with active DB client ping, e.g.: prisma.$queryRaw`SELECT 1` or db.execute(sql`SELECT 1`),
+      new Promise((resolve) => setTimeout(resolve, 10)),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Database ping timed out after 2000ms")), 2000)
+      ),
+    ]);
+
+    return {
+      status: "healthy",
+      latencyMs: Math.round(performance.now() - start),
+    };
+  } catch (err: unknown) {
+    return {
+      status: "unhealthy",
+      latencyMs: Math.round(performance.now() - start),
+      error: err instanceof Error ? err.message : "Database connection failed",
+    };
+  }
+}
+
+function evaluateMemory(): DependencyCheck {
+  const heapStats = v8.getHeapStatistics();
+  const memoryUsage = process.memoryUsage();
+  const usedHeapPercent = (heapStats.used_heap_size / heapStats.heap_size_limit) * 100;
+
+  let status: DependencyCheck["status"] = "healthy";
+  if (usedHeapPercent > 90) status = "unhealthy";
+  else if (usedHeapPercent > 80) status = "degraded";
+
+  return {
+    status,
+    details: {
+      heapUtilization: `${usedHeapPercent.toFixed(1)}%`,
+      usedHeapMB: Math.round(heapStats.used_heap_size / 1024 / 1024),
+      totalHeapMB: Math.round(heapStats.total_heap_size / 1024 / 1024),
+      heapLimitMB: Math.round(heapStats.heap_size_limit / 1024 / 1024),
+      rssMB: Math.round(memoryUsage.rss / 1024 / 1024),
+    },
+  };
+}
+
+function evaluateEventLoop(): DependencyCheck {
+  const p99LagMs = histogram.percentile(99) / 1e6;
+
+  let status: DependencyCheck["status"] = "healthy";
+  if (p99LagMs > 500) status = "unhealthy";
+  else if (p99LagMs > 100) status = "degraded";
+
+  return {
+    status,
+    details: {
+      meanLagMs: Number((histogram.mean / 1e6).toFixed(2)),
+      p99LagMs: Number(p99LagMs.toFixed(2)),
+    },
+  };
+}
+
+export async function GET() {
+  const [database, memory, eventLoop] = await Promise.all([
+    checkDatabaseConnectivity(),
+    Promise.resolve(evaluateMemory()),
+    Promise.resolve(evaluateEventLoop()),
+  ]);
+
+  const isHealthy =
+    database.status !== "unhealthy" &&
+    memory.status !== "unhealthy" &&
+    eventLoop.status !== "unhealthy";
+
+  const isDegraded =
+    database.status === "degraded" ||
+    memory.status === "degraded" ||
+    eventLoop.status === "degraded";
+
+  const overallStatus: "healthy" | "degraded" | "unhealthy" = !isHealthy
+    ? "unhealthy"
+    : isDegraded
+      ? "degraded"
+      : "healthy";
+
+  const payload = {
+    status: overallStatus,
+    timestamp: new Date().toISOString(),
+    uptimeSeconds: Math.floor(process.uptime()),
+    environment: process.env.NODE_ENV || "development",
+    version: process.env.npm_package_version || "1.0.0",
+    checks: {
+      database,
+      memory,
+      eventLoop,
+    },
+  };
+
+  return NextResponse.json(payload, {
+    status: overallStatus === "unhealthy" ? 503 : 200,
+    headers: {
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+    },
+  });
+}
+

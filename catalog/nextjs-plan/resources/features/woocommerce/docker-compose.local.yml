@@ -1,0 +1,52 @@
+# Local development override for a production WordPress compose file.
+#
+# Usage (from the WordPress compose directory):
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
+#
+# Requires Compose v2.24+ for the `!override` YAML tag.
+# Differences from production:
+#   - shop.local over plain self-signed TLS (no Let's Encrypt resolver)
+#   - mu-plugins and uploads.ini bind-mounted for live editing
+#   - WordPress development constants and JWT secret via WORDPRESS_CONFIG_EXTRA
+#   - /wc-api is NOT routed to WordPress; Next.js middleware handles callbacks
+
+services:
+  wordpress:
+    environment:
+      WORDPRESS_CONFIG_EXTRA: >-
+        define('WP_HOME', 'https://shop.local');
+        define('WP_SITEURL', 'https://shop.local');
+        define('WP_ENVIRONMENT_TYPE', 'local');
+        define('DISABLE_WP_CRON', true);
+        define('WP_POST_REVISIONS', false);
+        define('WP_MEMORY_LIMIT', '256M');
+        define('WP_MAX_MEMORY_LIMIT', '512M');
+        define('FS_METHOD', 'direct');
+        define('FORCE_SSL_ADMIN', true);
+        define('GRAPHQL_JWT_AUTH_SECRET_KEY', '${GRAPHQL_JWT_AUTH_SECRET_KEY}');
+    volumes:
+      - ./mu-plugins:/var/www/html/wp-content/mu-plugins
+      - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
+    labels: !override
+      - "traefik.enable=true"
+      - "traefik.docker.network=my_network"
+
+      # HTTP router (redirects all site traffic to HTTPS)
+      - "traefik.http.routers.wordpress-http.entrypoints=web"
+      - "traefik.http.routers.wordpress-http.rule=Host(`${DOMAIN_NAME:-shop.local}`) && (PathPrefix(`/checkout`) || PathPrefix(`/my-account`) || PathPrefix(`/wp-admin`) || PathPrefix(`/wp-login.php`) || PathPrefix(`/wp-content`) || PathPrefix(`/wp-includes`) || PathPrefix(`/wp-json`) || PathPrefix(`/graphql`) || QueryRegexp(`wc-ajax`, `.+`) || QueryRegexp(`wc-api`, `.+`))"
+      - "traefik.http.routers.wordpress-http.priority=100"
+      - "traefik.http.routers.wordpress-http.middlewares=wordpress-redirect@docker"
+      - "traefik.http.middlewares.wordpress-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.wordpress-redirect.redirectscheme.permanent=true"
+
+      # HTTPS router (default Traefik self-signed certificate, no ACME resolver)
+      - "traefik.http.routers.wordpress-secure.entrypoints=websecure"
+      - "traefik.http.routers.wordpress-secure.rule=Host(`${DOMAIN_NAME:-shop.local}`) && (PathPrefix(`/checkout`) || PathPrefix(`/my-account`) || PathPrefix(`/wp-admin`) || PathPrefix(`/wp-login.php`) || PathPrefix(`/wp-content`) || PathPrefix(`/wp-includes`) || PathPrefix(`/wp-json`) || PathPrefix(`/graphql`) || QueryRegexp(`wc-ajax`, `.+`) || QueryRegexp(`wc-api`, `.+`))"
+      - "traefik.http.routers.wordpress-secure.priority=100"
+      - "traefik.http.routers.wordpress-secure.tls=true"
+      - "traefik.http.routers.wordpress-secure.service=wordpress-service"
+      - "traefik.http.routers.wordpress-secure.middlewares=wordpress-compress@docker"
+      - "traefik.http.middlewares.wordpress-compress.compress=true"
+
+      # Service load balancer port
+      - "traefik.http.services.wordpress-service.loadbalancer.server.port=80"

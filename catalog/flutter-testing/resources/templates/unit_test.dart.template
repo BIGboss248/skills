@@ -1,0 +1,24 @@
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  group('Unit Test Group', () {
+    setUp(() {
+      // Set up dependencies and test state
+    });
+
+    tearDown(() {
+      // Clean up resources
+    });
+
+    test('should return expected result on valid input', () async {
+      // Arrange
+      const input = 'sample_file.xlsx';
+
+      // Act
+      final result = input.endsWith('.xlsx');
+
+      // Assert
+      expect(result, isTrue);
+    });
+  });
+}

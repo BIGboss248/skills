@@ -1,0 +1,68 @@
+import type { Metadata, ResolvingMetadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { routing } from "@/i18n/routing";
+import { SITE_CONFIG } from "@/lib/site-config";
+import { JsonLd } from "@/components/seo/JsonLd";
+import type { WebPage, WithContext } from "schema-dts";
+
+interface PageProps {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
+
+export async function generateMetadata(
+  { params }: PageProps,
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "pageNamespace" });
+
+  const canonicalUrl = `${SITE_CONFIG.url}/${locale}/page-path`;
+
+  return {
+    title: t("meta.title"),
+    description: t("meta.description"),
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title: t("meta.title"),
+      description: t("meta.description"),
+      url: canonicalUrl,
+      siteName: SITE_CONFIG.name,
+      locale,
+      type: "website",
+    },
+  };
+}
+
+export default async function Page({ params, searchParams }: PageProps) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "pageNamespace" });
+
+  const schema: WithContext<WebPage> = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: t("meta.title"),
+    description: t("meta.description"),
+    url: `${SITE_CONFIG.url}/${locale}/page-path`,
+  };
+
+  return (
+    <>
+      <JsonLd schema={schema} />
+      <main className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">
+          {t("title")}
+        </h1>
+        <p className="mt-4 text-muted-foreground">
+          {t("description")}
+        </p>
+      </main>
+    </>
+  );
+}

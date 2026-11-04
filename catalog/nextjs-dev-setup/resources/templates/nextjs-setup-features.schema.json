@@ -1,0 +1,13 @@
+{
+  "skill": "nextjs-dev-setup",
+  "preset": "standard",
+  "decided_at": "YYYY-MM-DD",
+  "categories": ["foundation", "testing", "agents", "delivery"],
+  "enabled": ["N1", "N2", "N3", "N4", "N5", "N6", "N8", "N9", "N10", "N12", "N13"],
+  "disabled": ["N7", "N11"],
+  "degraded": {},
+  "notes": {
+    "N7": "disabled: no component workshop requested",
+    "N12": "pre-push gate runs test:all (N5 + N6 enabled)"
+  }
+}

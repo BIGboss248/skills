@@ -1,0 +1,99 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { createProblemResponse, handleValidationError } from "@/lib/api/problem-details";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+// 1. Validation Schemas
+const QueryFilterSchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(20),
+  search: z.string().trim().max(100).optional(),
+});
+
+const CreateEntitySchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(100),
+  description: z.string().trim().max(500).optional(),
+});
+
+// 2. GET /api/v1/[resource] - List resources with pagination and query filters
+export async function GET(request: NextRequest) {
+  try {
+    const rawQuery = Object.fromEntries(request.nextUrl.searchParams.entries());
+    const queryResult = QueryFilterSchema.safeParse(rawQuery);
+
+    if (!queryResult.success) {
+      return handleValidationError(queryResult.error, request.nextUrl.pathname);
+    }
+
+    const { page, limit, search } = queryResult.data;
+
+    // TODO: Query database with pagination, search, and pass request.signal
+    // const results = await db.entity.findMany({ ..., signal: request.signal });
+    const items: Array<{ id: string; name: string }> = [];
+    const total = 0;
+
+    return NextResponse.json({
+      data: items,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error("GET error:", error);
+    return createProblemResponse({
+      title: "Internal Server Error",
+      status: 500,
+      detail: "An unexpected error occurred while fetching resources.",
+      instance: request.nextUrl.pathname,
+    });
+  }
+}
+
+// 3. POST /api/v1/[resource] - Create a new resource
+export async function POST(request: NextRequest) {
+  try {
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return createProblemResponse({
+        title: "Bad Request",
+        status: 400,
+        detail: "Malformed or invalid JSON payload.",
+        instance: request.nextUrl.pathname,
+      });
+    }
+
+    const parseResult = CreateEntitySchema.safeParse(body);
+    if (!parseResult.success) {
+      return handleValidationError(parseResult.error, request.nextUrl.pathname);
+    }
+
+    // TODO: Persist entity to database
+    const createdEntity = {
+      id: crypto.randomUUID(),
+      ...parseResult.data,
+      createdAt: new Date().toISOString(),
+    };
+
+    return NextResponse.json(createdEntity, {
+      status: 201,
+      headers: {
+        Location: `${request.nextUrl.pathname}/${createdEntity.id}`,
+      },
+    });
+  } catch (error) {
+    console.error("POST error:", error);
+    return createProblemResponse({
+      title: "Internal Server Error",
+      status: 500,
+      detail: "An unexpected error occurred while creating resource.",
+      instance: request.nextUrl.pathname,
+    });
+  }
+}

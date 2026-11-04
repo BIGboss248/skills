@@ -1,0 +1,9 @@
+services:
+  app:
+    image: ghcr.io/<lowercase-owner>/<lowercase-repo>:${IMAGE_TAG:-latest}
+    container_name: app-production
+    restart: always
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    environment:
+      - NODE_ENV=production

@@ -1,0 +1,64 @@
+# Sitemap & Route Inventory
+
+> Path **ownership** (which runtime answers a path) is defined in
+> [`04-architecture-contracts.md`](./04-architecture-contracts.md). This file
+> owns the information architecture and rendering strategy only.
+
+## 1. Information Architecture & Route Inventory
+
+| Route | Page Name | Primary Nav? | Rendering Strategy | Dynamic Params | Owner |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `/` | Home | Yes | Static (SSG) | None | app |
+| `/about` | About & Credentials | Yes | Static (SSG) | None | app |
+| `/projects` | Projects Showcase | Yes | Static (SSG) | None | app |
+| `/projects/[slug]` | Case Study Detail | No | SSG + ISR | `slug` | app |
+| `/lab` | Interactive Lab | Yes | Client Hydrated | None | app |
+| `/contact` | Contact & Inquiries | Yes | Static (SSG) | None | app |
+| `/api/health` | Health Check | No | Dynamic (`force-dynamic`) | None | app |
+
+---
+
+## 2. Page & Section Hierarchy Breakdown
+
+### Home (`/`)
+- **Global Header**: Brand emblem, navigation menu, locale switcher, theme toggle.
+- **Hero Section**: Value proposition headline, status indicator badge, primary action CTAs.
+- **Featured Projects**: Responsive case study card grid with metrics and tag pills.
+- **Interactive Lab Preview**: Live diagnostic tool card launchers.
+- **Trust Signals**: ORCID credentials, verification tokens, publications list.
+- **Global Footer**: Site index links, copyright, system status.
+
+---
+
+## 3. Rendering & Hydration Matrix
+- **Static Pre-rendering (SSG)**: Home, About, Projects list, Contact.
+- **Dynamic / Incremental Regeneration (ISR)**: Project detail articles.
+- **Client Components (`"use client"`)**: Interactive lab probers, theme switcher, mobile drawer navigation, contact form.
+
+---
+
+## 4. Non-Page Routes
+
+List everything that is a route but not a page. These still need plan items and
+ownership entries, and they are the ones most often forgotten.
+
+| Route | Kind | Purpose | Owner | Phase |
+| :--- | :--- | :--- | :--- | :--- |
+| `/api/health` | Route handler | Liveness/readiness probe | app | 3 |
+| `/login` | Route handler (redirect) | Hand off to the auth provider | app | 5 |
+| `/logout` | Route handler (redirect) | Clear the provider session | app | 5 |
+| `/api/webhooks/[provider]` | Route handler | Signed inbound callbacks | app | 6 |
+| `?wc-api=` / `/wc-api/*` | Proxy/middleware | Gateway callbacks | app | 2 |
+| `/_next/*` | Framework assets | Build output | app | 2 |
+
+---
+
+## 5. Route → Registry Parity
+
+Before the plan is accepted:
+
+- [ ] Every route above appears in `lib/routes.ts`.
+- [ ] Every route above appears in the ownership matrix
+      (`04-architecture-contracts.md`).
+- [ ] Every page route above appears in `docs/plan/05-pages-and-components.md`.
+- [ ] Every non-page route above appears in Phase 2, 3, 5, or 6.
