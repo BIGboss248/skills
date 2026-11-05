@@ -1,7 +1,7 @@
 ---
 name: nextjs-component-dev
 description: >-
-  Build Next.js App Router React components with Suspense skeletons, semantic OKLCH tokens, next-intl dictionaries, and Tailwind logical styling; test authoring is owned exclusively by nextjs-test. MANDATORY SKILL: activate for every new component, UI section, card, widget, or layout element. Triggers on "/nextjs-component-dev", "create component", "new component", "build component", "develop component".
+  Build Next.js App Router React components with semantic OKLCH tokens, next-intl dictionaries, and Tailwind logical styling; a Suspense skeleton is added only when the component can suspend, lazy-load, or wait on I/O, never for static components. Test authoring is owned exclusively by nextjs-test. MANDATORY SKILL: activate for every new component, UI section, card, widget, or layout element. Triggers on "/nextjs-component-dev", "create component", "new component", "build component", "develop component".
 metadata:
   author: BIGboss248
   version: "2.3"
@@ -9,18 +9,18 @@ metadata:
 
 # Next.js Component & Skeleton Development (`nextjs-component-dev`)
 
-Specialized workflow for creating production-ready React Server Components (RSC) and Client Components with Suspense skeletons, next-intl dictionary-backed translations, semantic theme tokens, and live runtime diagnostics via `next-devtools` MCP. This skill creates implementation only; test authoring is owned exclusively by `nextjs-test`.
+Specialized workflow for creating production-ready React Server Components (RSC) and Client Components with next-intl dictionary-backed translations, semantic theme tokens, and live runtime diagnostics via `next-devtools` MCP. Suspense skeletons are **conditional**: they ship only for components that can suspend or lazy-load, and are deliberately skipped for static components. This skill creates implementation only; test authoring is owned exclusively by `nextjs-test`.
 
 > [!CRITICAL]
-> **MANDATORY COMPONENT CREATION INVARIANT:** Whenever you create any new React or Next.js component (whether requested directly by the user, created as part of a page build, or executed from `docs/plan/`), you **MUST** strictly follow every architectural standard and workflow step in this skill. Never create ad-hoc `.tsx` component files without executing this workflow (Next.js local docs lookup, `implementation_plan.md`, surface-folder placement (`<new_component_dir>/<surface>/<component_name>.tsx`), `messages/[locale].json` dictionary sync, `<component_name>_skeleton.tsx`, and `verify-dev` verification). Test files are **not** part of this workflow: `nextjs-test` owns them.
+> **MANDATORY COMPONENT CREATION INVARIANT:** Whenever you create any new React or Next.js component (whether requested directly by the user, created as part of a page build, or executed from `docs/plan/`), you **MUST** strictly follow every architectural standard and workflow step in this skill. Never create ad-hoc `.tsx` component files without executing this workflow (Next.js local docs lookup, `implementation_plan.md`, surface-folder placement (`<new_component_dir>/<surface>/<component_name>.tsx`), `messages/[locale].json` dictionary sync, the skeleton decision gate (§1.2), and `verify-dev` verification). Test files are **not** part of this workflow: `nextjs-test` owns them.
 
 > [!IMPORTANT]
 > **Standalone invocation is self-sufficient.** When this skill is triggered on its own (`/nextjs-component-dev`, "create component", "build this card") — with no orchestrator, page skill, or plan file driving it — the same two gates still apply and are never delegated or skipped:
 >
 > 1. **Surface-first categorization (§1.1)** — resolve the owning surface folder from the component's renderers *before* the first write.
-> 2. **Skeleton-first streaming (§1.2)** — ship `<component_name>_skeleton.tsx` **and** wire it as the `<Suspense>` / `next/dynamic` fallback so it renders first while the component streams.
+> 2. **Skeleton decision gate (§1.2)** — classify the component as *can suspend/lazy-load* or *static* first, record the verdict, then either ship `<component_name>_skeleton.tsx` **and** wire it as the `<Suspense>` / `next/dynamic` fallback, or explicitly skip it with the reason recorded.
 >
-> If either gate cannot be satisfied, stop and ask the user. Never fall back to an ad-hoc file, a `global/` folder, a per-component folder, or a component without a skeleton.
+> If the surface cannot be resolved, or the skeleton verdict is genuinely ambiguous, stop and ask the user. Never fall back to an ad-hoc file, a `global/` folder, a per-component folder, a skeleton on a purely static component, or a streaming component shipped without a wired fallback.
 
 > [!TIP]
 > **Modular Assets & Templates:**
@@ -44,7 +44,7 @@ Specialized workflow for creating production-ready React Server Components (RSC)
 
 ## Architectural Rules & Standards
 
-### 1. Planning Context, Surface Categorization & Skeleton-First Streaming
+### 1. Planning Context, Surface Categorization & Skeleton Decision
 
 - Read `docs/project.json` to resolve `package_manager`, `new_component_dir`, `style_file_dir`, `component_library`, `dictionaries_dir` (default: `"messages"`), and `supported_languages`.
 - All internal routes MUST use `ROUTES` from `@/lib/routes`.
@@ -74,37 +74,46 @@ A component's folder is decided by **who renders it**, never by its own name. Re
 - **Target path**: `<new_component_dir>/<surface>/<component_name>.tsx` — flat files, no per-component subfolder, no per-component `index.ts` (an optional area-level `<surface>/index.ts` barrel is allowed).
 - **Forbidden**: the retired `global/` folder, `components/<component_name>/`, and any folder derived from the component's own name.
 - **Promotion rule**: the moment a second surface imports a page-scoped component, move it to `shared/` in the same change and update every import.
-- **Naming**: `snake_case.tsx` files with `PascalCase` exports (`theme_button.tsx` → `ThemeButton`). Companions are flat siblings in the same surface folder: `<component_name>_skeleton.tsx` (this skill) and, when `nextjs-test` runs, `<component_name>.test.tsx`, `<component_name>.edge.test.tsx`, `<component_name>.test-plan.md`; `<component_name>.stories.tsx` only when Storybook is in scope.
+- **Naming**: `snake_case.tsx` files with `PascalCase` exports (`theme_button.tsx` → `ThemeButton`). Companions are flat siblings in the same surface folder: `<component_name>_skeleton.tsx` **(only when §1.2 requires it)** and, when `nextjs-test` runs, `<component_name>.test.tsx`, `<component_name>.edge.test.tsx`, `<component_name>.test-plan.md`; `<component_name>.stories.tsx` only when Storybook is in scope.
 - **Test mirror**: QA Playwright specs live at `tests/e2e/components/<surface>/<component_name>.spec.ts` and are authored by `nextjs-test`.
 
 ```text
 <new_component_dir>/
 ├── header/                       # layout region
 │   ├── navbar.tsx
-│   ├── navbar_skeleton.tsx
-│   └── theme_button.tsx
+│   ├── navbar_skeleton.tsx       # only if navbar suspends / lazy-loads
+│   └── theme_button.tsx          # static? no skeleton
 ├── home/                         # page segment
 │   ├── hero.tsx
-│   └── hero_skeleton.tsx
+│   └── hero_skeleton.tsx         # only if hero awaits data or streams
 ├── shared/                       # reused by 2+ surfaces
-└── ui/                           # design-system primitives
+└── ui/                           # design-system primitives (static → no skeletons)
 ```
 
-#### 1.2 Skeleton-First Streaming (mandatory — also when invoked alone)
+#### 1.2 Skeleton Decision Gate (mandatory — also when invoked alone)
 
-The skeleton is not optional polish: it is the UI the user sees **first**, while the component streams in. Every component created by this skill ships a geometry-matched skeleton **and** wires it as the streaming fallback in the same change.
+A skeleton is a **streaming fallback**, not a mandatory companion file. It exists to fill the component's box while the real content is still being produced. A static component that finishes synchronously in the same server pass must **not** ship one: a fallback that can never paint is dead code that silently drifts out of sync with the real layout.
 
-1. **Artifact** — `<new_component_dir>/<surface>/<component_name>_skeleton.tsx`, a flat sibling exporting `[ComponentName]Skeleton` (start from [`skeleton.template.tsx`](./resources/templates/skeleton.template.tsx)).
-2. **Wire it — an unwired skeleton is a failed deliverable:**
+**Decision question: can this component suspend, lazy-load, or wait on I/O before its HTML exists?**
+
+| Verdict | Use when | Typical cases |
+| :--- | :--- | :--- |
+| **Skeleton required** | The component's box can be painted before its content is ready | Async RSC awaiting data (`fetch`, DB/API, `await params` / `await searchParams`, `cookies()`, `headers()`, `connection()`); a section placed inside `<Suspense>`; `useSuspenseQuery`; lazy `next/dynamic` leaves (charts, rich-text editors, dialogs, below-the-fold widgets); `ssr: false` client-only leaves; a route that composes `loading.tsx` |
+| **No skeleton** | The component renders completely and synchronously during the server pass | Static/presentational RSC whose data arrives as props or literal copy and which contains no `await`; layout chrome such as `footer/` or a static `header/` row; `ui/` primitives (`button`, `badge`, `input`); client leaves whose initial state paints instantly with no lazy import and no browser-API gate |
+
+1. **Record the verdict before the first write** — in `implementation_plan.md`: `skeleton: required — <trigger>` or `skeleton: not required — static (<evidence>)`. The verdict is a decision with a reason, never a default.
+2. **Required → ship the artifact**: `<new_component_dir>/<surface>/<component_name>_skeleton.tsx`, a flat sibling exporting `[ComponentName]Skeleton` (start from [`skeleton.template.tsx`](./resources/templates/skeleton.template.tsx)).
+3. **Required → wire it; an unwired skeleton is a failed deliverable:**
    - Async RSC or data-reading section: the parent renders `<Suspense fallback={<ComponentNameSkeleton />}><ComponentName /></Suspense>`.
    - Lazy client leaf: `dynamic(() => import("./x").then((m) => m.X), { loading: () => <XSkeleton /> })`, plus `{ ssr: false }` for browser-only APIs.
    - TanStack Query: `useSuspenseQuery` inside `<Suspense fallback={<ComponentNameSkeleton />}>`.
    - Route level: `loading.tsx` composes the section skeletons instead of a blank page (see `nextjs-page-dev`).
-3. **Geometry parity (CLS = 0)** — reuse the component's outer wrapper element and classes verbatim: same padding, `max-w-*`, `gap-*`, border and radius, `grid`/`flex` layout, row and column counts, responsive breakpoints (`sm:`/`md:`/`lg:`), media aspect ratios or fixed heights, and the same number of placeholder items and text lines.
-4. **Tokens only** — `animate-pulse bg-muted` (or `bg-muted/70`) blocks inside the same semantic container (`border border-border bg-card rounded-xl`). No hardcoded colors, no physical-direction classes.
-5. **Pure and static** — no data fetching, no hooks, no `"use client"`, no props beyond an optional `className`. Mark decorative blocks `aria-hidden="true"`; any localized loading label comes from the dictionary, never inline.
-6. **Streaming-order check** — on a slow response the layout must show the skeleton inside the component's exact box: never a full-page spinner and never a blank gap. Confirm with the Next DevTools Navigation Inspector ("Pause on navigations").
-7. **Exception handling** — if a component genuinely cannot suspend (a synchronous `ui/` primitive), do not silently drop the file: ask the user, record `skeleton: waived — <reason>` in `implementation_plan.md`, and expect `verify-dev` to flag the missing companion. An unwaived missing skeleton blocks Step 4.
+4. **Required → geometry parity (CLS = 0)** — reuse the component's outer wrapper element and classes verbatim: same padding, `max-w-*`, `gap-*`, border and radius, `grid`/`flex` layout, row and column counts, responsive breakpoints (`sm:`/`md:`/`lg:`), media aspect ratios or fixed heights, and the same number of placeholder items and text lines.
+5. **Required → tokens only, pure and static** — `animate-pulse bg-muted` (or `bg-muted/70`) blocks inside the same semantic container (`border border-border bg-card rounded-xl`). No hardcoded colors, no physical-direction classes, no data fetching, no hooks, no `"use client"`, no props beyond an optional `className`. Mark decorative blocks `aria-hidden="true"`; any localized loading label comes from the dictionary, never inline.
+6. **Required → streaming-order check** — on a slow response the layout must show the skeleton inside the component's exact box: never a full-page spinner and never a blank gap. Confirm with the Next DevTools Navigation Inspector ("Pause on navigations").
+7. **Not required → create nothing.** Do not add a `_skeleton.tsx` file, and do not wrap a static component in a `<Suspense>` boundary purely to justify one. Record the reason in `implementation_plan.md` and in the final report so the omission is visible and intentional.
+8. **Verdicts go stale.** The moment a component gains `await`, a data hook, a lazy `next/dynamic` import, or a browser-API gate, re-run this gate and add the skeleton **in the same change**. A skeleton that already exists for a component that became static is removed the same way, with the reason recorded.
+9. **When genuinely undecidable** (for example a client component a future parent may stream), ask the user and record the answer. Never add a skeleton "just in case", and never omit one for a component that can suspend.
 
 ### 2. Next.js Internal Docs Lookup (`node_modules/next/dist/docs`)
 
@@ -203,7 +212,7 @@ The implementation plan must cover:
 5. **Theme Tokens & Styling**: Identified semantic OKLCH CSS variables and logical layout classes.
 6. **Testing Handoff (`nextjs-test` owns it)**: Do not enumerate or plan test cases in this artifact. Record that this skill writes no tests and that `nextjs-test` owns the suite as a separate step.
 7. **Verification Gate**: `verify-dev.ps1`/`.sh` for companion files and i18n. Existing tests may be run read-only for feedback; Playwright, the full Jest project, and builds are the expensive tier and run at `git push` (pre-push), not here.
-8. **Skeleton Contract (§1.2)**: The skeleton file path, the exact parent file and boundary that imports it (`Suspense fallback`, `next/dynamic` `loading`, or `loading.tsx`), the geometry elements mirrored from the component (wrapper classes, grid/flex, breakpoints, item and line counts), and any approved waiver with its reason.
+8. **Skeleton Verdict (§1.2)**: The classification evidence — whether the component can suspend, lazy-load, or wait on I/O, or is static — and the resulting verdict. When required: the skeleton file path, the exact parent file and boundary that imports it (`Suspense fallback`, `next/dynamic` `loading`, or `loading.tsx`), and the geometry elements mirrored from the component (wrapper classes, grid/flex, breakpoints, item and line counts). When not required: `skeleton: not required — static (<evidence>)`. Ambiguous cases are escalated to the user, never defaulted.
 9. **Approval Gate**: The worktree branch `agent/<slug>`, the fact that all work lands there, and that merging into `main` waits for explicit user approval after the `review` summary.
 
 ---
@@ -212,7 +221,7 @@ The implementation plan must cover:
 
 - [ ] **Step 0: Implementation Plan Generation & Approval Gate**
   - Search and inspect `node_modules/next/dist/docs` via `codebase-memory` MCP (`search_code`, `search_graph`) for any Next.js APIs, directives, hooks, or components utilized by the planned component to ensure up-to-date context.
-  - Synthesize component requirements, scan `docs/project.json`, and generate `implementation_plan.md` documenting consulted docs, the surface decision with its renderer evidence (§1.1), and the skeleton contract with its wiring target (§1.2).
+  - Synthesize component requirements, scan `docs/project.json`, and generate `implementation_plan.md` documenting consulted docs, the surface decision with its renderer evidence (§1.1), and the skeleton verdict with its trigger or static evidence (§1.2).
   - Set `request_feedback = true` and `user_facing = true` on the artifact.
   - Wait for user review and explicit approval before writing any code.
   - **Form / Mutation Component Routing Gate**: If the component renders a form or accepts user mutations, read references/form-server-actions.md. Grill the user on whether to include useOptimistic and document the recommendation in implementation_plan.md.
@@ -235,17 +244,17 @@ The implementation plan must cover:
   - Define prop interfaces with strict **English TSDoc** annotations (`@param`, `@defaultValue`, `@returns`).
   - If there are more than one supported language, component must fetch the translation first and if failed use fallbacks.
 
-- [ ] **Step 3: Component & Skeleton Implementation**
+- [ ] **Step 3: Component Implementation & Conditional Skeleton**
   - Create the primary component at the exact flat path resolved in Phase 0: `<new_component_dir>/<surface>/<component_name>.tsx`. Never invent a new top-level folder and never create a per-component subfolder.
   - Implement it (RSC or Client Component) consuming translations via `next-intl` (`getTranslations` or `useTranslations`) with zero hardcoded placeholders or in-file mock dictionary objects. For heavy or conditionally rendered interactive leaves, wrap via `next/dynamic` with `loading: () => <ComponentNameSkeleton />` (or `{ ssr: false }` for browser-only APIs). When building interactive cards or dense feed items with links, pair with `useLinkStatus` for contextual click feedback.
-  - Create the matching skeleton `<component_name>_skeleton.tsx` alongside it (§1.2): mirror the outer wrapper, padding, grid/flex, breakpoints, item and line counts, and token classes so the skeleton renders first in the component's exact box with **CLS = 0**.
-  - **Wire the skeleton in the same change.** Import it in the owning parent — the page, layout, section, or the `next/dynamic` call — and place it as the `<Suspense fallback>` (or `loading.tsx` composition). A skeleton that no boundary imports is an orphan and does not satisfy this step.
+  - **Apply the skeleton gate (§1.2) before writing any fallback.** If the component can suspend, lazy-load, or wait on I/O, create `<component_name>_skeleton.tsx` alongside it, mirroring the outer wrapper, padding, grid/flex, breakpoints, item and line counts, and token classes so it renders in the component's exact box with **CLS = 0**, then **wire it in the same change** by importing it in the owning parent — the page, layout, section, or `next/dynamic` call — as the `<Suspense fallback>` (or `loading.tsx` composition). A skeleton that no boundary imports is an orphan and does not satisfy this step.
+  - **If the component is static, skip the skeleton deliberately.** No `_skeleton.tsx` file, no `<Suspense>` wrapper added only to host a fallback. Record `skeleton: not required — static (<evidence>)` in `implementation_plan.md` and name that decision in the report.
   - Follow the surface's existing naming; do not add a per-component `index.ts` barrel (an area-level `<surface>/index.ts` is optional).
   - **No tests here.** Do not create `<component_name>.test.tsx`, `<component_name>.edge.test.tsx`, `<component_name>.test-plan.md`, or Playwright specs; `nextjs-test` owns them.
 
 - [ ] **Step 4: Fast Verification Gate (no expensive suites)**
   - **Next DevTools Runtime Inspection & Navigation Inspector:** Use `next-devtools` MCP server (`nextjs_call`) to check for compilation errors, runtime exceptions, hydration issues, or broken routes. Use Navigation Inspector ("Pause on navigations") to verify the static shell and App Shell render instantly with granular fallbacks.
-  - **Companion & i18n Verification:** Run `verify-dev.ps1`/`.sh` (file presence + dictionary compliance; it does not execute tests) against the component file:
+  - **Companion & i18n Verification:** Run `verify-dev.ps1`/`.sh` (file presence + skeleton verdict + dictionary compliance; it does not execute tests) against the component file. Pass `-SkeletonMode required` when §1.2 demands a skeleton and `-SkeletonMode not-required` for a static component; the default `auto` infers the verdict from the component source (`await`, `next/dynamic`, `useSuspenseQuery`, `cookies()`/`headers()`, `ssr: false`):
     - **Windows (PowerShell):** `pwsh .agents/skills/nextjs-component-dev/scripts/verify-dev.ps1 -ComponentPath <new_component_dir>/<surface>/<component_name>.tsx`
     - **Linux / macOS (Bash):** `bash .agents/skills/nextjs-component-dev/scripts/verify-dev.sh <new_component_dir>/<surface>/<component_name>.tsx`
   - **Existing Suite Feedback (read-only, optional):** when companion backfill finds tests that already exist, run only those files (e.g. `pnpm test -- <new_component_dir>/<surface>/<component_name>.test.tsx`) and report failures. Never author or edit them.
@@ -273,9 +282,9 @@ Even when this skill is invoked alone, do not report a component as done until e
 
 - [ ] **Surface resolved with evidence** — the file sits in the surface folder that actually renders it, and the renderer path (page, layout, or "no renderer yet → page segment") is named in the plan and in the report.
 - [ ] **No forbidden folders** — no `global/`, no `components/<component_name>/`, no folder named after the component.
-- [ ] **Skeleton file exists** — `<component_name>_skeleton.tsx` is a flat sibling, or a user-approved waiver with its reason is recorded.
-- [ ] **Skeleton is wired** — a `<Suspense fallback>`, `next/dynamic` `loading`, or `loading.tsx` actually imports it; no orphan skeleton.
-- [ ] **Geometry parity** — wrapper, padding, grid/flex, breakpoints, item and line counts match the component; skeleton tokens only (`bg-muted`, `animate-pulse`).
+- [ ] **Skeleton verdict recorded** — `implementation_plan.md` states either `skeleton: required — <trigger>` or `skeleton: not required — static (<evidence>)`; no component is shipped without a stated verdict.
+- [ ] **Skeleton matches the verdict** — a streaming/lazy component has `<component_name>_skeleton.tsx` as a flat sibling and a boundary that imports it (`<Suspense fallback>`, `next/dynamic` `loading`, or `loading.tsx`); a static component has **no** skeleton file and no fallback boundary added for show.
+- [ ] **Geometry parity (only when a skeleton exists)** — wrapper, padding, grid/flex, breakpoints, item and line counts match the component; skeleton tokens only (`bg-muted`, `animate-pulse`).
 - [ ] **Translations complete** — every string lives in `messages/[locale].json` for all `supported_languages`; no in-file dictionaries.
 - [ ] **Creation gate green** — `verify-dev` passes with no missing dictionaries.
 - [ ] **No tests written** — no `*.test.ts(x)`, `*.edge.test.tsx`, `*.test-plan.md`, or Playwright spec was created or edited; `nextjs-test` is named as the next owner.
@@ -287,6 +296,8 @@ Even when this skill is invoked alone, do not report a component as done until e
 
 - **Surface-First Placement:** Never derive a component's folder from its own name, never resurrect the retired `global/` folder, and never nest a per-component folder. Decide the owning surface before the first write: layout region (`header/`, `footer/`, `sidebar/`) when a layout renders it, the page segment when exactly one page renders it, `shared/` when two or more surfaces do, `ui/` for design-system primitives. Promote a page-scoped component to `shared/` the moment a second surface imports it.
 - **Ambiguous surface:** A card that one page renders today but three pages will render tomorrow is `shared/` from the start only when the user confirms the reuse. Otherwise place it in the page segment and apply the promotion rule on the second import. Never guess silently.
+- **Skeleton on a static component:** A synchronous, prop/literal-driven component (a `ui/` primitive, static footer, static heading) must not ship a `_skeleton.tsx`. The fallback never paints, and it becomes a second layout to maintain. If the component is static, say so in the plan and skip it.
+- **Stale skeleton verdict:** Adding `await`, a data hook, `next/dynamic`, or a browser-API gate to a previously static component invalidates `skeleton: not required`. Re-run §1.2 and add the wired skeleton in the same change; conversely, delete the skeleton when the async source is removed.
 - **Orphan skeleton:** A `<component_name>_skeleton.tsx` that no `<Suspense>` boundary, `next/dynamic` call, or `loading.tsx` imports does not satisfy §1.2 — the user still sees a blank gap. Wire it in the same change.
 - **Skeleton geometry drift:** A generic `h-96 w-full animate-pulse` block is not a skeleton. Copy the component's real wrapper classes, grid, and breakpoints, or the layout jumps when the content streams in.
 - **Local Docs Verification via Codebase Memory MCP:** Always search `node_modules/next/dist/docs/` using `codebase-memory` MCP tools (`search_code`, `search_graph`) before authoring components. Never assume deprecated Next.js API signatures or outdated caching mechanisms; local docs reflect the exact runtime version installed.

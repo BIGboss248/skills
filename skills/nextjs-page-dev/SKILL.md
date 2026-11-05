@@ -51,8 +51,8 @@ Specialized workflow for creating production-ready Next.js App Router pages with
 - Consult [`references/streaming-and-boundaries.md`](./references/streaming-and-boundaries.md) for streaming patterns.
 
 ### 6. Child Component Delegation (`nextjs-component-dev`)
-- Never write complex section components inline inside `page.tsx` or create ad-hoc component files without skeletons. Whenever a page requires new section or UI components, place them as flat `snake_case` files in the page's surface folder (`<new_component_dir>/<page-segment>/<component_name>.tsx`) by activating and strictly executing [`.agents/skills/nextjs-component-dev/SKILL.md`](../nextjs-component-dev/SKILL.md) for each component.
-- Every new section component follows the `nextjs-component-dev` workflow (surface folder, wired skeleton, dictionaries). Tests are not part of that workflow and are owned by `nextjs-test`.
+- Never write complex section components inline inside `page.tsx` or create ad-hoc component files outside the workflow. Whenever a page requires new section or UI components, place them as flat `snake_case` files in the page's surface folder (`<new_component_dir>/<page-segment>/<component_name>.tsx`) by activating and strictly executing [`.agents/skills/nextjs-component-dev/SKILL.md`](../nextjs-component-dev/SKILL.md) for each component.
+- Every new section component follows the `nextjs-component-dev` workflow (surface folder, dictionaries, and the §1.2 skeleton verdict). A skeleton is created and wired only when the component can suspend or lazy-load; static sections ship without one. Tests are not part of that workflow and are owned by `nextjs-test`.
 
 ### 7. Agent Boundaries & Source Isolation
 - Implementation is written by `nextjs-dev` when orchestrated. This skill never authors tests.

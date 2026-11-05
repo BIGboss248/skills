@@ -31,7 +31,7 @@ Next.js 16+ automatically exposes an MCP endpoint at `/_next/mcp` on startup.
 
 ## 2. Post-Component Runtime Diagnostics
 
-After authoring a component, skeleton, and dictionary entries:
+After authoring a component (plus its skeleton only when §1.2 requires one) and dictionary entries:
 
 1. **Query Diagnostics & Compilation Errors:**
    Use `nextjs_call` to check runtime compilation status:

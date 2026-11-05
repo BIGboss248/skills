@@ -13,7 +13,7 @@
 ## 1. Target Directory & Planned Files
 
 - [ ] `[new_component_dir]/[surface]/[component_name].tsx` (Primary Component)
-- [ ] `[new_component_dir]/[surface]/[component_name]_skeleton.tsx` (Suspense Skeleton)
+- [ ] `[new_component_dir]/[surface]/[component_name]_skeleton.tsx` (Suspense Skeleton — **only when §1.2 verdict is `required`; delete this line for a static component**)
 
 > Test files are **not** part of this plan. `nextjs-test` owns `<component_name>.test-plan.md`, `<component_name>.test.tsx`, and `<component_name>.edge.test.tsx` and runs as a separate step.
 
@@ -28,12 +28,21 @@
 | Surface chosen by §1.1 | `[<page-segment> / <layout-region> / shared / ui]` |
 | Forbidden-folder check | `[no global/, no components/<component_name>/, no per-component folder]` |
 
-### 1.2 Skeleton Contract (§1.2)
+### 1.2 Skeleton Verdict (§1.2)
+
+| Check | Result |
+| :--- | :--- |
+| Can it suspend, lazy-load, or wait on I/O? | `[yes → await/fetch/DB, `useSuspenseQuery`, `next/dynamic`, `ssr: false`, `loading.tsx` \| no → synchronous static render]` |
+| Trigger evidence | `[e.g. "awaits fetchProduct(id) in an async RSC" \| "pure presentational, props only, no await"]` |
+| Verdict | `[required \| not required — static]` |
+
+Only when the verdict is **required**:
 
 - **Skeleton file**: `[new_component_dir]/[surface]/[component_name]_skeleton.tsx`
 - **Wired in**: `[parent file]` via `[<Suspense fallback> | next/dynamic loading | loading.tsx]`
 - **Geometry mirrored**: `[outer wrapper classes, padding, grid/flex, breakpoints, item count, text-line count]`
-- **Waiver**: `[none | approved by user — reason]`
+
+When the verdict is **not required — static**: state the evidence above and ship **no** `_skeleton.tsx` and no fallback boundary added only to host one.
 
 ---
 

@@ -30,14 +30,14 @@ When invoked via `nextjs-storybook-story`:
 
 ---
 
-## 3. Four Mandatory Canonical Story Variants
+## 3. Canonical Story Variants
 
-All Storybook stories must strictly export four canonical variants styled with semantic OKLCH theme tokens:
+Stories export `Light` and `Dark` for every component. `SkeletonLight` and `SkeletonDark` are added **only when the component ships a skeleton** under SKILL.md §1.2 (it can suspend or lazy-load); a static component has no skeleton to render. All variants use semantic OKLCH theme tokens:
 
 1. **`Light`**: Default component in light theme card (`.light bg-background text-foreground border-border`).
 2. **`Dark`**: Default component in dark theme card (`.dark bg-background text-foreground border-border`).
-3. **`SkeletonLight`**: Renders `<[ComponentName]Skeleton />` in light theme container.
-4. **`SkeletonDark`**: Renders `<[ComponentName]Skeleton />` in dark theme container.
+3. **`SkeletonLight`**: Renders `<[ComponentName]Skeleton />` in light theme container (only when a skeleton exists).
+4. **`SkeletonDark`**: Renders `<[ComponentName]Skeleton />` in dark theme container (only when a skeleton exists).
 
 ---
 

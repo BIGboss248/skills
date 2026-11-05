@@ -1,5 +1,11 @@
 // File: <new_component_dir>/<surface>/<component_name>_skeleton.tsx
 // Flat sibling of <component_name>.tsx in the same page or layout-region folder.
+//
+// ONLY create this file when the component can suspend, lazy-load, or wait on I/O
+// (async RSC data, useSuspenseQuery, next/dynamic, ssr: false, loading.tsx).
+// Static/synchronous components (ui/ primitives, static layout chrome) get NO skeleton.
+// Then wire it in the same change as a <Suspense fallback>, next/dynamic `loading`,
+// or a loading.tsx composition. An unwired skeleton is an orphan.
 import React from "react";
 import { cn } from "@/lib/utils";
 

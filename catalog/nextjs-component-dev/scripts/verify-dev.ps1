@@ -3,7 +3,15 @@ param (
     [string]$ComponentPath,
 
     [Parameter(Mandatory = $false)]
-    [string]$ComponentName
+    [string]$ComponentName,
+
+    # Skeleton decision gate (SKILL.md §1.2):
+    #   auto         - infer from the component source (default)
+    #   required     - the component can suspend/lazy-load; a wired skeleton is mandatory
+    #   not-required - the component is static; a skeleton would be dead code
+    [Parameter(Mandatory = $false)]
+    [ValidateSet("auto", "required", "not-required")]
+    [string]$SkeletonMode = "auto"
 )
 
 $ErrorActionPreference = "Stop"
@@ -32,6 +40,30 @@ if ($resolvedItem.PSIsContainer) {
 
 $componentFile = Join-Path $resolvedDir "$compName.tsx"
 
+# --- Skeleton decision gate (SKILL.md §1.2) --------------------------------------
+# A skeleton is a streaming fallback, not a mandatory companion. Only components that
+# can suspend, lazy-load, or wait on I/O need one; static components must not ship one.
+function Test-SuspendsOrLazyLoads {
+    param ([string]$Path)
+    if (-not (Test-Path $Path)) { return $false }
+    $code = Get-Content -Path $Path -Raw
+    # Lazy/client-only signals apply regardless of the RSC/client classification.
+    if ($code -match 'next/dynamic' -or $code -match '\bdynamic\(' -or
+        $code -match 'useSuspenseQuery' -or $code -match 'ssr:\s*false') { return $true }
+    # Await inside a client component is usually an event handler, not a suspend point.
+    $isClient = $code -match '"use client"' -or $code -match "'use client'"
+    if ($isClient) { return $false }
+    if ($code -match '\bawait\b') { return $true }
+    if ($code -match 'cookies\(\)|headers\(\)|connection\(\)|noStore\(\)') { return $true }
+    return $false
+}
+
+switch ($SkeletonMode) {
+    "required"     { $skeletonRequired = $true }
+    "not-required" { $skeletonRequired = $false }
+    default        { $skeletonRequired = Test-SuspendsOrLazyLoads -Path $componentFile }
+}
+
 # Flat companion convention: <component_name>_skeleton.tsx. Legacy '<Name>Skeleton.tsx' is tolerated with a rename warning.
 $skeletonFile = Join-Path $resolvedDir "${compName}_skeleton.tsx"
 $legacySkeleton = $false
@@ -50,8 +82,7 @@ if (-not (Test-Path $testFile)) {
 
 $missing = @()
 if (-not (Test-Path $componentFile)) { $missing += "$compName.tsx" }
-if (-not (Test-Path $skeletonFile))  { $missing += "${compName}_skeleton.tsx" }
-if (-not (Test-Path $testFile))      { $missing += "$compName.test.tsx" }
+if ($skeletonRequired -and -not (Test-Path $skeletonFile)) { $missing += "${compName}_skeleton.tsx" }
 
 if ($missing.Count -gt 0) {
     Write-Host "[FAIL] Missing dev companion files for $compName in $($resolvedDir):" -ForegroundColor Red
@@ -61,39 +92,54 @@ if ($missing.Count -gt 0) {
     exit 1
 }
 
-Write-Host "[PASS] Files present: $compName.tsx, $(Split-Path $skeletonFile -Leaf), $(Split-Path $testFile -Leaf)" -ForegroundColor Green
+$present = @("$compName.tsx")
+if (Test-Path $skeletonFile) { $present += (Split-Path $skeletonFile -Leaf) }
+Write-Host "[PASS] Files present: $($present -join ', ')" -ForegroundColor Green
 
 if ($legacySkeleton) {
     Write-Host "[WARN] Legacy skeleton name found. Rename '${compName}Skeleton.tsx' to '${compName}_skeleton.tsx' (flat snake_case convention)." -ForegroundColor Yellow
 }
 
-# Skeleton-first streaming: an orphan skeleton (no Suspense/dynamic/loading.tsx import) is a failed deliverable.
-$skeletonRef = "${compName}_skeleton"
-$skeletonLeaf = Split-Path $skeletonFile -Leaf
-$wired = $false
-$scanPaths = @("app", "src", $resolvedDir) | Where-Object { Test-Path $_ } | Select-Object -Unique
-foreach ($scanPath in $scanPaths) {
-    $candidates = Get-ChildItem -Path $scanPath -Recurse -Filter *.tsx -File -ErrorAction SilentlyContinue |
-        Where-Object { $_.FullName -notmatch '[\\/](node_modules|\.next|\.git|dist|build|coverage)[\\/]' -and $_.Name -ne $skeletonLeaf -and $_.Name -notmatch '\.(test|edge\.test|stories)\.tsx$' } |
-        Select-Object -First 5000
-    foreach ($candidate in $candidates) {
-        if (Select-String -Path $candidate.FullName -Pattern $skeletonRef -SimpleMatch -Quiet) {
-            $wired = $true
-            break
-        }
+if (-not $skeletonRequired) {
+    if (Test-Path $skeletonFile) {
+        Write-Host "[WARN] Static component carries a skeleton ('$(Split-Path $skeletonFile -Leaf)'). It can never paint, so it is dead code that will drift from the real layout. Delete it unless the component gains await / a data hook / next/dynamic." -ForegroundColor Yellow
+    } else {
+        Write-Host "[PASS] Skeleton not required: static component (no suspend/lazy/await trigger detected)." -ForegroundColor Green
     }
-    if ($wired) { break }
-}
-
-if (-not $wired) {
-    Write-Host "[WARN] Orphan skeleton: '$skeletonLeaf' is not imported by any <Suspense fallback>, next/dynamic loading, or loading.tsx. Wire it so the skeleton renders first while the component streams." -ForegroundColor Yellow
 } else {
-    Write-Host "[PASS] Skeleton is wired into a streaming boundary." -ForegroundColor Green
+    Write-Host "[INFO] Skeleton required: component can suspend, lazy-load, or wait on I/O." -ForegroundColor Cyan
+
+    # Skeleton-first streaming: an orphan skeleton (no Suspense/dynamic/loading.tsx import) is a failed deliverable.
+    $skeletonRef = "${compName}_skeleton"
+    $skeletonLeaf = Split-Path $skeletonFile -Leaf
+    $wired = $false
+    $scanPaths = @("app", "src", $resolvedDir) | Where-Object { Test-Path $_ } | Select-Object -Unique
+    foreach ($scanPath in $scanPaths) {
+        $candidates = Get-ChildItem -Path $scanPath -Recurse -Filter *.tsx -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -notmatch '[\\/](node_modules|\.next|\.git|dist|build|coverage)[\\/]' -and $_.Name -ne $skeletonLeaf -and $_.Name -notmatch '\.(test|edge\.test|stories)\.tsx$' } |
+            Select-Object -First 5000
+        foreach ($candidate in $candidates) {
+            if (Select-String -Path $candidate.FullName -Pattern $skeletonRef -SimpleMatch -Quiet) {
+                $wired = $true
+                break
+            }
+        }
+        if ($wired) { break }
+    }
+
+    if (-not $wired) {
+        Write-Host "[WARN] Orphan skeleton: '$skeletonLeaf' is not imported by any <Suspense fallback>, next/dynamic loading, or loading.tsx. Wire it so the skeleton renders first while the component streams." -ForegroundColor Yellow
+    } else {
+        Write-Host "[PASS] Skeleton is wired into a streaming boundary." -ForegroundColor Green
+    }
 }
 
 # Test authoring is owned exclusively by the nextjs-test skill (separate step).
 # If tests already exist, run only those files read-only for feedback; never author one here.
-Write-Host "[INFO] Test authoring is owned by nextjs-test (separate step). Existing suites may be run read-only; use nextjs-test/scripts/verify-qa.ps1 for the test gate." -ForegroundColor Cyan
+if (Test-Path $testFile) {
+    Write-Host "[PASS] Existing suite found: $(Split-Path $testFile -Leaf) (run read-only for feedback)." -ForegroundColor Green
+}
+Write-Host "[INFO] Test authoring is owned by nextjs-test (separate step). Use nextjs-test/scripts/verify-qa.ps1 for the test gate." -ForegroundColor Cyan
 
 # Verify zero in-file i18n placeholders / mock translation dictionaries
 if (Test-Path $componentFile) {

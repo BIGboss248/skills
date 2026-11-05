@@ -26,17 +26,17 @@ Before creating or modifying components, read the planning artifacts created by 
    <new_component_dir>/
    ├── header/                            # layout region
    │   ├── navbar.tsx                     # Primary component (PascalCase export: Navbar)
-   │   ├── navbar_skeleton.tsx            # Suspense fallback matching geometry
+   │   ├── navbar_skeleton.tsx            # Suspense fallback (only if §1.2 requires one)
    │   ├── navbar.test.tsx                # QA baseline suite
    │   ├── navbar.edge.test.tsx           # QA adversarial suite (immutable)
    │   ├── navbar.test-plan.md            # QA coverage matrix
    │   ├── navbar.stories.tsx             # Storybook (only when in scope)
-   │   └── theme_button.tsx
+   │   └── theme_button.tsx               # static? no skeleton
    ├── footer/
    │   └── site_footer.tsx
    ├── home/                              # page-segment folder
    │   ├── hero.tsx
-   │   ├── hero_skeleton.tsx
+   │   ├── hero_skeleton.tsx              # only if hero awaits data or streams
    │   └── feature_grid.tsx
    ├── shared/                            # reused by 2+ surfaces
    └── ui/                                # design-system primitives
@@ -98,7 +98,7 @@ Before generating files, always audit whether the component already exists:
 1. **Mandatory scan.** Check `new_component_dir`, `component_library`, `components/ui/`, and root `components/`.
 2. **If the component exists → Companion Backfill Mode:**
    - **Preserve code.** Never delete, recreate, or overwrite `<component_name>.tsx`.
-   - **Audit companions.** `<component_name>_skeleton.tsx`, `<component_name>.test.tsx`, `<component_name>.test-plan.md`, `<component_name>.edge.test.tsx`, Playwright spec, TSDoc, and `<component_name>.stories.tsx` (only when Storybook is in scope).
+   - **Audit companions.** `<component_name>.test.tsx`, `<component_name>.test-plan.md`, `<component_name>.edge.test.tsx`, Playwright spec, TSDoc, and `<component_name>.stories.tsx` (only when Storybook is in scope). `<component_name>_skeleton.tsx` is audited **only when the component can suspend or lazy-load** (§1.2 of `nextjs-component-dev`); a static component must not gain one.
    - **Backfill only missing artifacts** that match the existing component contract.
 3. **If the component is missing** → run the full pipeline from Phase 0.
 

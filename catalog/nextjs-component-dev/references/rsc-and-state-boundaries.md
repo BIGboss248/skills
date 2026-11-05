@@ -52,7 +52,7 @@ When components require client-side caching, polling, or optimistic mutations:
 
 ## 3. Suspense Skeletons & Layout Stability (Zero CLS)
 
-- Every composite component must have a matching `<component_name>_skeleton.tsx` flat sibling in the same surface folder.
+- A `_skeleton.tsx` sibling is required only when the component can suspend or lazy-load (async RSC awaiting data, `useSuspenseQuery`, `next/dynamic`, or `ssr: false`). Static, synchronous components — including every `ui/` primitive and static layout chrome — must not ship a skeleton.
 - The skeleton must mirror the exact outer geometry, container padding, grid rows/columns, and responsive breakpoints (`sm:`, `md:`, `lg:`) of the real component to ensure **Cumulative Layout Shift (CLS) = 0**.
 - Use semantic token skeleton classes: `animate-pulse bg-muted rounded-md`.
 
