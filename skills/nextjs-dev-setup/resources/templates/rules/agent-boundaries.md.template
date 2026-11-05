@@ -14,8 +14,13 @@ inside the scope they were given.
 | :--- | :--- | :--- | :--- |
 | `nextjs-orchestrator` | primary | Runs the pipeline, owns gates and the plan checklist | delegation, plan checklist, approved edge-test corrections |
 | `nextjs-dev` | subagent | Components and pages | implementation, skeletons, dictionaries, surface folders |
-| `nextjs-test-author` | subagent | Baseline and page suites | `*.test.ts(x)`, `tests/e2e/pages/**`, `<component_name>.test-plan.md` |
-| `nextjs-qa-auditor` | subagent | Adversarial edge suites and audit | `*.edge.test.tsx`, `tests/e2e/components/**` |
+| `nextjs-test-author` | subagent | Baseline and page suites via the `nextjs-test` skill | `*.test.ts(x)`, `tests/e2e/pages/**`, `<component_name>.test-plan.md` |
+| `nextjs-qa-auditor` | subagent | Adversarial edge suites and audit via the `nextjs-test` skill | `*.edge.test.tsx`, `tests/e2e/components/**` |
+
+**Test ownership:** the `nextjs-test` skill is the only place tests are authored.
+Creation skills (`nextjs-component-dev`, `nextjs-page-dev`), the `/nextjs-create-*`
+commands, and `nextjs-dev` never create, edit, or scaffold tests, test plans, or
+E2E specs. Both test agents load that one skill and read only their own subtree.
 
 Every agent works in its **own git worktree** on branch `agent/<slug>`; nothing
 is written in the user's working tree. See
@@ -93,6 +98,9 @@ instead of doing it — it is an instruction, not a tool lock.
     conflicting paths, and ask which resolution to use. Never `-X ours`/`-X
     theirs`, never force-push, never rewrite history.
 12. **No pushing.** Agents never `git push` and never use `--no-verify`.
+13. **Only `nextjs-test` writes tests.** Test agents load the `nextjs-test` skill;
+    creation skills, creation commands, and `nextjs-dev` never author, edit, or
+    scaffold test files, test plans, or E2E specs.
 
 ---
 

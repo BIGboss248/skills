@@ -7,7 +7,7 @@ description: >-
   "outline nextjs architecture", or "generate plan".
 metadata:
   author: BIGboss248
-  version: "6.0"
+  version: "6.1"
 ---
 
 # Next.js Project Planning Skill (`nextjs-plan`)
@@ -17,6 +17,11 @@ Turns a workspace and an interview into canonical specifications
 (`docs/design/`), and a **7-phase execution ledger** in `docs/plan/` that any agent
 can resume from. Optional capability tracks (**feature packs**) compose into that
 ledger without adding phases.
+
+**Test ownership:** plan items may call for tests, but only the
+[`nextjs-test`](../nextjs-test/SKILL.md) skill writes them. This skill never
+creates or edits test files, and downstream creation skills hand off to
+`nextjs-test` as a separate step.
 
 ---
 

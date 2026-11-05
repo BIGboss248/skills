@@ -8,12 +8,15 @@ The roster is **instruction-scoped, not permission-locked**: the subagents carry
 orchestrator writes an explicit brief before every spawn and audits the diff when
 the agent returns.
 
-Two execution rules apply to every role:
+Three execution rules apply to every role:
 
 1. **Fast tier only during development.** Narrow Jest runs; Playwright, full Jest,
    and builds run at `git push` through `.husky/pre-push`. See
    [testing-guide.md](./testing-guide.md#6-test-execution-tiers-fast-during-dev-expensive-pre-push).
-2. **One worktree per task.** Implementation agents work on branch `agent/<slug>`
+2. **Only `nextjs-test` writes tests.** Test authoring lives in the `nextjs-test`
+   skill; `nextjs-dev`, the creation skills, and the `/create-nextjs-*` commands
+   never create, edit, or scaffold test files, test plans, or E2E specs.
+3. **One worktree per task.** Implementation agents work on branch `agent/<slug>`
    in `../<repo>-worktrees/<slug>`; the branch merges into `main` with `--no-ff`
    only after the user approves the review. Merge conflicts are escalated to the
    user. See [agent-worktree-isolation.md](./agent-worktree-isolation.md).
@@ -54,8 +57,8 @@ Three boundaries remain load-bearing, now as contract:
 | :--- | :--- | :--- | :--- |
 | `nextjs-orchestrator` | primary | user (Tab / command) | Runs the pipeline, owns gates, briefs, audits, final report |
 | `nextjs-dev` | subagent | orchestrator | Components, pages, skeletons, dictionaries, surface folders |
-| `nextjs-test-author` | subagent | orchestrator | Baseline unit tests, page E2E, test plan |
-| `nextjs-qa-auditor` | subagent | orchestrator | Immutable edge tests, component E2E, audit report |
+| `nextjs-test-author` | subagent | orchestrator | Baseline unit tests, page E2E, test plan (loads `nextjs-test`) |
+| `nextjs-qa-auditor` | subagent | orchestrator | Immutable edge tests, component E2E, audit report (loads `nextjs-test`) |
 
 The orchestrator's `permission.task` allows only these three names, so it cannot
 wander into unrelated subagents. That is the only permission rule in the roster:
@@ -203,6 +206,6 @@ Repositories without `.opencode/agents/` (or non-OpenCode harnesses) can still r
 the pipeline, but the orchestrator must:
 
 1. Announce `DEGRADED: agent permissions unavailable`.
-2. Use the prompts in `nextjs-adversarial-qa/resources/prompts/`.
+2. Use the prompts in `nextjs-test/resources/prompts/`.
 3. Run the write audit (`audit-agent-writes`) before reporting success — it is
    the only boundary check in that mode.

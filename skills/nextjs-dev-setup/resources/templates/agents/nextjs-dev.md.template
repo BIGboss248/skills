@@ -19,7 +19,8 @@ a suggestion: everything outside it is read-only to you, and the orchestrator
 audits your diff against it before accepting the work.
 
 1. **You do not edit tests.** `*.test.ts(x)`, `*.edge.test.tsx`, `*.spec.ts(x)`,
-   `tests/e2e/**`, and `<component_name>.test-plan.md` belong to the test agents. If a test is
+   `tests/e2e/**`, and `<component_name>.test-plan.md` belong to the test agents,
+   who load the `nextjs-test` skill. If a test is
    wrong, report it; never rewrite it to go green.
 2. **You do not edit infrastructure.** `package.json`, lockfiles, `jest.config.*`,
    `jest.setup.*`, and `playwright.config.*` are off-limits. If a dependency or

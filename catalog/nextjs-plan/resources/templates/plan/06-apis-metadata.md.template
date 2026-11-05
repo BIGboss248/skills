@@ -61,7 +61,8 @@
 ---
 
 **Phase 6 gate:** every mutation and non-page route is implemented, authorized,
-and covered by a positive and a negative test; global SEO endpoints are live.
+and covered by a positive and a negative test authored by `nextjs-test`; global
+SEO endpoints are live.
 
 > **Gate verified YYYY-MM-DD (6.1–6.6):** [route matrix, validation results,
 > robots/sitemap status].

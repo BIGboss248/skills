@@ -3,7 +3,12 @@
 **Category:** Agents · **Default:** on · **Depends on:** N2
 
 Installs the four OpenCode agents that keep implementation and test authorship in
-separate contexts, their boundary contract, and the two command shortcuts.
+separate contexts, their boundary contract, and the two creation command shortcuts.
+
+Test authoring is centralized in the `nextjs-test` skill: `nextjs-test-author` and
+`nextjs-qa-auditor` load it (authoring vs adversarial subtrees), while
+`nextjs-component-dev`, `nextjs-page-dev`, `nextjs-dev`, and the
+`/create-nextjs-*` commands never write test files.
 
 Subagents run unrestricted: no `permission` block, no shell allowlist. The
 orchestrator briefs each spawn with an explicit write scope and audits the diff on
@@ -28,7 +33,8 @@ delegation and accept the documented degraded mode.
 2. **Model overrides** — per role (orchestrator, implementation, test author, QA
    auditor), or inherit the primary agent's model (`null`)?
 3. **Command shortcuts** — install `/create-nextjs-component` and
-   `/create-nextjs-page`? Default yes.
+   `/create-nextjs-page` (creation-only wrappers over `nextjs-component-dev` /
+   `nextjs-page-dev`)? Default yes.
 4. **Verification commands** — confirm the exact script names the brief and review
    step should name (`test`, `test:fast`, `test:all`, `lint`, `e2e`, `check`). Do
    not invent one. The brief defaults to `tier: fast`.
@@ -59,7 +65,10 @@ delegation and accept the documented degraded mode.
    replace the sample commands in the orchestrator's brief/review sections with
    the repository's real scripts. A deployed file containing a `{{TOKEN}}` is
    invalid.
-5. Deploy the commands from [commands/](../../resources/templates/commands/).
+5. Deploy the commands from [commands/](../../resources/templates/commands/). They
+   are creation-only: they run `nextjs-component-dev` / `nextjs-page-dev` and must
+   not contain test-authoring steps. Ensure the `nextjs-test` skill is installed
+   (hub / `npx skills`) as the single test-writing skill.
 6. Confirm the tier scripts exist (`test:fast`, `test:e2e`, `test:all`,
    `test:prepush`) and `.husky/pre-push` calls `test:prepush`.
 7. Record the roster in `docs/project.json` under
@@ -83,7 +92,9 @@ delegation and accept the documented degraded mode.
       approved `merge` work in a scratch repository; `merge` without the approval
       flag exits `4` and leaves `main` untouched.
 - [ ] `.husky/pre-push` invokes the expensive tier (`test:prepush`).
-- [ ] Both command shortcuts exist.
+- [ ] Both command shortcuts exist and contain no test-authoring steps.
+- [ ] `nextjs-test` is installed as the only skill that writes tests; the two test
+      agents load it.
 - [ ] No `{{TOKEN}}` placeholder remains.
 - [ ] `opencode debug agents` lists the roster (when available).
 

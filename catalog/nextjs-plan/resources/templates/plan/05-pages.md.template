@@ -26,7 +26,7 @@ Every page must include all six:
 - [ ] All visible copy comes from the dictionary (no hard-coded strings).
 - [ ] Works in RTL; mixed-direction values use `dir="auto"`.
 - [ ] No overflow at the smallest and largest breakpoint.
-- [ ] Unit test (or story) covers the happy path and one edge case.
+- [ ] Unit test (or story) covers the happy path and one edge case (tests authored by `nextjs-test`, stories only when in scope).
 - [ ] Uses semantic tokens only — no raw palette class, arbitrary value, or
       inline style.
 

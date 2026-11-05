@@ -25,7 +25,7 @@ no test gate.
 3. Add the scripts: `test`, `test:unit`, and `test:all` (the latter runs every
    enabled suite; wire it after N6/N12 selection is known).
 4. Do **not** create sample or placeholder test files (Rule 3). Patterns live in
-   [sample-component.test.tsx](../../examples/sample-component.test.tsx) for
+   [sample-component.test.tsx](../../../nextjs-test/examples/sample-component.test.tsx) for
    reference only.
 
 ## Acceptance

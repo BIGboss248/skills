@@ -1,18 +1,18 @@
 ---
 name: nextjs-component-dev
 description: >-
-  Build Next.js App Router React components with Suspense skeletons, semantic OKLCH tokens, next-intl dictionaries, and Tailwind logical styling; test authoring is delegated to nextjs-adversarial-qa. MANDATORY SKILL: activate for every new component, UI section, card, widget, or layout element. Triggers on "/nextjs-component-dev", "create component", "new component", "build component", "develop component".
+  Build Next.js App Router React components with Suspense skeletons, semantic OKLCH tokens, next-intl dictionaries, and Tailwind logical styling; test authoring is owned exclusively by nextjs-test. MANDATORY SKILL: activate for every new component, UI section, card, widget, or layout element. Triggers on "/nextjs-component-dev", "create component", "new component", "build component", "develop component".
 metadata:
   author: BIGboss248
-  version: "2.2"
+  version: "2.3"
 ---
 
 # Next.js Component & Skeleton Development (`nextjs-component-dev`)
 
-Specialized workflow for creating production-ready React Server Components (RSC) and Client Components with Suspense skeletons, next-intl dictionary-backed translations, semantic theme tokens, and live runtime diagnostics via `next-devtools` MCP. All test authoring and execution are delegated to `nextjs-adversarial-qa`.
+Specialized workflow for creating production-ready React Server Components (RSC) and Client Components with Suspense skeletons, next-intl dictionary-backed translations, semantic theme tokens, and live runtime diagnostics via `next-devtools` MCP. This skill creates implementation only; test authoring is owned exclusively by `nextjs-test`.
 
 > [!CRITICAL]
-> **MANDATORY COMPONENT CREATION INVARIANT:** Whenever you create any new React or Next.js component (whether requested directly by the user, created as part of a page build, or executed from `docs/plan/`), you **MUST** strictly follow every architectural standard and workflow step in this skill. Never create ad-hoc `.tsx` component files without executing this workflow (Next.js local docs lookup, `implementation_plan.md`, surface-folder placement (`<new_component_dir>/<surface>/<component_name>.tsx`), `messages/[locale].json` dictionary sync, QA baseline `<component_name>.test.tsx`, `<component_name>_skeleton.tsx`, and `verify-dev` verification).
+> **MANDATORY COMPONENT CREATION INVARIANT:** Whenever you create any new React or Next.js component (whether requested directly by the user, created as part of a page build, or executed from `docs/plan/`), you **MUST** strictly follow every architectural standard and workflow step in this skill. Never create ad-hoc `.tsx` component files without executing this workflow (Next.js local docs lookup, `implementation_plan.md`, surface-folder placement (`<new_component_dir>/<surface>/<component_name>.tsx`), `messages/[locale].json` dictionary sync, `<component_name>_skeleton.tsx`, and `verify-dev` verification). Test files are **not** part of this workflow: `nextjs-test` owns them.
 
 > [!IMPORTANT]
 > **Standalone invocation is self-sufficient.** When this skill is triggered on its own (`/nextjs-component-dev`, "create component", "build this card") — with no orchestrator, page skill, or plan file driving it — the same two gates still apply and are never delegated or skipped:
@@ -27,7 +27,7 @@ Specialized workflow for creating production-ready React Server Components (RSC)
 >
 > - Next.js Docs Search & Context: [`references/nextjs-docs-lookup.md`](./references/nextjs-docs-lookup.md)
 > - Forms & Server Actions Guide: [references/form-server-actions.md](./references/form-server-actions.md)
-> - Test Authoring & Adversarial QA (delegated): [`../nextjs-adversarial-qa/SKILL.md`](../nextjs-adversarial-qa/SKILL.md)
+> - Test Authoring (separate skill, run after creation): [`../nextjs-test/SKILL.md`](../nextjs-test/SKILL.md)
 > - Storybook Standards & Separation: [`references/storybook-reference.md`](./references/storybook-reference.md)
 > - Instant Navigation & Prefetching: [`references/instant-navigation-and-prefetching.md`](./references/instant-navigation-and-prefetching.md)
 > - Next DevTools Debugging Guide: [`references/next-devtools-debugging.md`](./references/next-devtools-debugging.md)
@@ -35,8 +35,8 @@ Specialized workflow for creating production-ready React Server Components (RSC)
 > - RSC, State Boundaries & Lazy Loading: [`references/rsc-and-state-boundaries.md`](./references/rsc-and-state-boundaries.md)
 > - Code Templates: [`resources/templates/`](./resources/templates/) ([Component](./resources/templates/component.template.tsx), [Form Component](./resources/templates/form-component.template.tsx), [Skeleton](./resources/templates/skeleton.template.tsx), [Link Status Button](./resources/templates/link-status-button.template.tsx))
 > - Source Tree Isolation & Approval-Gated Merge: [`../nextjs-dev-setup/references/agent-worktree-isolation.md`](../nextjs-dev-setup/references/agent-worktree-isolation.md)
-> - Test Execution Tiers (fast vs pre-push): [`../nextjs-adversarial-qa/references/shared/test-execution-tiers.md`](../nextjs-adversarial-qa/references/shared/test-execution-tiers.md)
-> - Test Templates (owned by QA): [`../nextjs-adversarial-qa/resources/templates/`](../nextjs-adversarial-qa/resources/templates/)
+> - Test Execution Tiers (fast vs pre-push): [`../nextjs-test/references/shared/test-execution-tiers.md`](../nextjs-test/references/shared/test-execution-tiers.md)
+> - Test Templates (owned by `nextjs-test`): [`../nextjs-test/resources/templates/`](../nextjs-test/resources/templates/)
 > - Reference Implementations: [`examples/`](./examples/)
 > - Verification Scripts: [`scripts/verify-dev.ps1`](./scripts/verify-dev.ps1) (Windows) / [`scripts/verify-dev.sh`](./scripts/verify-dev.sh) (Linux)
 
@@ -74,8 +74,8 @@ A component's folder is decided by **who renders it**, never by its own name. Re
 - **Target path**: `<new_component_dir>/<surface>/<component_name>.tsx` — flat files, no per-component subfolder, no per-component `index.ts` (an optional area-level `<surface>/index.ts` barrel is allowed).
 - **Forbidden**: the retired `global/` folder, `components/<component_name>/`, and any folder derived from the component's own name.
 - **Promotion rule**: the moment a second surface imports a page-scoped component, move it to `shared/` in the same change and update every import.
-- **Naming**: `snake_case.tsx` files with `PascalCase` exports (`theme_button.tsx` → `ThemeButton`). Companions are flat siblings in the same surface folder: `<component_name>_skeleton.tsx`, `<component_name>.test.tsx`, `<component_name>.edge.test.tsx`, `<component_name>.test-plan.md`, `<component_name>.stories.tsx` (Storybook only when in scope).
-- **Test mirror**: QA Playwright specs live at `tests/e2e/components/<surface>/<component_name>.spec.ts`.
+- **Naming**: `snake_case.tsx` files with `PascalCase` exports (`theme_button.tsx` → `ThemeButton`). Companions are flat siblings in the same surface folder: `<component_name>_skeleton.tsx` (this skill) and, when `nextjs-test` runs, `<component_name>.test.tsx`, `<component_name>.edge.test.tsx`, `<component_name>.test-plan.md`; `<component_name>.stories.tsx` only when Storybook is in scope.
+- **Test mirror**: QA Playwright specs live at `tests/e2e/components/<surface>/<component_name>.spec.ts` and are authored by `nextjs-test`.
 
 ```text
 <new_component_dir>/
@@ -104,7 +104,7 @@ The skeleton is not optional polish: it is the UI the user sees **first**, while
 4. **Tokens only** — `animate-pulse bg-muted` (or `bg-muted/70`) blocks inside the same semantic container (`border border-border bg-card rounded-xl`). No hardcoded colors, no physical-direction classes.
 5. **Pure and static** — no data fetching, no hooks, no `"use client"`, no props beyond an optional `className`. Mark decorative blocks `aria-hidden="true"`; any localized loading label comes from the dictionary, never inline.
 6. **Streaming-order check** — on a slow response the layout must show the skeleton inside the component's exact box: never a full-page spinner and never a blank gap. Confirm with the Next DevTools Navigation Inspector ("Pause on navigations").
-7. **Exception handling** — if a component genuinely cannot suspend (a synchronous `ui/` primitive), do not silently drop the file: ask the user, record `skeleton: waived — <reason>` in `implementation_plan.md`, and expect `verify-dev` to flag the missing companion. An unwaived missing skeleton blocks Step 5.
+7. **Exception handling** — if a component genuinely cannot suspend (a synchronous `ui/` primitive), do not silently drop the file: ask the user, record `skeleton: waived — <reason>` in `implementation_plan.md`, and expect `verify-dev` to flag the missing companion. An unwaived missing skeleton blocks Step 4.
 
 ### 2. Next.js Internal Docs Lookup (`node_modules/next/dist/docs`)
 
@@ -156,15 +156,13 @@ The skeleton is not optional polish: it is the UI the user sees **first**, while
 - **Streamed Components:** Use `useSuspenseQuery` inside `<Suspense fallback={<[ComponentName]Skeleton />}>`.
 - **Optimistic Mutations:** Use `useMutation` with `onMutate` cache snapshots and `onError` rollbacks; call Server Actions with `updateTag(cache.tag)`.
 
-### 8. Test Delegation (`nextjs-adversarial-qa`)
+### 8. Test Ownership (`nextjs-test`)
 
-- **No test authoring in this skill.** Jest + RTL and Playwright standards, templates, and execution live exclusively in [`nextjs-adversarial-qa`](../nextjs-adversarial-qa/SKILL.md).
-- **Agent boundaries:** tests are written by `nextjs-test-author` and `nextjs-qa-auditor`. A dev agent cannot edit `*.test.ts(x)`, `*.edge.test.tsx`, `tests/e2e/**`, or `<component_name>.test-plan.md`; permissions enforce it. Report a failing assertion instead of changing it.
-- **Fast tier only.** During development run the targeted Jest file(s) for the component. Never run Playwright, the full Jest project, `build`, or Storybook builds: that is the expensive tier and it runs at `git push` through `.husky/pre-push`.
-- **TDD gate:** Invoke QA in `baseline` mode after plan approval and before writing JSX. The gate is a green baseline Jest suite.
-- **Handoff:** After implementation, invoke QA in `adversarial` mode; the independent auditor owns `<component_name>.edge.test.tsx`.
-- **Deferral:** Playwright specs are authored now, audited statically, and declared in `deferred_expensive_tests[]`. A deferred suite is reported `DEFERRED (pre-push)`, never `PASS`.
-- **Repair:** If a fast suite fails, fix the component — never the assertions. Route `code_fixes_required[]` items back through implementation.
+- **Creation only.** This skill never writes, edits, scaffolds, or plans tests. Jest + RTL, Playwright, test plans, and adversarial suites live exclusively in [`nextjs-test`](../nextjs-test/SKILL.md), which is the only test-writing skill in the Next.js set.
+- **Separate step.** Test authoring runs after creation, or before implementation when the user deliberately invokes `nextjs-test` in `baseline` mode. Never block component creation on a test suite, and never invent one to satisfy this workflow.
+- **Read-only feedback.** If tests already exist (companion backfill), run the targeted files and report failures; never change an assertion. Fix the component instead.
+- **Fast tier only.** Never run Playwright, the full Jest project, `build`, or Storybook builds during development: those are the expensive tier and run at `git push` through `.husky/pre-push`.
+- **Handoff.** At the end of creation, state that no tests were written and name `nextjs-test` as the follow-up owner.
 
 ### 9. Source Tree Isolation (Worktrees) & Approval-Gated Merge
 
@@ -194,7 +192,7 @@ The skeleton is not optional polish: it is the UI the user sees **first**, while
 ## Phase 0: Implementation Plan & Approval Gate
 
 > [!IMPORTANT]
-> **Plan Before Execution:** Always generate and present an `implementation_plan.md` artifact detailing all planned file creations, modifications, TypeScript contracts, translation dictionary additions, and TDD test cases before executing any write operations, modifying dictionaries, or creating components in the repository. Wait for user confirmation/approval before proceeding with execution.
+> **Plan Before Execution:** Always generate and present an `implementation_plan.md` artifact detailing all planned file creations, modifications, TypeScript contracts, and translation dictionary additions before executing any write operations, modifying dictionaries, or creating components in the repository. Wait for user confirmation/approval before proceeding with execution.
 
 The implementation plan must cover:
 
@@ -203,8 +201,8 @@ The implementation plan must cover:
 3. **TypeScript Contracts**: Prop interfaces and types with strict English TSDoc annotations.
 4. **Dictionary Strategy**: Explicit translation namespaces and keys to add to `messages/[locale].json` across all `supported_languages` in `docs/project.json` (zero hardcoded strings or in-file mock dictionaries).
 5. **Theme Tokens & Styling**: Identified semantic OKLCH CSS variables and logical layout classes.
-6. **Testing Strategy (delegated to `nextjs-adversarial-qa`)**: Reference the QA `<component_name>.test-plan.md` path and planned test files. Do not enumerate test cases here; the QA skill owns the coverage matrix.
-7. **Verification Gate**: `verify-dev.ps1`/`.sh` for companion files and i18n, plus the targeted Jest baseline suite. Playwright, the full Jest project, and builds are the expensive tier and run at `git push` (pre-push), not here.
+6. **Testing Handoff (`nextjs-test` owns it)**: Do not enumerate or plan test cases in this artifact. Record that this skill writes no tests and that `nextjs-test` owns the suite as a separate step.
+7. **Verification Gate**: `verify-dev.ps1`/`.sh` for companion files and i18n. Existing tests may be run read-only for feedback; Playwright, the full Jest project, and builds are the expensive tier and run at `git push` (pre-push), not here.
 8. **Skeleton Contract (§1.2)**: The skeleton file path, the exact parent file and boundary that imports it (`Suspense fallback`, `next/dynamic` `loading`, or `loading.tsx`), the geometry elements mirrored from the component (wrapper classes, grid/flex, breakpoints, item and line counts), and any approved waiver with its reason.
 9. **Approval Gate**: The worktree branch `agent/<slug>`, the fact that all work lands there, and that merging into `main` waits for explicit user approval after the `review` summary.
 
@@ -223,7 +221,7 @@ The implementation plan must cover:
   - Create branch `agent/<kebab-task-slug>` off `main` with `agent-worktree.ps1` / `.sh` (`-Action create`).
   - Install dependencies inside the worktree; it shares `.git` but not `node_modules`.
   - Do all reads, writes, and commands from the worktree path for the rest of the task.
-  - The branch stays isolated until Step 7: nothing is merged into `main` before explicit user approval.
+  - The branch stays isolated until Step 6: nothing is merged into `main` before explicit user approval.
 
 - [ ] **Step 1: Dev Server Verification & Next DevTools Connection**
   - Query `next-devtools` MCP via `nextjs_index` to detect running Next.js dev server instances.
@@ -237,37 +235,29 @@ The implementation plan must cover:
   - Define prop interfaces with strict **English TSDoc** annotations (`@param`, `@defaultValue`, `@returns`).
   - If there are more than one supported language, component must fetch the translation first and if failed use fallbacks.
 
-- [ ] **Step 3: TDD Baseline Tests (Delegated to `nextjs-test-author`, `baseline` mode)**
-  - Spawn the `nextjs-test-author` agent with the approved `implementation_plan.md` and design spec §7.
-  - It produces `<component_name>.test-plan.md` and `<component_name>.test.tsx` (flat siblings in the surface folder) BEFORE the component is implemented.
-  - Do not author test code here; consult [`../nextjs-adversarial-qa/SKILL.md`](../nextjs-adversarial-qa/SKILL.md).
-  - Gate: baseline suite green (or expected-red before implementation) before Step 4.
-
-- [ ] **Step 4: Component & Skeleton Implementation**
+- [ ] **Step 3: Component & Skeleton Implementation**
   - Create the primary component at the exact flat path resolved in Phase 0: `<new_component_dir>/<surface>/<component_name>.tsx`. Never invent a new top-level folder and never create a per-component subfolder.
   - Implement it (RSC or Client Component) consuming translations via `next-intl` (`getTranslations` or `useTranslations`) with zero hardcoded placeholders or in-file mock dictionary objects. For heavy or conditionally rendered interactive leaves, wrap via `next/dynamic` with `loading: () => <ComponentNameSkeleton />` (or `{ ssr: false }` for browser-only APIs). When building interactive cards or dense feed items with links, pair with `useLinkStatus` for contextual click feedback.
   - Create the matching skeleton `<component_name>_skeleton.tsx` alongside it (§1.2): mirror the outer wrapper, padding, grid/flex, breakpoints, item and line counts, and token classes so the skeleton renders first in the component's exact box with **CLS = 0**.
   - **Wire the skeleton in the same change.** Import it in the owning parent — the page, layout, section, or the `next/dynamic` call — and place it as the `<Suspense fallback>` (or `loading.tsx` composition). A skeleton that no boundary imports is an orphan and does not satisfy this step.
   - Follow the surface's existing naming; do not add a per-component `index.ts` barrel (an area-level `<surface>/index.ts` is optional).
+  - **No tests here.** Do not create `<component_name>.test.tsx`, `<component_name>.edge.test.tsx`, `<component_name>.test-plan.md`, or Playwright specs; `nextjs-test` owns them.
 
-- [ ] **Step 5: Fast Verification Gate (no expensive suites)**
+- [ ] **Step 4: Fast Verification Gate (no expensive suites)**
   - **Next DevTools Runtime Inspection & Navigation Inspector:** Use `next-devtools` MCP server (`nextjs_call`) to check for compilation errors, runtime exceptions, hydration issues, or broken routes. Use Navigation Inspector ("Pause on navigations") to verify the static shell and App Shell render instantly with granular fallbacks.
   - **Companion & i18n Verification:** Run `verify-dev.ps1`/`.sh` (file presence + dictionary compliance; it does not execute tests) against the component file:
     - **Windows (PowerShell):** `pwsh .agents/skills/nextjs-component-dev/scripts/verify-dev.ps1 -ComponentPath <new_component_dir>/<surface>/<component_name>.tsx`
     - **Linux / macOS (Bash):** `bash .agents/skills/nextjs-component-dev/scripts/verify-dev.sh <new_component_dir>/<surface>/<component_name>.tsx`
-  - **Fast Test Tier (mandatory):** run only the Jest files for this component — baseline first, then the edge file once it exists:
-    - `pnpm test -- <new_component_dir>/<surface>/<component_name>.test.tsx`
-    - `pnpm test -- <new_component_dir>/<surface>/<component_name>.edge.test.tsx`
+  - **Existing Suite Feedback (read-only, optional):** when companion backfill finds tests that already exist, run only those files (e.g. `pnpm test -- <new_component_dir>/<surface>/<component_name>.test.tsx`) and report failures. Never author or edit them.
   - **Forbidden here:** `pnpm run test:e2e`, `pnpm exec playwright test`, bare `pnpm test`, `pnpm run test:all`, `pnpm build`, `storybook build`. These are expensive and belong to the pre-push gate.
-  - **Declare deferrals:** list every authored-but-unrun Playwright file in `deferred_expensive_tests[]`. Report it as `DEFERRED (pre-push)`, never `PASS`.
-  - Fix syntax errors, missing dictionary keys, or implementation defects until the fast gates pass.
+  - Fix syntax errors, missing dictionary keys, or implementation defects until the creation gates pass.
 
-- [ ] **Step 6: Implementation Plan Checklist Synchronization**
+- [ ] **Step 5: Implementation Plan Checklist Synchronization**
   - When orchestrated, the orchestrator checks off the completed component item (`- [x]`) in `docs/plan/05-pages-and-components.md`.
   - If all sub-components and page infrastructure tasks for the parent page are completed, the orchestrator checks off the parent page item (`- [x]`).
   - When invoked directly without the orchestrator, perform this step yourself.
 
-- [ ] **Step 7: Present for Approval, Then Merge into `main`**
+- [ ] **Step 6: Present for Approval, Then Merge into `main`**
   - `git add <changed paths>` and commit on `agent/<slug>` (scoped commits inside the worktree are the only permitted commits).
   - Run the review from the main worktree and include its output in the report: `agent-worktree.ps1 -Action review -Slug <slug>` / `agent-worktree.sh review <slug>` (commits, diffstat, changed paths).
   - **STOP here and wait for explicit user approval.** Do not merge, do not remove the worktree, and do not report the work as landed before that approval. Running `merge` without `-Approved`/`--approved` prints the review and exits `4` — that is the gate working, not a failure to route around.
@@ -287,7 +277,8 @@ Even when this skill is invoked alone, do not report a component as done until e
 - [ ] **Skeleton is wired** — a `<Suspense fallback>`, `next/dynamic` `loading`, or `loading.tsx` actually imports it; no orphan skeleton.
 - [ ] **Geometry parity** — wrapper, padding, grid/flex, breakpoints, item and line counts match the component; skeleton tokens only (`bg-muted`, `animate-pulse`).
 - [ ] **Translations complete** — every string lives in `messages/[locale].json` for all `supported_languages`; no in-file dictionaries.
-- [ ] **Fast gate green** — `verify-dev` passes and the targeted Jest baseline file is green.
+- [ ] **Creation gate green** — `verify-dev` passes with no missing dictionaries.
+- [ ] **No tests written** — no `*.test.ts(x)`, `*.edge.test.tsx`, `*.test-plan.md`, or Playwright spec was created or edited; `nextjs-test` is named as the next owner.
 - [ ] **Merge withheld until approval** — the work is committed on `agent/<slug>`, `review` output is in the report, and `main` is untouched until the user explicitly approves.
 
 ---
@@ -302,7 +293,7 @@ Even when this skill is invoked alone, do not report a component as done until e
 - **Zero In-File i18n Fallbacks:** Never hardcode dictionary objects or fallbacks (`const DEFAULT_CONTENT = {...}`) in TSX files. All text must come from `messages/[locale].json`.
 - **Hydration Warning Detection & Browser APIs:** Never access browser-only globals (`window`, `localStorage`) during SSR. Use `dynamic(() => import('./Widget'), { ssr: false, loading: () => <WidgetSkeleton /> })` instead of double-rendering `useEffect(mounted)` flags to eliminate hydration crashes cleanly.
 - **Strict Logical Styling (BiDi):** Never use physical directions (`ml-`, `mr-`, `pl-`, `pr-`, `left-`, `right-`). Always use logical alternatives (`ms-`, `pe-`, `ps-`, `me-`, `start`, `end`).
-- **Targeted Test Execution:** Run only the specific Jest files for the component. Never the full suite, Playwright, or a production build during development — those are the expensive tier and run at `git push`.
+- **Test Separation:** Never write, edit, or scaffold test files (`*.test.tsx`, `*.edge.test.tsx`, `*.test-plan.md`, `tests/e2e/**`). Test authoring is owned exclusively by `nextjs-test` and runs as a separate step. Existing tests may be run read-only for feedback.
 - **Isolation Before Code:** Never start a component in the user's working tree. Create the `agent/<slug>` worktree first and write there.
 - **Never merge before approval:** The worktree branch is a proposal, not a delivery. Commit there, run `review`, and stop. `merge` without `-Approved`/`--approved` exits `4` by design; present the review to the user and wait. Bypassing the flag with a raw `git merge`, `-X ours`, or a force-push is a contract violation, not a shortcut.
 - **Merge Conflicts Are a Stop Signal:** Abort the merge, keep the branch, and ask the user. Never `-X ours`/`-X theirs`, never force-push, never rewrite history.

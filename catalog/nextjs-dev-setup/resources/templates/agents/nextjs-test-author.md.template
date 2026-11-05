@@ -42,8 +42,9 @@ suite green, and never weaken an assertion to hide a defect.
 
 ## Skill
 
-Load `.agents/skills/nextjs-adversarial-qa/SKILL.md` and follow its `baseline`
-or `page` mode (or the path recorded in `AGENTS.md`). Read only:
+Load `.agents/skills/nextjs-test/SKILL.md` and follow its `baseline`
+or `page` mode (or the path recorded in `AGENTS.md`). This is the only skill in
+the repository that authors tests. Read only:
 
 - `references/shared/`
 - `references/authoring/`

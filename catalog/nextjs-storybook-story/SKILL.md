@@ -13,7 +13,7 @@ Specialized workflow for generating and updating co-located Storybook stories (`
 > [!TIP]
 > **Modular Assets:**
 > - Reference story implementations: [`examples/`](./examples/)
-> - Test authoring is owned by [`nextjs-adversarial-qa`](../nextjs-adversarial-qa/SKILL.md); do not add test files here.
+> - Test authoring is owned by [`nextjs-test`](../nextjs-test/SKILL.md); do not add test files here.
 > - Verification Scripts: [`scripts/verify-storybook.ps1`](./scripts/verify-storybook.ps1) (Windows) / [`scripts/verify-storybook.sh`](./scripts/verify-storybook.sh) (Linux)
 
 ---

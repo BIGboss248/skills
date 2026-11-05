@@ -20,15 +20,15 @@ Whenever you are asked to create, scaffold, build, or implement **any new React 
 1. **Always Activate & Read First**: You **MUST** read and follow [`.agents/skills/nextjs-component-dev/SKILL.md`](./.agents/skills/nextjs-component-dev/SKILL.md) before writing any component code. (If full UX/UI design discovery + adversarial QA orchestration is requested, use [`.agents/skills/nextjs-component-create/SKILL.md`](./.agents/skills/nextjs-component-create/SKILL.md), which delegates implementation to `nextjs-component-dev`).
 2. **Non-Negotiable Standards from `nextjs-component-dev`**:
    - **Next.js Local Docs Lookup**: Query `node_modules\next\dist\docs` via `codebase-memory` MCP before authoring.
-   - **Implementation Plan Gate**: Generate `implementation_plan.md` covering the owning surface and target path (`<new_component_dir>/<page-segment|layout-region|shared|ui>/<component_name>.tsx`), TypeScript contracts with English TSDoc, translation keys, semantic tokens, and test cases.
+   - **Implementation Plan Gate**: Generate `implementation_plan.md` covering the owning surface and target path (`<new_component_dir>/<page-segment|layout-region|shared|ui>/<component_name>.tsx`), TypeScript contracts with English TSDoc, translation keys, and semantic tokens.
    - **Dev Server Check**: Verify or start the Next.js dev server via `next-devtools` MCP (`nextjs_index`).
    - **Zero Hardcoded Strings (i18n)**: Populate `messages/[locale].json` across all `supported_languages` in `docs/project.json` first and consume via `next-intl` (`getTranslations` / `useTranslations`). Never hardcode copy or in-file fallback objects.
-   - **TDD Baseline Delegation**: The `nextjs-test-author` agent authors `<component_name>.test.tsx` (Jest + RTL + `jest-axe` + `NextIntlClientProvider`) before implementation. Implementation agents never write or edit tests.
+   - **Test Authoring is Separate**: Tests are owned exclusively by [`nextjs-test`](./.agents/skills/nextjs-test/SKILL.md) and are written as a separate step. Creation skills, `/nextjs-create-*` commands, and implementation agents never create, edit, or scaffold tests, test plans, or E2E specs.
    - **Component & Skeleton Placement**: Implement `<new_component_dir>/<surface>/<component_name>.tsx` (RSC by default, push `"use client"` to leaf nodes) plus `<component_name>_skeleton.tsx` (mirroring geometry to prevent CLS) as flat siblings. `<surface>` is the page segment (e.g. `home/`), the layout region (e.g. `header/`, `footer/`), `shared/`, or `ui/`. Never use a `global/` folder, a per-component subfolder, or a per-component `index.ts`.
    - **Semantic Tokens & Logical BiDi Styling**: Exclusively use the project's semantic CSS variables declared in the stylesheet recorded as `style_file_dir` in `docs/project.json` (`bg-background`, `text-foreground`, `border-border`, `text-muted-foreground` are the common names — use whatever that stylesheet actually declares) and Tailwind logical properties (`ms-`, `me-`, `ps-`, `pe-`, `start`, `end`). Physical directional classes (`ml-`, `mr-`, `pl-`, `pr-`, `left-`, `right-`) and raw hex/palette classes are strictly forbidden.
    - **Both Themes or It Does Not Ship**: Every component must be reviewed in light **and** dark. If the project's token layer has no dark counterpart for a role you need, report it — never hardcode a dark-only or light-only color.
    - **Navigation Pending Feedback**: Links use the composite `Link` (or `@/i18n/navigation` when N4 is enabled), and pending state comes from per-link `useLinkStatus` (`next/link`, Next ≥15.3). Never add a progress-bar package or provider, and never mount the indicator conditionally.
-   - **Verification Gate (fast tier)**: Run `pwsh .agents/skills/nextjs-component-dev/scripts/verify-dev.ps1 -ComponentPath <new_component_dir>/<surface>/<component_name>.tsx` and the targeted Jest baseline/edge files, then inspect runtime health via `next-devtools` MCP (`nextjs_call`). Do **not** run Playwright, the full Jest project, or a production build — those are the expensive tier and run at `git push` through `.husky/pre-push`.
+   - **Verification Gate (fast tier)**: Run `pwsh .agents/skills/nextjs-component-dev/scripts/verify-dev.ps1 -ComponentPath <new_component_dir>/<surface>/<component_name>.tsx` and inspect runtime health via `next-devtools` MCP (`nextjs_call`). Existing tests may be run read-only for feedback; never author or edit one. Do **not** run Playwright, the full Jest project, or a production build — those are the expensive tier and run at `git push` through `.husky/pre-push`.
    - **Plan Checklist Sync**: The orchestrator checks off completed component items (`- [x]`) in `docs/plan/05-pages-and-components.md`. Role agents never edit the plan.
 
 ---
@@ -44,7 +44,7 @@ Whenever you are asked to create, scaffold, build, or implement **any new Next.j
    - **Companion Route Files**: Create `loading.tsx` skeleton and `error.tsx` boundary where applicable.
    - **Page Implementation (`page.tsx`)**: Use async `params` (`Promise<{ locale: string, ... }>`), export `generateMetadata()` with canonical alternates, export `generateStaticParams()` for localized/dynamic routes, inject typed `<JsonLd>` (`schema-dts`) with `<` escaped as `\u003c`, and wrap dynamic streaming subtrees in granular `<Suspense>` boundaries.
    - **Delegate New Page Components to `nextjs-component-dev`**: Whenever a new page requires new section or child components, you **MUST** use [`.agents/skills/nextjs-component-dev/SKILL.md`](./.agents/skills/nextjs-component-dev/SKILL.md) to build each component.
-   - **Page Test Delegation**: The `nextjs-test-author` agent writes `tests/e2e/pages/<route>.spec.ts` in `page` mode after the route is implemented. Implementation agents never write or edit tests. The suite is authored and statically audited now; its execution is deferred to pre-push.
+   - **Test Authoring is Separate**: The [`nextjs-test`](./.agents/skills/nextjs-test/SKILL.md) skill writes `tests/e2e/pages/<route>.spec.ts` in `page` mode as its own step after the route is implemented. Page/component creation and `/nextjs-create-*` commands never write or edit tests.
    - **Verification Gate (fast tier)**: Run `pwsh .agents/skills/nextjs-page-dev/scripts/verify-page.ps1 -RoutePath <route_dir>`. Never run Playwright or a production build during development.
    - **Plan Checklist Sync**: The orchestrator checks off completed page infrastructure items (`page.tsx`, `loading.tsx`, `error.tsx`, `generateMetadata`, `JSON-LD Schema`, `generateStaticParams()`) in `docs/plan/05-pages-and-components.md`, and checks off the parent page item when all its sub-items are complete.
 
@@ -96,8 +96,8 @@ This repository installs four OpenCode agents. The subagents have no tool-level 
 | :--- | :--- | :--- | :--- |
 | `nextjs-orchestrator` | primary | gates, delegation, plan checklist, approved edge-test corrections | implementation or tests |
 | `nextjs-dev` | subagent | components, pages, skeletons, dictionaries, surface folders | tests, test plans, runner configs, manifests |
-| `nextjs-test-author` | subagent | `*.test.ts(x)`, `tests/e2e/pages/**`, `<component_name>.test-plan.md` | implementation, dictionaries, edge tests |
-| `nextjs-qa-auditor` | subagent | `*.edge.test.tsx`, `tests/e2e/components/**` | implementation, baseline tests |
+| `nextjs-test-author` | subagent | `*.test.ts(x)`, `tests/e2e/pages/**`, `<component_name>.test-plan.md` (via `nextjs-test`) | implementation, dictionaries, edge tests |
+| `nextjs-qa-auditor` | subagent | `*.edge.test.tsx`, `tests/e2e/components/**` (via `nextjs-test`) | implementation, baseline tests |
 
 Rules:
 
@@ -109,7 +109,8 @@ Rules:
 6. **A brief scopes every spawn.** Role, objective, mode, `write_scope`, `read_scope`, `forbidden`, expected commands, definition of done.
 7. **Subagents verify themselves** — they run their own build, lint, type check, and targeted suites and return real command output.
 8. **The orchestrator audits the diff** before reporting success: touched paths vs `write_scope`, then re-runs the claimed-green suite.
-9. **Command shortcuts**: `/create-nextjs-component` and `/create-nextjs-page` route to `nextjs-orchestrator`.
+9. **Command shortcuts**: `/create-nextjs-component` runs `nextjs-component-dev`; `/create-nextjs-page` runs `nextjs-page-dev` (routing new sections through `nextjs-component-dev`). Neither command writes tests.
+10. **Test ownership**: only the `nextjs-test` skill writes test files. Creation skills, creation commands, and `nextjs-dev` never author, edit, or scaffold tests.
 
 Full contract: [`.agents/rules/agent-boundaries.md`](./.agents/rules/agent-boundaries.md).
 
@@ -128,7 +129,7 @@ Full contract: [`.agents/rules/agent-boundaries.md`](./.agents/rules/agent-bound
 - `verify-qa` / `verify-component-create` default to `-Tier fast`; `-Tier full` is
   pre-push/CI only.
 - Full contract:
-  [`.agents/skills/nextjs-adversarial-qa/references/shared/test-execution-tiers.md`](./.agents/skills/nextjs-adversarial-qa/references/shared/test-execution-tiers.md).
+  [`.agents/skills/nextjs-test/references/shared/test-execution-tiers.md`](./.agents/skills/nextjs-test/references/shared/test-execution-tiers.md).
 
 **Isolated branches — one worktree per component/page task:**
 

@@ -4,7 +4,7 @@ description: >-
   Step-by-step workflow for designing and building Next.js App Router pages (RSC page.tsx, loading.tsx skeleton, error.tsx boundary, generateMetadata, JSON-LD schema, and generateStaticParams). MANDATORY SKILL: MUST ALWAYS be activated, read, and strictly followed every time the agent creates, scaffolds, or implements any new Next.js page, route, or view. Triggers on "/nextjs-page-dev", "create page", "new page", "develop page", "build route", "implement page", or any page creation task.
 metadata:
   author: BIGboss248
-  version: "1.3"
+  version: "1.4"
 ---
 
 # Next.js Page & Route Development (`nextjs-page-dev`)
@@ -21,7 +21,7 @@ Specialized workflow for creating production-ready Next.js App Router pages with
 > - SEO & Structured Data Guide: [`references/seo-structured-data-guide.md`](./references/seo-structured-data-guide.md)
 > - Reusable Templates: [`resources/templates/`](./resources/templates/)
 > - Page Specification Template: [`page-spec.template.md`](./resources/templates/page-spec.template.md)
-> - Page Test Suite (delegated): [`../nextjs-adversarial-qa/SKILL.md`](../nextjs-adversarial-qa/SKILL.md) (`page` mode)
+> - Page Test Suite (separate skill, run after creation): [`../nextjs-test/SKILL.md`](../nextjs-test/SKILL.md) (`page` mode)
 > - Verification Script: [`scripts/verify-page.ps1`](./scripts/verify-page.ps1) (Windows) / [`scripts/verify-page.sh`](./scripts/verify-page.sh) (Linux)
 
 ---
@@ -51,12 +51,12 @@ Specialized workflow for creating production-ready Next.js App Router pages with
 - Consult [`references/streaming-and-boundaries.md`](./references/streaming-and-boundaries.md) for streaming patterns.
 
 ### 6. Child Component Delegation (`nextjs-component-dev`)
-- Never write complex section components inline inside `page.tsx` or create ad-hoc component files without tests/skeletons. Whenever a page requires new section or UI components, place them as flat `snake_case` files in the page's surface folder (`<new_component_dir>/<page-segment>/<component_name>.tsx`) by activating and strictly executing [`.agents/skills/nextjs-component-dev/SKILL.md`](../nextjs-component-dev/SKILL.md) for each component.
-- When orchestrated, every new section component routes through the component track (spec → `nextjs-test-author` baseline → `nextjs-dev` implementation → `nextjs-qa-auditor` edge suite).
+- Never write complex section components inline inside `page.tsx` or create ad-hoc component files without skeletons. Whenever a page requires new section or UI components, place them as flat `snake_case` files in the page's surface folder (`<new_component_dir>/<page-segment>/<component_name>.tsx`) by activating and strictly executing [`.agents/skills/nextjs-component-dev/SKILL.md`](../nextjs-component-dev/SKILL.md) for each component.
+- Every new section component follows the `nextjs-component-dev` workflow (surface folder, wired skeleton, dictionaries). Tests are not part of that workflow and are owned by `nextjs-test`.
 
 ### 7. Agent Boundaries & Source Isolation
 - Implementation is written by `nextjs-dev` when orchestrated. This skill never authors tests.
-- Page tests belong to `nextjs-test-author`; adversarial page assertions belong to `nextjs-qa-auditor`.
+- All page test authoring belongs to the `nextjs-test` skill; no other skill or command writes test files, and test agents write only through `nextjs-test`.
 - Only the orchestrator updates `docs/plan/05-pages-and-components.md`.
 - All page work happens on branch `agent/<slug>` in its own worktree (contract: [`../nextjs-dev-setup/references/agent-worktree-isolation.md`](../nextjs-dev-setup/references/agent-worktree-isolation.md)); it merges into `main` only after the review is approved. A merge conflict is never resolved by an agent: abort, keep the branch, and ask the user.
 
@@ -84,13 +84,7 @@ Specialized workflow for creating production-ready Next.js App Router pages with
     4. Implement page RSC composing section components from the page's surface folder (`<new_component_dir>/<page-segment>/`; using `nextjs-component-dev` for any new components).
     5. Render `<JsonLd>` structured data component.
 
-- [ ] **Step 4: Page Test Suite (Delegated to `nextjs-test-author`, `page` mode)**
-  - Spawn the `nextjs-test-author` agent with the route definition, `page-spec.md`, `docs/project.json`, and the worktree path.
-  - It produces `tests/e2e/pages/<route>.spec.ts` covering metadata, canonical/hreflang, JSON-LD, locale coverage, loading/error boundaries, instant shell, RTL, and route boundaries.
-  - Do not author page tests here; consult [`../nextjs-adversarial-qa/SKILL.md`](../nextjs-adversarial-qa/SKILL.md).
-  - Gate: the suite is **authored and statically audited**, then listed in `deferred_expensive_tests[]`. Do not launch a browser: Playwright is the expensive tier and runs at pre-push.
-
-- [ ] **Step 5: Verification & Sanity Check (fast tier)**
+- [ ] **Step 4: Verification & Sanity Check (fast tier)**
   - Run the page verification script:
     - **Windows (PowerShell):**
       ```pwsh
@@ -100,14 +94,11 @@ Specialized workflow for creating production-ready Next.js App Router pages with
       ```bash
       bash .agents/skills/nextjs-page-dev/scripts/verify-page.sh <route_dir>
       ```
-  - Audit the page suite without executing it:
-    - **Windows:** `pwsh .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.ps1 -TargetPath <route_dir> -Mode page`
-    - **Linux / macOS:** `bash .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.sh <route_dir> page`
-    - Expected output: `[DEFERRED] Playwright suites are expensive and run pre-push`. That is a pass for this phase.
+  - **No test authoring here.** Do not create `tests/e2e/pages/<route>.spec.ts` or any test file; `nextjs-test` owns the page suite and runs as a separate step.
   - **Forbidden here:** `pnpm run test:e2e`, `pnpm exec playwright test`, `pnpm build` — expensive tier, pre-push only.
   - Ensure zero TypeScript, missing dictionary, metadata, or JSON-LD errors.
 
-- [ ] **Step 6: Implementation Plan Checklist Synchronization**
+- [ ] **Step 5: Implementation Plan Checklist Synchronization**
   - When orchestrated, the orchestrator checks off the completed page infrastructure items (`page.tsx`, `loading.tsx`, `error.tsx`, `generateMetadata`, `JSON-LD Schema`, `generateStaticParams()`) in `docs/plan/05-pages-and-components.md`.
   - If all component sub-checklists and page infrastructure tasks for this page are completed, the orchestrator checks off the parent page item (`- [x]`).
   - When invoked directly without the orchestrator, perform this step yourself.

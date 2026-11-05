@@ -21,8 +21,9 @@ backfilling Next.js App Router components and pages.
 ## Skill
 
 Load and follow `.agents/skills/nextjs-component-create/SKILL.md` (or the path
-recorded in `AGENTS.md`) end to end. Do not re-implement its phases from memory,
-and do not duplicate the test material owned by `nextjs-adversarial-qa`.
+recorded in `AGENTS.md`) end to end. Do not re-implement its phases from memory.
+All test authoring is delegated to agents that load the `nextjs-test` skill; the
+orchestrator never writes, edits, or scaffolds tests.
 
 ## Delegation
 

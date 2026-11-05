@@ -1,19 +1,17 @@
 ---
-description: Create a Next.js App Router page and its section components through the orchestrator pipeline
-agent: nextjs-orchestrator
+description: Create a Next.js App Router page and its section components with nextjs-page-dev (no test authoring)
 ---
 
-Run the `nextjs-component-create` skill end to end in page mode for this target:
+Run the `nextjs-page-dev` skill end to end for this target, and route every new section component through `nextjs-component-dev`:
 
 $ARGUMENTS
 
-Page track:
+Creation only:
 
 1. Resolve the route, locales, and component directory from `docs/project.json` and `lib/routes.ts`.
-2. Gate on `page-spec.md` with §7 page edge cases (metadata, JSON-LD, boundaries, locale routing).
-3. Delegate the page suite to `nextjs-test-author` (`page` mode).
-4. Delegate page implementation to `nextjs-dev`, routing each new section component through the component track.
-5. Delegate the adversarial audit to `nextjs-qa-auditor`.
-6. Repair loop: failing assertions go to `nextjs-dev`, never to a test agent.
-7. Run `verify-page`, `verify-component-create -TargetKind page`, plus the write audit.
-8. Tick `docs/plan/05-pages-and-components.md` yourself and return the execution report.
+2. Scaffold `page-spec.md` with §7 page edge cases (metadata, JSON-LD, boundaries, locale routing) and present the implementation plan for approval.
+3. Implement `page.tsx`, `loading.tsx`, `error.tsx`, `generateMetadata`, JSON-LD, and `generateStaticParams()`; populate dictionaries for every locale.
+4. For each new section or child component, activate `nextjs-component-dev` and follow it end to end (surface folder, skeleton, dictionary keys).
+5. Run `verify-page` and `verify-dev` for each new component; fix implementation defects. Existing targeted tests may be run read-only for feedback.
+6. Do **not** write, edit, or scaffold tests, test plans, E2E specs, or runner configuration. Test authoring is owned exclusively by the `nextjs-test` skill and runs as a separate step after creation.
+7. Work in an isolated `agent/<slug>` worktree; present the review and merge into `main` only after the user approves.

@@ -1,19 +1,17 @@
 ---
-description: Create or backfill a Next.js component through the orchestrator pipeline
-agent: nextjs-orchestrator
+description: Create or backfill a Next.js component with the nextjs-component-dev skill (no test authoring)
 ---
 
-Run the `nextjs-component-create` skill end to end for this target:
+Run the `nextjs-component-dev` skill end to end for this target:
 
 $ARGUMENTS
 
-Component track only:
+Creation only:
 
-1. Classify `scratch` or `companion_backfill`; resolve paths from `docs/project.json`.
-2. Gate on `design-spec.md` with §7 edge cases.
-3. Delegate the baseline suite to `nextjs-test-author`.
-4. Delegate implementation to `nextjs-dev`.
-5. Delegate the adversarial edge suite to `nextjs-qa-auditor`.
-6. Repair loop: failing assertions go to `nextjs-dev`, never to a test agent.
-7. Run `verify-component-create` plus the write audit.
-8. Tick `docs/plan/05-pages-and-components.md` yourself and return the execution report.
+1. Read `docs/project.json` and resolve `new_component_dir`, `dictionaries_dir`, package manager, and `supported_languages`; never guess paths.
+2. Resolve the owning surface folder from the component's renderers and place it as a flat `<new_component_dir>/<surface>/<component_name>.tsx`.
+3. Generate `implementation_plan.md` and wait for approval before writing.
+4. Implement the component and its wired `<component_name>_skeleton.tsx`; populate `messages/[locale].json` for every supported language.
+5. Run `verify-dev` and fix implementation defects. If tests already exist, you may run the targeted files read-only for feedback.
+6. Do **not** write, edit, or scaffold tests, test plans, E2E specs, or runner configuration. Test authoring is owned exclusively by the `nextjs-test` skill and runs as a separate step after creation.
+7. Work in an isolated `agent/<slug>` worktree; present the review and merge into `main` only after the user approves.

@@ -1,6 +1,6 @@
 # Examples
 
-Canonical worked examples for `nextjs-adversarial-qa`. They pair with the component sources in `skills/nextjs-component-dev/examples/`; copy the pattern, not the literals.
+Canonical worked examples for `nextjs-test`. They pair with the component sources in `skills/nextjs-component-dev/examples/`; copy the pattern, not the literals.
 
 ## Component baseline
 

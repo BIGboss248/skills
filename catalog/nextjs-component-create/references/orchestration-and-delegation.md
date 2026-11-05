@@ -12,10 +12,10 @@ Installed by `nextjs-dev-setup` into `.opencode/agents/`.
 
 | Agent | Mode | Spawned by | Skill it loads |
 | :--- | :--- | :--- | :--- |
-| `nextjs-orchestrator` | primary | user (`Tab`, `/create-nextjs-*`) | `nextjs-component-create` |
+| `nextjs-orchestrator` | primary | user (`Tab`, `/nextjs-component-create`) | `nextjs-component-create` |
 | `nextjs-dev` | subagent | orchestrator | `nextjs-component-dev` / `nextjs-page-dev` |
-| `nextjs-test-author` | subagent | orchestrator | `nextjs-adversarial-qa` (`baseline`, `page`) |
-| `nextjs-qa-auditor` | subagent | orchestrator | `nextjs-adversarial-qa` (`adversarial`, `audit`) |
+| `nextjs-test-author` | subagent | orchestrator | `nextjs-test` (`baseline`, `page`) |
+| `nextjs-qa-auditor` | subagent | orchestrator | `nextjs-test` (`adversarial`, `audit`) |
 
 Spawn with the `task` tool naming the agent explicitly:
 
@@ -82,7 +82,7 @@ rules:
 ```
 
 Return payloads are defined in
-[`nextjs-adversarial-qa/references/shared/subagent-test-author-protocol.md`](../../nextjs-adversarial-qa/references/shared/subagent-test-author-protocol.md)
+[`nextjs-test/references/shared/subagent-test-author-protocol.md`](../../nextjs-test/references/shared/subagent-test-author-protocol.md)
 for test agents and in the `nextjs-dev` agent prompt for implementation.
 
 ---
@@ -176,7 +176,7 @@ Without `.opencode/agents/`, permissions cannot enforce anything. The orchestrat
 must:
 
 1. Announce `DEGRADED: agent permissions unavailable`.
-2. Use the prompts in `nextjs-adversarial-qa/resources/prompts/`.
+2. Use the prompts in `nextjs-test/resources/prompts/`.
 3. Run the write audit after **each** phase, not just at the end.
 4. Report the degraded status in the execution report; never present it as
    equivalent to the enforced path.

@@ -10,7 +10,7 @@ description: >-
   "containerize nextjs app".
 metadata:
   author: BIGBOSS248
-  version: "2.1"
+  version: "2.2"
 ---
 
 # Next.js Development Setup (Feature-Driven)

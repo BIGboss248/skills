@@ -197,39 +197,8 @@
       ]
     },
     {
-      "name": "nextjs-adversarial-qa",
-      "version": "fee3e31cd7ad",
-      "files": [
-        "examples/component-baseline/FeatureCard.test.tsx",
-        "examples/component-baseline/ProductCard.test.tsx",
-        "examples/page-suite/about.spec.ts",
-        "examples/README.md",
-        "references/adversarial/adversarial-test-matrix.md",
-        "references/authoring/page-testing-standards.md",
-        "references/authoring/unit-testing-standards.md",
-        "references/shared/pitfalls.md",
-        "references/shared/playwright-e2e-standards.md",
-        "references/shared/subagent-test-author-protocol.md",
-        "references/shared/test-execution-tiers.md",
-        "references/shared/test-plan-and-report-schema.md",
-        "references/shared/test-strategy-matrix.md",
-        "resources/prompts/adversarial/adversarial-auditor-subagent.md",
-        "resources/prompts/authoring/test-author-subagent.md",
-        "resources/templates/adversarial/edge-test.template.tsx",
-        "resources/templates/adversarial/playwright-component-spec.template.ts",
-        "resources/templates/adversarial/qa-report.template.md",
-        "resources/templates/authoring/component-unit-test.template.tsx",
-        "resources/templates/authoring/playwright-page-spec.template.ts",
-        "resources/templates/authoring/test-plan.template.md",
-        "resources/test-plan.schema.json",
-        "scripts/verify-qa.ps1",
-        "scripts/verify-qa.sh",
-        "SKILL.md"
-      ]
-    },
-    {
       "name": "nextjs-api",
-      "version": "793f983204f8",
+      "version": "d6172dd99dd4",
       "files": [
         "examples/products-api-example.ts",
         "references/openapi-spec-guidelines.md",
@@ -247,14 +216,12 @@
     },
     {
       "name": "nextjs-component-create",
-      "version": "6d69a25f2446",
+      "version": "e8e71d04aebf",
       "files": [
         "examples/feature-card/FeatureCard.stories.tsx",
-        "examples/feature-card/FeatureCard.test.tsx",
         "examples/feature-card/FeatureCard.tsx",
         "examples/tanstack-product/product-cache.ts",
         "examples/tanstack-product/ProductCard.stories.tsx",
-        "examples/tanstack-product/ProductCard.test.tsx",
         "examples/tanstack-product/ProductCard.tsx",
         "examples/tanstack-product/ProductSection.tsx",
         "references/architecture-standards.md",
@@ -270,7 +237,7 @@
     },
     {
       "name": "nextjs-component-dev",
-      "version": "47e4370a8b41",
+      "version": "3f596865fba5",
       "files": [
         "examples/cached-data-component/actions.ts",
         "examples/cached-data-component/product-cache.ts",
@@ -305,11 +272,9 @@
     },
     {
       "name": "nextjs-dev-setup",
-      "version": "81ff3d31b378",
+      "version": "70e0596d042d",
       "files": [
         "examples/sample-component.stories.tsx",
-        "examples/sample-component.test.tsx",
-        "examples/sample-navigation.spec.ts",
         "references/agent-roster-guide.md",
         "references/agent-worktree-isolation.md",
         "references/app-icons-and-pwa-guide.md",
@@ -405,7 +370,7 @@
     },
     {
       "name": "nextjs-page-dev",
-      "version": "f1cf8ff010cf",
+      "version": "269531ab9e43",
       "files": [
         "references/metadata-and-seo.md",
         "references/page-conventions-and-lifecycle.md",
@@ -425,7 +390,7 @@
     },
     {
       "name": "nextjs-plan",
-      "version": "1edc2db150d7",
+      "version": "10f3b222ab14",
       "files": [
         "references/architecture-contracts.md",
         "references/execution-ledger.md",
@@ -476,7 +441,7 @@
     },
     {
       "name": "nextjs-storybook-story",
-      "version": "9ad5b47c1929",
+      "version": "be6221fdb861",
       "files": [
         "examples/feature-card/FeatureCard.stories.tsx",
         "examples/feature-card/FeatureCard.tsx",
@@ -486,6 +451,39 @@
         "examples/tanstack-product/ProductSection.tsx",
         "scripts/verify-storybook.ps1",
         "scripts/verify-storybook.sh",
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "nextjs-test",
+      "version": "35df2f6d5ea1",
+      "files": [
+        "examples/component-baseline/FeatureCard.test.tsx",
+        "examples/component-baseline/ProductCard.test.tsx",
+        "examples/page-suite/about.spec.ts",
+        "examples/README.md",
+        "examples/sample-component.test.tsx",
+        "examples/sample-navigation.spec.ts",
+        "references/adversarial/adversarial-test-matrix.md",
+        "references/authoring/page-testing-standards.md",
+        "references/authoring/unit-testing-standards.md",
+        "references/shared/pitfalls.md",
+        "references/shared/playwright-e2e-standards.md",
+        "references/shared/subagent-test-author-protocol.md",
+        "references/shared/test-execution-tiers.md",
+        "references/shared/test-plan-and-report-schema.md",
+        "references/shared/test-strategy-matrix.md",
+        "resources/prompts/adversarial/adversarial-auditor-subagent.md",
+        "resources/prompts/authoring/test-author-subagent.md",
+        "resources/templates/adversarial/edge-test.template.tsx",
+        "resources/templates/adversarial/playwright-component-spec.template.ts",
+        "resources/templates/adversarial/qa-report.template.md",
+        "resources/templates/authoring/component-unit-test.template.tsx",
+        "resources/templates/authoring/playwright-page-spec.template.ts",
+        "resources/templates/authoring/test-plan.template.md",
+        "resources/test-plan.schema.json",
+        "scripts/verify-qa.ps1",
+        "scripts/verify-qa.sh",
         "SKILL.md"
       ]
     },

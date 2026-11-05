@@ -1,7 +1,7 @@
 # Page Specification: `{{route}}`
 
-> Scaffolded by the `nextjs-page-dev` skill. Consumed by `nextjs-test-author`
-> (`page` mode), `nextjs-qa-auditor` (page boundaries), and `nextjs-dev`.
+> Scaffolded by the `nextjs-page-dev` skill. Consumed by `nextjs-test`
+> (`page` mode and page boundaries) and `nextjs-dev`.
 > Do not start implementation until §7 is complete.
 
 ---
@@ -102,5 +102,5 @@ Add page-specific rows below; keep IDs stable once tests reference them.
 - [ ] JSON-LD injected with the declared schema type and escaping.
 - [ ] Every string exists in `messages/[locale].json` for all locales.
 - [ ] Section components are created through the component track.
-- [ ] Page suite authored by `nextjs-test-author` and green.
+- [ ] Page suite authored by `nextjs-test` as a separate step (not by this skill).
 - [ ] Plan checklist updated by the orchestrator.

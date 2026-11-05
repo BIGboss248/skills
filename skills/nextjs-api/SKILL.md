@@ -57,5 +57,5 @@ flowchart LR
 
 ### Step 5: Verification & Quality Gate
 1. Run static type checking: `pnpm run build` or `pnpm tsc --noEmit`.
-2. Verify route response codes, schema conformance, and error payloads using unit/integration tests (Jest or Playwright).
+2. Verify route response codes, schema conformance, and error payloads. Test authoring is owned exclusively by [`nextjs-test`](../nextjs-test/SKILL.md); this skill never creates or edits test files. If tests already exist, run the targeted files read-only; otherwise hand off to `nextjs-test`.
 3. Review the complete working reference implementation in [products-api-example.ts](./examples/products-api-example.ts).

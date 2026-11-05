@@ -95,7 +95,7 @@ if [ "$SKIP_TESTS" -eq 0 ]; then
     QA_MODE="all"
     [ "$TARGET_KIND" = "page" ] && QA_MODE="page"
     run_gate "Phase 4 - QA suites ($QA_MODE, tier $TIER)" \
-        bash "$SKILLS_ROOT/nextjs-adversarial-qa/scripts/verify-qa.sh" "$COMPONENT_PATH" "$QA_MODE" "$TIER"
+        bash "$SKILLS_ROOT/nextjs-test/scripts/verify-qa.sh" "$COMPONENT_PATH" "$QA_MODE" "$TIER"
 else
     echo "[SKIP] QA suite gate (--skip-tests)"
 fi

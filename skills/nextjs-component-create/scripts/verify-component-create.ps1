@@ -9,7 +9,7 @@
 
     Tier 'fast' (default) runs Jest only and DEFERS Playwright to the pre-push
     gate. Tier 'full' runs every gate and belongs to pre-push, CI, or an explicit
-    user request. See nextjs-adversarial-qa/references/shared/test-execution-tiers.md.
+    user request. See nextjs-test/references/shared/test-execution-tiers.md.
 
 .PARAMETER ComponentPath
     Target component file (e.g. components/home/hero.tsx). Components are flat
@@ -116,7 +116,7 @@ if ($TargetKind -eq "page") {
 if (-not $SkipTests) {
     $qaMode = if ($TargetKind -eq "page") { "page" } else { "all" }
     Invoke-Gate -Label "Phase 4 - QA suites ($qaMode, tier $Tier)" -Action {
-        & (Join-Path $skillsRoot "nextjs-adversarial-qa/scripts/verify-qa.ps1") -TargetPath $ComponentPath -Mode $qaMode -Tier $Tier
+        & (Join-Path $skillsRoot "nextjs-test/scripts/verify-qa.ps1") -TargetPath $ComponentPath -Mode $qaMode -Tier $Tier
     }
 } else {
     Write-Host "[SKIP] QA suite gate (SkipTests)" -ForegroundColor Yellow

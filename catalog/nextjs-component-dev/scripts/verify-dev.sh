@@ -86,8 +86,9 @@ else
     echo -e "\033[0;32m[PASS] Skeleton is wired into a streaming boundary.\033[0m"
 fi
 
-# Test authoring and execution are owned by nextjs-adversarial-qa (fast tier only).
-echo -e "\033[0;36m[INFO] Fast-tier execution is delegated. Run nextjs-adversarial-qa/scripts/verify-qa.sh \"$COMPONENT_FILE\" all (Jest only; Playwright deferred to pre-push)\033[0m"
+# Test authoring is owned exclusively by the nextjs-test skill (separate step).
+# If tests already exist, run only those files read-only for feedback; never author one here.
+echo -e "\033[0;36m[INFO] Test authoring is owned by nextjs-test (separate step). Existing suites may be run read-only; use nextjs-test/scripts/verify-qa.sh for the test gate.\033[0m"
 
 # Verify zero in-file i18n placeholders / mock translation dictionaries
 if [ -f "$COMPONENT_FILE" ]; then

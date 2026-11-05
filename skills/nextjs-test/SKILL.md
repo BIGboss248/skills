@@ -1,21 +1,23 @@
 ---
-name: nextjs-adversarial-qa
+name: nextjs-test
 description: >-
-  Author and adversarially audit Jest/RTL and Playwright suites for Next.js components and pages. Triggers on "/nextjs-adversarial-qa", "write tests", "audit tests", or "repair failing suite".
+  The single owner of Next.js test writing: Jest/RTL unit suites, Playwright page and component E2E, adversarial edge suites, and test plans. Triggers on "/nextjs-test", "write tests", "create tests", "audit tests", or "repair failing suite".
 metadata:
   author: BIGboss248
-  version: "3.0"
+  version: "4.0"
 ---
 
-# Next.js Test Authoring & Adversarial QA (`nextjs-adversarial-qa`)
+# Next.js Test Authoring & Quality (`nextjs-test`)
 
-Single source of truth for planning, authoring, executing, and hardening Next.js App Router test suites for **components and pages**. Work is split across two OpenCode agents with hard write boundaries; this skill holds the material for both.
+Single source of truth for planning, authoring, executing, and hardening Next.js App Router test suites for **components and pages**. No other Next.js skill or command writes test files: creation skills (`nextjs-component-dev`, `nextjs-page-dev`) and the `/nextjs-create-*` commands produce implementation only. Test agents write only through this skill.
+
+Work is split across two OpenCode agents with hard write boundaries; this skill holds the material for both.
 
 > [!IMPORTANT]
 > **Material is partitioned by role.** Each agent reads only its own subtree. Shared rules live in exactly one place so the two roles cannot drift.
 > - **Shared:** [`references/shared/`](./references/shared/) — strategy, E2E mechanics, pitfalls, protocol, schemas
-> - **Test Author:** [`references/authoring/`](./references/authoring/) + [`templates/authoring/`](./resources/templates/authoring/)
-> - **QA Auditor:** [`references/adversarial/`](./references/adversarial/) + [`templates/adversarial/`](./resources/templates/adversarial/)
+> - **Test Author:** [`references/authoring/`](./references/authoring/) + [`resources/templates/authoring/`](./resources/templates/authoring/)
+> - **QA Auditor:** [`references/adversarial/`](./references/adversarial/) + [`resources/templates/adversarial/`](./resources/templates/adversarial/)
 > - **Prompts / payloads:** [`resources/prompts/`](./resources/prompts/)
 > - **Verification:** [`scripts/verify-qa.ps1`](./scripts/verify-qa.ps1) / [`.sh`](./scripts/verify-qa.sh)
 > - **Execution tiers (fast vs pre-push):** [`references/shared/test-execution-tiers.md`](./references/shared/test-execution-tiers.md)
@@ -145,18 +147,18 @@ If the spec is missing, stop and return `BLOCKED: missing specification` to the 
 
 ```bash
 # Component — fast tier (default): static audit + targeted Jest, Playwright deferred
-pwsh .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.ps1 -TargetPath <component_dir> -Mode all
+pwsh .agents/skills/nextjs-test/scripts/verify-qa.ps1 -TargetPath <component_dir> -Mode all
 
 # Page suite — fast tier: suite authored and audited, Playwright deferred
-pwsh .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.ps1 -TargetPath <route_dir> -Mode page
+pwsh .agents/skills/nextjs-test/scripts/verify-qa.ps1 -TargetPath <route_dir> -Mode page
 
 # Expensive tier — pre-push / CI / explicit user request only
-pwsh .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.ps1 -TargetPath <component_dir> -Mode all -Tier full
+pwsh .agents/skills/nextjs-test/scripts/verify-qa.ps1 -TargetPath <component_dir> -Mode all -Tier full
 
 # Linux / macOS
-bash .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.sh <component_dir> all
-bash .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.sh <route_dir> page
-bash .agents/skills/nextjs-adversarial-qa/scripts/verify-qa.sh <component_dir> all --tier full
+bash .agents/skills/nextjs-test/scripts/verify-qa.sh <component_dir> all
+bash .agents/skills/nextjs-test/scripts/verify-qa.sh <route_dir> page
+bash .agents/skills/nextjs-test/scripts/verify-qa.sh <component_dir> all --tier full
 ```
 
 - [ ] Fast suites exit `0` with zero skipped tests.

@@ -1,24 +1,32 @@
 ---
 name: nextjs-component-create
 description: >-
-  Orchestrate Next.js component and page creation or backfill: design grilling, TDD, Storybook, adversarial QA. Triggers on "/nextjs-component-create", "/create-nextjs-component", "/create-nextjs-page", "create component", "create page", "backfill component".
+  Orchestrate the full Next.js component and page pipeline: design grilling, nextjs-test baseline, implementation, adversarial audit, and approval-gated merge. Triggers on "/nextjs-component-create", "full component pipeline", "TDD component", "create component with tests", "adversarial audit component".
 metadata:
   author: BIGboss248
-  version: "4.2"
+  version: "4.3"
 ---
 
 # Next.js Creation Orchestrator (`nextjs-component-create`)
 
 The single canonical orchestrator for creating or backfilling production-ready Next.js App Router **components and pages**. It sequences UX grilling, TDD implementation, conditional Storybook, and independent adversarial QA, and it delegates each phase to a dedicated OpenCode agent whose write access is enforced by permissions.
 
+> [!NOTE]
+> **Creation commands do not use this pipeline.** `/create-nextjs-component` and
+> `/create-nextjs-page` invoke `nextjs-component-dev` / `nextjs-page-dev` directly
+> and write implementation only. Use this orchestrator only when the full
+> spec → test → implementation → audit sequence is explicitly requested. All test
+> authoring is delegated to agents that load the [`nextjs-test`](../nextjs-test/SKILL.md)
+> skill; this orchestrator never writes tests.
+
 > [!TIP]
 > **Modular Assets:**
 > - Orchestration, delegation, and handoff contracts: [`references/orchestration-and-delegation.md`](./references/orchestration-and-delegation.md)
 > - Worktree isolation, approval gate & merge protocol: [`../nextjs-dev-setup/references/agent-worktree-isolation.md`](../nextjs-dev-setup/references/agent-worktree-isolation.md)
-> - Test execution tiers (fast vs pre-push): [`../nextjs-adversarial-qa/references/shared/test-execution-tiers.md`](../nextjs-adversarial-qa/references/shared/test-execution-tiers.md)
+> - Test execution tiers (fast vs pre-push): [`../nextjs-test/references/shared/test-execution-tiers.md`](../nextjs-test/references/shared/test-execution-tiers.md)
 > - Architecture & folder rules: [`references/architecture-standards.md`](./references/architecture-standards.md)
 > - Anti-patterns & pitfalls: [`references/pitfalls.md`](./references/pitfalls.md)
-> - Reference implementations: [`examples/`](./examples/)
+> - Reference implementations: [`examples/`](./examples/) (implementation only; test examples live in [`../nextjs-test/examples/`](../nextjs-test/examples/))
 > - JSON plan schema: [`resources/plan-schema.json`](./resources/plan-schema.json)
 > - Verification: [`scripts/verify-component-create.ps1`](./scripts/verify-component-create.ps1) / [`.sh`](./scripts/verify-component-create.sh)
 > - Write audit: [`scripts/audit-agent-writes.ps1`](./scripts/audit-agent-writes.ps1) / [`.sh`](./scripts/audit-agent-writes.sh)
@@ -63,7 +71,7 @@ flowchart TD
    approves**.
 4. **Conflicts stop the pipeline.** Abort the merge, keep the branch, report the
    conflicting paths, and ask the user to choose. Never resolve by inference.
-   Contracts: [`test-execution-tiers.md`](../nextjs-adversarial-qa/references/shared/test-execution-tiers.md),
+   Contracts: [`test-execution-tiers.md`](../nextjs-test/references/shared/test-execution-tiers.md),
    [`agent-worktree-isolation.md`](../nextjs-dev-setup/references/agent-worktree-isolation.md).
 
 ---
@@ -83,7 +91,7 @@ Agents are installed by `nextjs-dev-setup` into `.opencode/agents/`. The orchest
 | **5** | `nextjs-dev` | Repairs implementation from `code_fixes_required[]` | implementation only |
 | **6** | `nextjs-orchestrator` | Verification, write audit, plan checklist sync, report | plan, docs |
 
-Test authoring standards live only in [`nextjs-adversarial-qa`](../nextjs-adversarial-qa/SKILL.md). Never duplicate Jest or Playwright templates here.
+Test authoring standards live only in [`nextjs-test`](../nextjs-test/SKILL.md). Both test agents load that skill; no other Next.js skill or command writes test files. Never duplicate Jest or Playwright templates here.
 
 ---
 
@@ -263,8 +271,8 @@ deferred_expensive_tests:
 
 - [Orchestration & Delegation](./references/orchestration-and-delegation.md) — pipeline, agent contracts, payloads, audit.
 - [Worktree Isolation, Approval & Merge](../nextjs-dev-setup/references/agent-worktree-isolation.md) — branch layout, approval gate, merge protocol, conflict escalation.
-- [Test Execution Tiers](../nextjs-adversarial-qa/references/shared/test-execution-tiers.md) — fast vs expensive, pre-push gate.
+- [Test Execution Tiers](../nextjs-test/references/shared/test-execution-tiers.md) — fast vs expensive, pre-push gate.
 - [Architecture Standards](./references/architecture-standards.md) — context, RSC, folder layout, styling, TanStack, i18n, backfill.
 - [Pitfalls](./references/pitfalls.md) — creation and testing anti-patterns.
 - [Plan Schema](./resources/plan-schema.json) — structured plan/report payload.
-- [Examples](./examples/) — RSC and TanStack reference implementations.
+- [Examples](./examples/) — RSC and TanStack reference implementations (tests live in `nextjs-test/examples/`).

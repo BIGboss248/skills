@@ -1,6 +1,6 @@
 # Next.js Component Architecture Standards
 
-Canonical rules enforced by `nextjs-component-create` and delegated to `nextjs-component-dev`, `nextjs-storybook-story`, and `nextjs-adversarial-qa`.
+Canonical rules enforced by `nextjs-component-create` and delegated to `nextjs-component-dev`, `nextjs-storybook-story`, and `nextjs-test`.
 
 ---
 
@@ -106,14 +106,14 @@ Before generating files, always audit whether the component already exists:
 
 ## 8. Test Ownership
 
-All test authoring and execution is delegated to [`nextjs-adversarial-qa`](../../nextjs-adversarial-qa/SKILL.md) in `baseline`, `page`, `adversarial`, or `repair` mode. This orchestrator never writes assertions directly and never weakens an edge test.
+All test authoring and execution is delegated to [`nextjs-test`](../../nextjs-test/SKILL.md) in `baseline`, `page`, `adversarial`, or `repair` mode. This orchestrator never writes assertions directly and never weakens an edge test.
 
 Two execution rules apply to every test artifact:
 
 - **Fast tier only during development** — targeted Jest files run; Playwright, the
   full Jest project, `build`, and Storybook builds run at `git push` through
   `.husky/pre-push`. Policy:
-  [`test-execution-tiers.md`](../../nextjs-adversarial-qa/references/shared/test-execution-tiers.md).
+  [`test-execution-tiers.md`](../../nextjs-test/references/shared/test-execution-tiers.md).
 - **Worktree only** — every write happens on branch `agent/<slug>` in its own
   worktree, and the branch merges into `main` only after explicit user approval
   of the review. Policy:

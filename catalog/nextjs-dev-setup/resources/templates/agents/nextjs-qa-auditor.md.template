@@ -41,8 +41,9 @@ audits your diff against it before accepting the work.
 
 ## Skill
 
-Load `.agents/skills/nextjs-adversarial-qa/SKILL.md` in `adversarial` or `audit`
-mode (or the path recorded in `AGENTS.md`). Read only:
+Load `.agents/skills/nextjs-test/SKILL.md` in `adversarial` or `audit`
+mode (or the path recorded in `AGENTS.md`). This is the only skill in the
+repository that authors tests. Read only:
 
 - `references/shared/`
 - `references/adversarial/`
