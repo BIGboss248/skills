@@ -13,9 +13,9 @@ remotes without GitHub Actions.
    pre-push gate run: `test:all`, lint only, or nothing? Default: **`test:all`** —
    the pre-push hook is the only place the expensive test tier runs locally.
 2. **Agent worktrees** — install the worktree helper
-   (`agent-worktree.ps1` / `.sh`) and the isolated-branch merge contract so
-   implementation agents never write in the user's working tree? Default: yes
-   when N9 is enabled.
+   (`agent-worktree.ps1` / `.sh`) and the isolated-branch approval/merge contract
+   so implementation agents never write in the user's working tree and never
+   merge before the user approves? Default: yes when N9 is enabled.
 3. **Release automation** — Release Please for SemVer release PRs and changelogs?
 4. **Container publishing** — multi-arch (AMD64 + ARM64) image publishing to
    GHCR? Requires N11.
@@ -57,7 +57,7 @@ remotes without GitHub Actions.
 - [ ] `.husky/pre-push` invokes `test:prepush` (or the documented degraded
       equivalent) — the expensive tier, not a fast subset.
 - [ ] `scripts/agent-worktree.ps1` and `.sh` exist when agent worktrees were
-      selected, and `AGENTS.md` names the isolation contract.
+      selected, and `AGENTS.md` names the isolation + approval/merge contract.
 - [ ] `.github/ISSUE_TEMPLATE/bug_report.yml` and `config.yml` exist; labels exist
       when `gh` is authenticated and a remote is present.
 - [ ] The Release Please workflow exists and caches `.next/cache`.

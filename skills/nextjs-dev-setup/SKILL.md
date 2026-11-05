@@ -10,7 +10,7 @@ description: >-
   "containerize nextjs app".
 metadata:
   author: BIGBOSS248
-  version: "2.0"
+  version: "2.1"
 ---
 
 # Next.js Development Setup (Feature-Driven)
@@ -189,6 +189,7 @@ Produce the report from
   [testing-guide.md](./references/testing-guide.md#6-test-execution-tiers-fast-during-dev-expensive-pre-push).
 - **Agent worktrees** — implementation agents must not write in the user's working
   tree. Deploy the worktree helper with N9 and record the contract in `AGENTS.md`.
+  Branches merge into `main` only after the user approves the review.
   `.husky/` hooks live in the shared `.git`, so they apply to every worktree.
   Details: [agent-worktree-isolation.md](./references/agent-worktree-isolation.md).
 - **Storybook intl context** — wrap stories with `NextIntlClientProvider` (when

@@ -115,7 +115,8 @@ Two execution rules apply to every test artifact:
   `.husky/pre-push`. Policy:
   [`test-execution-tiers.md`](../../nextjs-adversarial-qa/references/shared/test-execution-tiers.md).
 - **Worktree only** — every write happens on branch `agent/<slug>` in its own
-  worktree. Policy:
+  worktree, and the branch merges into `main` only after explicit user approval
+  of the review. Policy:
   [`agent-worktree-isolation.md`](../../nextjs-dev-setup/references/agent-worktree-isolation.md).
 
 ---

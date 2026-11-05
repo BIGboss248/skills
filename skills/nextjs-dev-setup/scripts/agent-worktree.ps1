@@ -1,24 +1,32 @@
 <#
 .SYNOPSIS
-    Creates, lists, merges, and cleans up per-task agent git worktrees.
+    Creates, reviews, approves, merges, and cleans up per-task agent worktrees.
 
 .DESCRIPTION
     Implements the isolation contract in
     references/agent-worktree-isolation.md: every agent writes in its own
-    worktree on branch agent/<slug>, then merges into the base branch.
+    worktree on branch agent/<slug>, then merges into the base branch only
+    after the user approves the change set.
+
+    'merge' refuses to run without -Approved. Without it the script prints the
+    review summary (commits, diffstat, changed paths) and exits 4, so nothing
+    reaches the base branch before approval.
 
     A merge conflict is never resolved automatically. The merge is aborted,
     main is left clean, and the script exits 3 with the conflicting paths so
     the calling agent stops and asks the user.
 
 .PARAMETER Action
-    create | list | merge | abort | remove
+    create | review | list | merge | abort | remove
 
 .PARAMETER Slug
     Kebab-case task slug (e.g. hero-card). Required for every action except list.
 
 .PARAMETER BaseBranch
     Base branch. Defaults to 'main'.
+
+.PARAMETER Approved
+    merge: explicit user approval of the reviewed change set.
 
 .PARAMETER Force
     remove: delete the branch even when it is not merged.
@@ -27,17 +35,22 @@
     pwsh agent-worktree.ps1 -Action create -Slug hero-card
 
 .EXAMPLE
-    pwsh agent-worktree.ps1 -Action merge -Slug hero-card
+    pwsh agent-worktree.ps1 -Action review -Slug hero-card
+
+.EXAMPLE
+    pwsh agent-worktree.ps1 -Action merge -Slug hero-card -Approved
 #>
 param(
     [Parameter(Mandatory = $true, Position = 0)]
-    [ValidateSet("create", "list", "merge", "abort", "remove")]
+    [ValidateSet("create", "review", "list", "merge", "abort", "remove")]
     [string]$Action,
 
     [Parameter(Position = 1)]
     [string]$Slug,
 
     [string]$BaseBranch = "main",
+
+    [switch]$Approved,
 
     [switch]$Force,
 
@@ -79,9 +92,34 @@ function Test-BranchExists([string]$b) {
     return ($LASTEXITCODE -eq 0)
 }
 
+function Show-Review([string]$branch, [string]$base) {
+    $count = (& git -C $repoRoot rev-list --count "$base..$branch").Trim()
+    Write-Host "Review: $branch -> $base" -ForegroundColor Cyan
+    Write-Host "  commits: $count"
+    $commits = @(& git -C $repoRoot log --oneline "$base..$branch")
+    foreach ($c in $commits) { Write-Host "    $c" }
+    Write-Host "  diffstat:"
+    $stat = @(& git -C $repoRoot diff --stat "$base...$branch")
+    foreach ($s in $stat) { Write-Host "    $s" }
+    Write-Host "  changed paths:"
+    $paths = @(& git -C $repoRoot diff --name-status "$base...$branch")
+    foreach ($p in $paths) { Write-Host "    $p" }
+}
+
 switch ($Action) {
     "list" {
         & git -C $repoRoot worktree list
+        exit 0
+    }
+
+    "review" {
+        Assert-Slug
+        $branch = Get-Branch $Slug
+        if (-not (Test-BranchExists $branch)) { Fail "Branch '$branch' does not exist." }
+        Show-Review $branch $BaseBranch
+        Write-Host ""
+        Write-Host "Nothing was merged. Approve, then run:" -ForegroundColor Yellow
+        Write-Host "  agent-worktree.ps1 -Action merge -Slug $Slug -Approved"
         exit 0
     }
 
@@ -109,7 +147,8 @@ switch ($Action) {
         Write-Host "  1. Install dependencies (worktrees share .git, not node_modules)."
         Write-Host "  2. Implement; run fast tests only. Expensive suites run pre-push."
         Write-Host "  3. git add <paths>; commit on $branch."
-        Write-Host "  4. agent-worktree.ps1 -Action merge -Slug $Slug   (from the main worktree)"
+        Write-Host "  4. agent-worktree.ps1 -Action review -Slug $Slug   (present to the user)"
+        Write-Host "  5. agent-worktree.ps1 -Action merge -Slug $Slug -Approved   (after approval)"
         exit 0
     }
 
@@ -119,6 +158,17 @@ switch ($Action) {
         $path = Get-WorktreePath $Slug
 
         if (-not (Test-BranchExists $branch)) { Fail "Branch '$branch' does not exist." }
+
+        if (-not $Approved) {
+            Show-Review $branch $BaseBranch
+            Write-Host ""
+            Write-Host "[APPROVAL REQUIRED] Nothing was merged; '$BaseBranch' is untouched." -ForegroundColor Yellow
+            Write-Host "Present the review above to the user and wait for explicit approval." -ForegroundColor Yellow
+            Write-Host "Then re-run with -Approved:" -ForegroundColor Cyan
+            Write-Host "  agent-worktree.ps1 -Action merge -Slug $Slug -Approved"
+            exit 4
+        }
+
         if (Test-Path -LiteralPath $path) {
             $dirty = (& git -C $path status --porcelain)
             if ($dirty) { Fail "Worktree '$path' has uncommitted changes. Commit or discard them before merging." }

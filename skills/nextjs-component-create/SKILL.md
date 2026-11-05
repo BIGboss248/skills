@@ -4,7 +4,7 @@ description: >-
   Orchestrate Next.js component and page creation or backfill: design grilling, TDD, Storybook, adversarial QA. Triggers on "/nextjs-component-create", "/create-nextjs-component", "/create-nextjs-page", "create component", "create page", "backfill component".
 metadata:
   author: BIGboss248
-  version: "4.1"
+  version: "4.2"
 ---
 
 # Next.js Creation Orchestrator (`nextjs-component-create`)
@@ -14,7 +14,7 @@ The single canonical orchestrator for creating or backfilling production-ready N
 > [!TIP]
 > **Modular Assets:**
 > - Orchestration, delegation, and handoff contracts: [`references/orchestration-and-delegation.md`](./references/orchestration-and-delegation.md)
-> - Worktree isolation & merge protocol: [`../nextjs-dev-setup/references/agent-worktree-isolation.md`](../nextjs-dev-setup/references/agent-worktree-isolation.md)
+> - Worktree isolation, approval gate & merge protocol: [`../nextjs-dev-setup/references/agent-worktree-isolation.md`](../nextjs-dev-setup/references/agent-worktree-isolation.md)
 > - Test execution tiers (fast vs pre-push): [`../nextjs-adversarial-qa/references/shared/test-execution-tiers.md`](../nextjs-adversarial-qa/references/shared/test-execution-tiers.md)
 > - Architecture & folder rules: [`references/architecture-standards.md`](./references/architecture-standards.md)
 > - Anti-patterns & pitfalls: [`references/pitfalls.md`](./references/pitfalls.md)
@@ -58,8 +58,9 @@ flowchart TD
    statically audited and declared in `deferred_expensive_tests[]`. Report them as
    `DEFERRED (pre-push)`, never `PASS`.
 3. **One worktree per target.** All implementation writes happen on branch
-   `agent/<slug>` in a dedicated worktree. The orchestrator creates it, and the
-   orchestrator merges it into `main` after Phase 6.
+   `agent/<slug>` in a dedicated worktree. The orchestrator creates it, then
+   presents the review after Phase 6 and merges into `main` **only after the user
+   approves**.
 4. **Conflicts stop the pipeline.** Abort the merge, keep the branch, report the
    conflicting paths, and ask the user to choose. Never resolve by inference.
    Contracts: [`test-execution-tiers.md`](../nextjs-adversarial-qa/references/shared/test-execution-tiers.md),
@@ -184,27 +185,31 @@ Run only when in scope. Delegate `nextjs-storybook-story` to `nextjs-dev`, then 
    - It reports the expensive tier as `[DEFERRED]`. That is the expected result, not a failure.
 2. Run the write audit: `scripts/audit-agent-writes.ps1 -TargetKind <kind> -Since <pre-phase-ref>`. A violation means a role wrote outside its boundary; restore the file and report it.
 3. Check off completed items (`- [x]`) in `docs/plan/05-pages-and-components.md`; tick the parent page only when every sub-item is complete. Only the orchestrator does this.
-4. Report using the template below, including the worktree branch, the merge result, and the deferred suites.
+4. Report using the template below, including the worktree branch, the approval status (awaiting approval / merged), and the deferred suites.
 
-## Phase 7: Merge into `main`
+## Phase 7: Approval Gate & Merge into `main`
 
 1. Confirm the worktree is clean: every change is committed on `agent/<slug>`.
-2. From the main worktree:
-   - **Windows:** `pwsh .agents/skills/nextjs-dev-setup/scripts/agent-worktree.ps1 -Action merge -Slug <slug>`
-   - **Linux / macOS:** `bash .agents/skills/nextjs-dev-setup/scripts/agent-worktree.sh merge <slug>`
-3. The helper merges with `--no-ff`. On success, continue to Phase 8.
-4. **On conflict the helper exits `3`** after aborting the merge; `main` stays clean and the branch is intact. Stop the pipeline and ask the user:
+2. From the main worktree, generate the review:
+   - **Windows:** `pwsh .agents/skills/nextjs-dev-setup/scripts/agent-worktree.ps1 -Action review -Slug <slug>`
+   - **Linux / macOS:** `bash .agents/skills/nextjs-dev-setup/scripts/agent-worktree.sh review <slug>`
+3. Present the review (commits, diffstat, changed paths) and **stop**. A green gate is not approval; wait for the user to explicitly approve the merge. Running `merge` without the approved flag exits `4` and changes nothing by design.
+4. After approval, merge with the approved flag:
+   - **Windows:** `pwsh .agents/skills/nextjs-dev-setup/scripts/agent-worktree.ps1 -Action merge -Slug <slug> -Approved`
+   - **Linux / macOS:** `bash .agents/skills/nextjs-dev-setup/scripts/agent-worktree.sh merge <slug> --approved`
+   - The helper merges with `--no-ff`. On success, continue to Phase 8.
+5. **On conflict the helper exits `3`** after aborting the merge; `main` stays clean and the branch is intact. Stop the pipeline and ask the user:
    - the conflicting paths,
    - which side changed what,
    - **A)** rebase the agent branch onto `main` and re-merge, **B)** keep `main` and drop the conflicting hunk, **C)** the user resolves manually.
    Never pick an option yourself, never use `-X ours`/`-X theirs`, never force-push. Log the choice and resolution in the report.
-5. Do not `git push` and do not use `--no-verify`. The expensive tier runs when the user pushes.
+6. Do not `git push` and do not use `--no-verify`. The expensive tier runs when the user pushes.
 
 ## Phase 8: Report & Handoff
 
 1. Render the report with tier status per phase (`[PASSED]` / `[DEFERRED]` / `[FAILED]`).
 2. State the expensive gate explicitly: `DEFERRED → .husky/pre-push (test:all)`.
-3. Remove the worktree only after the merge is accepted: `agent-worktree.ps1 -Action remove -Slug <slug>`.
+3. Remove the worktree only after the approved merge is accepted: `agent-worktree.ps1 -Action remove -Slug <slug>`.
 4. Leave pushing to the user.
 
 ---
@@ -220,7 +225,7 @@ Run only when in scope. Delegate `nextjs-storybook-story` to `nextjs-dev`, then 
 - **Never overwrite an existing component or page**; enter Companion Backfill Mode instead.
 - **The orchestrator ticks the plan**, not the role agents.
 - **Fast tier only in-pipeline**; the expensive tier (Playwright, full Jest, builds) runs at pre-push and is reported `DEFERRED`, never `PASS`.
-- **One worktree per target**; all writes happen on `agent/<slug>`, and only the orchestrator merges into `main`.
+- **One worktree per target**; all writes happen on `agent/<slug>`, and only the orchestrator merges into `main` after explicit user approval.
 - **Merge conflicts belong to the user**; abort, keep the branch, and ask.
 
 ---
@@ -257,7 +262,7 @@ deferred_expensive_tests:
 ## Reference Index
 
 - [Orchestration & Delegation](./references/orchestration-and-delegation.md) — pipeline, agent contracts, payloads, audit.
-- [Worktree Isolation & Merge](../nextjs-dev-setup/references/agent-worktree-isolation.md) — branch layout, merge protocol, conflict escalation.
+- [Worktree Isolation, Approval & Merge](../nextjs-dev-setup/references/agent-worktree-isolation.md) — branch layout, approval gate, merge protocol, conflict escalation.
 - [Test Execution Tiers](../nextjs-adversarial-qa/references/shared/test-execution-tiers.md) — fast vs expensive, pre-push gate.
 - [Architecture Standards](./references/architecture-standards.md) — context, RSC, folder layout, styling, TanStack, i18n, backfill.
 - [Pitfalls](./references/pitfalls.md) — creation and testing anti-patterns.

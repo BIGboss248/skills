@@ -4,7 +4,7 @@ description: >-
   Step-by-step workflow for designing and building Next.js App Router pages (RSC page.tsx, loading.tsx skeleton, error.tsx boundary, generateMetadata, JSON-LD schema, and generateStaticParams). MANDATORY SKILL: MUST ALWAYS be activated, read, and strictly followed every time the agent creates, scaffolds, or implements any new Next.js page, route, or view. Triggers on "/nextjs-page-dev", "create page", "new page", "develop page", "build route", "implement page", or any page creation task.
 metadata:
   author: BIGboss248
-  version: "1.2"
+  version: "1.3"
 ---
 
 # Next.js Page & Route Development (`nextjs-page-dev`)
@@ -58,7 +58,7 @@ Specialized workflow for creating production-ready Next.js App Router pages with
 - Implementation is written by `nextjs-dev` when orchestrated. This skill never authors tests.
 - Page tests belong to `nextjs-test-author`; adversarial page assertions belong to `nextjs-qa-auditor`.
 - Only the orchestrator updates `docs/plan/05-pages-and-components.md`.
-- All page work happens on branch `agent/<slug>` in its own worktree (contract: [`../nextjs-dev-setup/references/agent-worktree-isolation.md`](../nextjs-dev-setup/references/agent-worktree-isolation.md)). A merge conflict is never resolved by an agent: abort, keep the branch, and ask the user.
+- All page work happens on branch `agent/<slug>` in its own worktree (contract: [`../nextjs-dev-setup/references/agent-worktree-isolation.md`](../nextjs-dev-setup/references/agent-worktree-isolation.md)); it merges into `main` only after the review is approved. A merge conflict is never resolved by an agent: abort, keep the branch, and ask the user.
 
 ---
 

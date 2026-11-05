@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Creates, lists, merges, and cleans up per-task agent git worktrees.
+# Creates, reviews, approves, merges, and cleans up per-task agent worktrees.
 #
 # Implements references/agent-worktree-isolation.md: every agent writes in its
-# own worktree on branch agent/<slug>, then merges into the base branch.
+# own worktree on branch agent/<slug>, then merges into the base branch only
+# after the user approves the change set.
 #
 # A merge conflict is never resolved automatically. The merge is aborted, the
 # base branch is left clean, and the script exits 3 with the conflicting paths
@@ -10,18 +11,20 @@
 #
 # Usage:
 #   agent-worktree.sh create <slug> [base-branch]
+#   agent-worktree.sh review <slug> [base-branch]
 #   agent-worktree.sh list
-#   agent-worktree.sh merge  <slug> [base-branch]
+#   agent-worktree.sh merge  <slug> [base-branch] --approved
 #   agent-worktree.sh abort  <slug> [--force]
 #   agent-worktree.sh remove <slug> [--force]
 #   agent-worktree.sh --help
 #
-# Exit codes: 0 success, 1 failure, 2 usage error, 3 merge conflict.
+# Exit codes: 0 success, 1 failure, 2 usage error, 3 merge conflict,
+#             4 approval required (merge without --approved).
 
 set -u
 
 usage() {
-    sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'
 }
 
 fail() {
@@ -37,11 +40,13 @@ shift
 SLUG=""
 BASE_BRANCH="main"
 FORCE=0
+APPROVED=0
 
 for arg in "$@"; do
     case "$arg" in
         --help|-h) usage; exit 0 ;;
         --force) FORCE=1 ;;
+        --approved) APPROVED=1 ;;
         *)
             if [ -z "$SLUG" ]; then SLUG="$arg"; else BASE_BRANCH="$arg"; fi
             ;;
@@ -71,9 +76,31 @@ require_slug() {
     fi
 }
 
+show_review() {
+    branch="$1"
+    base="$2"
+    echo "Review: $branch -> $base"
+    echo "  commits: $(git -C "$REPO_ROOT" rev-list --count "$base..$branch")"
+    git -C "$REPO_ROOT" log --oneline "$base..$branch" | sed 's/^/    /'
+    echo "  diffstat:"
+    git -C "$REPO_ROOT" diff --stat "$base...$branch" | sed 's/^/    /'
+    echo "  changed paths:"
+    git -C "$REPO_ROOT" diff --name-status "$base...$branch" | sed 's/^/    /'
+}
+
 case "$ACTION" in
     list)
         git -C "$REPO_ROOT" worktree list
+        exit 0
+        ;;
+
+    review)
+        require_slug
+        branch_exists "$BRANCH" || fail "Branch '$BRANCH' does not exist."
+        show_review "$BRANCH" "$BASE_BRANCH"
+        echo ""
+        echo "Nothing was merged. Approve, then run:"
+        echo "  agent-worktree.sh merge $SLUG --approved"
         exit 0
         ;;
 
@@ -94,13 +121,24 @@ case "$ACTION" in
         echo "  1. Install dependencies (worktrees share .git, not node_modules)."
         echo "  2. Implement; run fast tests only. Expensive suites run pre-push."
         echo "  3. git add <paths>; commit on $BRANCH."
-        echo "  4. agent-worktree.sh merge $SLUG   (from the main worktree)"
+        echo "  4. agent-worktree.sh review $SLUG   (present to the user)"
+        echo "  5. agent-worktree.sh merge $SLUG --approved   (after approval)"
         exit 0
         ;;
 
     merge)
         require_slug
         branch_exists "$BRANCH" || fail "Branch '$BRANCH' does not exist."
+
+        if [ "$APPROVED" -ne 1 ]; then
+            show_review "$BRANCH" "$BASE_BRANCH"
+            echo ""
+            echo "[APPROVAL REQUIRED] Nothing was merged; '$BASE_BRANCH' is untouched."
+            echo "Present the review above to the user and wait for explicit approval."
+            echo "Then re-run with --approved:"
+            echo "  agent-worktree.sh merge $SLUG --approved"
+            exit 4
+        fi
 
         if [ -e "$WORKTREE_PATH" ] && [ -n "$(git -C "$WORKTREE_PATH" status --porcelain)" ]; then
             fail "Worktree '$WORKTREE_PATH' has uncommitted changes. Commit or discard them before merging."

@@ -71,6 +71,7 @@
         "helper": "scripts/agent-worktree.ps1",
         "branch_prefix": "agent/",
         "base_branch": "main",
+        "merge_requires_approval": true,
         "on_conflict": "ask_user"
       },
       "test_tiers": {

@@ -193,31 +193,39 @@ Full contract:
 2. Layout: `../<repo>-worktrees/<slug>`, branch `agent/<slug>`, base `main`.
 3. Every delegate brief carries `worktree.branch`, `worktree.path`, and
    `worktree.base`. Agents read, write, install, and verify inside that path.
-4. The orchestrator owns the merge; only one merge runs at a time.
+4. The orchestrator owns the review and merge: it presents the change set after
+   the fast gates and audits, then merges **only after explicit user approval**.
+   Only one merge runs at a time.
 5. Test agents write inside the dev worktree; they do not open their own.
-6. Cleanup is `-Action remove` **after** the merge is accepted.
+6. Cleanup is `-Action remove` **after** the approved merge is accepted.
 
-## 9. Merge & Conflict Protocol
+## 9. Approval Gate & Merge Protocol
 
 ```text
 fast gates green + audit clean
-  └─ merge agent/<slug> --no-ff into main
-       ├─ clean   -> Phase 8 report; expensive tier deferred to pre-push
-       └─ conflict-> helper aborts merge (exit 3), main stays clean, branch intact
-                     -> STOP, report conflicting paths, ASK THE USER
-                        A) rebase agent branch onto main and re-merge
-                        B) keep main, drop the conflicting hunk
-                        C) user resolves manually
+  └─ review agent/<slug>  (commits, diffstat, changed paths)
+       └─ STOP: present the review; wait for explicit user approval
+            ├─ not approved -> branch stays isolated; main untouched (merge exits 4)
+            └─ approved     -> merge agent/<slug> --approved (--no-ff)
+                 ├─ clean   -> Phase 8 report; expensive tier deferred to pre-push
+                 └─ conflict-> helper aborts merge (exit 3), main stays clean,
+                                branch intact -> STOP, report conflicting paths,
+                                ASK THE USER:
+                                  A) rebase agent branch onto main and re-merge
+                                  B) keep main, drop the conflicting hunk
+                                  C) user resolves manually
 ```
 
 Hard rules:
 
-1. Never choose a resolution on the user's behalf.
-2. Never `-X ours`, `-X theirs`, `--strategy-option`, `reset --hard`, rebase
+1. Never merge before approval. A green suite, a clean audit, or silence is not approval.
+2. Never bypass the helper's approval gate with a raw `git merge`.
+3. Never choose a conflict resolution on the user's behalf.
+4. Never `-X ours`, `-X theirs`, `--strategy-option`, `reset --hard`, rebase
    without instruction, or force-push.
-3. Never resolve a lockfile or dependency conflict; report `BLOCKED: lockfile conflict`.
-4. Never merge a dirty main worktree, and never merge a worktree with uncommitted changes.
-5. Log the chosen option and the resolution in the execution report.
+5. Never resolve a lockfile or dependency conflict; report `BLOCKED: lockfile conflict`.
+6. Never merge a dirty main worktree, and never merge a worktree with uncommitted changes.
+7. Log the approval, the chosen conflict option, and the resolution in the execution report.
 
 ---
 
@@ -232,6 +240,7 @@ Hard rules:
 - [ ] Adversarial audit delegated; `immutable_edits` empty; E2E deferred.
 - [ ] Repair loop closed with fast suites at exit `0`.
 - [ ] Write audit exit `0`.
-- [ ] Merged into `main` with `--no-ff`, or `BLOCKED: merge conflict` reported to the user.
+- [ ] Review presented; explicit user approval recorded before any merge.
+- [ ] Merged into `main` with `--no-ff` **after approval**, or `BLOCKED: merge conflict` reported to the user.
 - [ ] Plan checklist ticked by the orchestrator only.
 - [ ] Report rendered with commands, exit codes, `[DEFERRED]` expensive gate, and merge result.

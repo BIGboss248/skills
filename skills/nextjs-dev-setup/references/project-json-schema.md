@@ -49,6 +49,7 @@ prescribe a CSS file structure, token vocabulary, or color space.
     "helper": "scripts/agent-worktree.ps1",
     "branch_prefix": "agent/",
     "base_branch": "main",
+    "merge_requires_approval": true,
     "on_conflict": "ask_user"
   },
   "test_tiers": {
@@ -66,6 +67,8 @@ prescribe a CSS file structure, token vocabulary, or color space.
 - `roster`: `"three-role"` only. A two-role repository is out of contract because it loses the independent auditor.
 - `model`: `null` inherits the primary agent's model; otherwise a `provider/model` string.
 - `enabled: false` means the file stays on disk but the orchestrator must not delegate to it.
+- `worktree_isolation.merge_requires_approval` must stay `true`: the agent branch
+  merges into `base_branch` only after the user approves the review summary.
 - `worktree_isolation.on_conflict` must stay `"ask_user"`: agents never resolve a
   merge conflict themselves.
 - `test_tiers.development` must stay `"fast"`; `prepush` is the only local

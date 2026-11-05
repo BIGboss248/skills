@@ -14,9 +14,9 @@ Two execution rules apply to every role:
    and builds run at `git push` through `.husky/pre-push`. See
    [testing-guide.md](./testing-guide.md#6-test-execution-tiers-fast-during-dev-expensive-pre-push).
 2. **One worktree per task.** Implementation agents work on branch `agent/<slug>`
-   in `../<repo>-worktrees/<slug>` and merge into `main` with `--no-ff`. Merge
-   conflicts are escalated to the user. See
-   [agent-worktree-isolation.md](./agent-worktree-isolation.md).
+   in `../<repo>-worktrees/<slug>`; the branch merges into `main` with `--no-ff`
+   only after the user approves the review. Merge conflicts are escalated to the
+   user. See [agent-worktree-isolation.md](./agent-worktree-isolation.md).
 
 ---
 
@@ -101,7 +101,8 @@ Brief rules:
 brief -> subagent works in its worktree + self-verifies (fast tier)
       -> orchestrator audits diff + re-runs the fast suite
       -> accept | re-brief with failures -> repeat
-      -> merge agent/<slug> into main (--no-ff) | conflict -> ask user
+      -> review agent/<slug>, present to the user, wait for approval
+      -> merge agent/<slug> --approved into main (--no-ff) | conflict -> ask user
 ```
 
 The orchestrator, on every return:
@@ -170,6 +171,7 @@ tool locks:
 | Start a Playwright run during development | any role agent | Refuses, defers to pre-push, declares the file |
 | Return `PASS` for a deferred suite | any role agent | Rejected; must be `DEFERRED (pre-push)` |
 | Write in the main working tree | `nextjs-dev` | Refuses; creates and uses `agent/<slug>` worktree |
+| Merge before the user approves | merge owner | Refuses; presents the review and waits (unapproved merge exits 4) |
 | Hit a merge conflict | merge owner | Aborts, keeps the branch, reports paths, asks the user |
 
 New agent files register on the **next** session. A session already running will

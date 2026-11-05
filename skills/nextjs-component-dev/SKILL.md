@@ -4,7 +4,7 @@ description: >-
   Build Next.js App Router React components with Suspense skeletons, semantic OKLCH tokens, next-intl dictionaries, and Tailwind logical styling; test authoring is delegated to nextjs-adversarial-qa. MANDATORY SKILL: activate for every new component, UI section, card, widget, or layout element. Triggers on "/nextjs-component-dev", "create component", "new component", "build component", "develop component".
 metadata:
   author: BIGboss248
-  version: "2.1"
+  version: "2.2"
 ---
 
 # Next.js Component & Skeleton Development (`nextjs-component-dev`)
@@ -34,7 +34,7 @@ Specialized workflow for creating production-ready React Server Components (RSC)
 > - Caching & Revalidation: [`references/caching-and-revalidation.md`](./references/caching-and-revalidation.md)
 > - RSC, State Boundaries & Lazy Loading: [`references/rsc-and-state-boundaries.md`](./references/rsc-and-state-boundaries.md)
 > - Code Templates: [`resources/templates/`](./resources/templates/) ([Component](./resources/templates/component.template.tsx), [Form Component](./resources/templates/form-component.template.tsx), [Skeleton](./resources/templates/skeleton.template.tsx), [Link Status Button](./resources/templates/link-status-button.template.tsx))
-> - Source Tree Isolation & Merge: [`../nextjs-dev-setup/references/agent-worktree-isolation.md`](../nextjs-dev-setup/references/agent-worktree-isolation.md)
+> - Source Tree Isolation & Approval-Gated Merge: [`../nextjs-dev-setup/references/agent-worktree-isolation.md`](../nextjs-dev-setup/references/agent-worktree-isolation.md)
 > - Test Execution Tiers (fast vs pre-push): [`../nextjs-adversarial-qa/references/shared/test-execution-tiers.md`](../nextjs-adversarial-qa/references/shared/test-execution-tiers.md)
 > - Test Templates (owned by QA): [`../nextjs-adversarial-qa/resources/templates/`](../nextjs-adversarial-qa/resources/templates/)
 > - Reference Implementations: [`examples/`](./examples/)
@@ -166,7 +166,7 @@ The skeleton is not optional polish: it is the UI the user sees **first**, while
 - **Deferral:** Playwright specs are authored now, audited statically, and declared in `deferred_expensive_tests[]`. A deferred suite is reported `DEFERRED (pre-push)`, never `PASS`.
 - **Repair:** If a fast suite fails, fix the component — never the assertions. Route `code_fixes_required[]` items back through implementation.
 
-### 9. Source Tree Isolation (Worktrees)
+### 9. Source Tree Isolation (Worktrees) & Approval-Gated Merge
 
 - **Your own worktree.** Implementation agents do not write in the user's working tree. Create a worktree on branch `agent/<kebab-task-slug>` off `main` before the first write:
   ```powershell
@@ -176,7 +176,17 @@ The skeleton is not optional polish: it is the UI the user sees **first**, while
   bash .agents/skills/nextjs-dev-setup/scripts/agent-worktree.sh create hero-card
   ```
 - **One task, one worktree, one branch.** Never reuse another agent's worktree and never write in the main tree while the worktree task is open.
-- **Run the fast gates inside the worktree**, commit there, then merge into `main` (`--no-ff`).
+- **Run the fast gates inside the worktree**, then commit the scoped changes on `agent/<slug>`.
+- **Merge only on explicit approval.** Present the change set, then stop and wait. Nothing reaches `main` until the user approves:
+  ```powershell
+  pwsh .agents/skills/nextjs-dev-setup/scripts/agent-worktree.ps1 -Action review -Slug hero-card
+  pwsh .agents/skills/nextjs-dev-setup/scripts/agent-worktree.ps1 -Action merge -Slug hero-card -Approved
+  ```
+  ```bash
+  bash .agents/skills/nextjs-dev-setup/scripts/agent-worktree.sh review hero-card
+  bash .agents/skills/nextjs-dev-setup/scripts/agent-worktree.sh merge hero-card --approved
+  ```
+  `review` prints the commits, diffstat, and changed paths without touching `main`. `merge` without `-Approved`/`--approved` prints the same review and exits `4` with `[APPROVAL REQUIRED]` — that exit is a stop signal, not an error to work around. Never simulate approval with a raw `git merge`.
 - **Conflicts are not yours to resolve.** Abort the merge, keep the branch, and ask the user how to resolve it. Full contract: [`agent-worktree-isolation.md`](../nextjs-dev-setup/references/agent-worktree-isolation.md).
 
 ---
@@ -196,6 +206,7 @@ The implementation plan must cover:
 6. **Testing Strategy (delegated to `nextjs-adversarial-qa`)**: Reference the QA `<component_name>.test-plan.md` path and planned test files. Do not enumerate test cases here; the QA skill owns the coverage matrix.
 7. **Verification Gate**: `verify-dev.ps1`/`.sh` for companion files and i18n, plus the targeted Jest baseline suite. Playwright, the full Jest project, and builds are the expensive tier and run at `git push` (pre-push), not here.
 8. **Skeleton Contract (§1.2)**: The skeleton file path, the exact parent file and boundary that imports it (`Suspense fallback`, `next/dynamic` `loading`, or `loading.tsx`), the geometry elements mirrored from the component (wrapper classes, grid/flex, breakpoints, item and line counts), and any approved waiver with its reason.
+9. **Approval Gate**: The worktree branch `agent/<slug>`, the fact that all work lands there, and that merging into `main` waits for explicit user approval after the `review` summary.
 
 ---
 
@@ -212,6 +223,7 @@ The implementation plan must cover:
   - Create branch `agent/<kebab-task-slug>` off `main` with `agent-worktree.ps1` / `.sh` (`-Action create`).
   - Install dependencies inside the worktree; it shares `.git` but not `node_modules`.
   - Do all reads, writes, and commands from the worktree path for the rest of the task.
+  - The branch stays isolated until Step 7: nothing is merged into `main` before explicit user approval.
 
 - [ ] **Step 1: Dev Server Verification & Next DevTools Connection**
   - Query `next-devtools` MCP via `nextjs_index` to detect running Next.js dev server instances.
@@ -255,9 +267,11 @@ The implementation plan must cover:
   - If all sub-components and page infrastructure tasks for the parent page are completed, the orchestrator checks off the parent page item (`- [x]`).
   - When invoked directly without the orchestrator, perform this step yourself.
 
-- [ ] **Step 7: Commit in the Worktree and Merge into `main`**
+- [ ] **Step 7: Present for Approval, Then Merge into `main`**
   - `git add <changed paths>` and commit on `agent/<slug>` (scoped commits inside the worktree are the only permitted commits).
-  - Merge from the main worktree: `agent-worktree.ps1 -Action merge -Slug <slug>` / `agent-worktree.sh merge <slug>`.
+  - Run the review from the main worktree and include its output in the report: `agent-worktree.ps1 -Action review -Slug <slug>` / `agent-worktree.sh review <slug>` (commits, diffstat, changed paths).
+  - **STOP here and wait for explicit user approval.** Do not merge, do not remove the worktree, and do not report the work as landed before that approval. Running `merge` without `-Approved`/`--approved` prints the review and exits `4` — that is the gate working, not a failure to route around.
+  - After approval, merge with the approved flag: `agent-worktree.ps1 -Action merge -Slug <slug> -Approved` / `agent-worktree.sh merge <slug> --approved` (local `--no-ff` merge).
   - **On a merge conflict:** do not resolve it. The helper aborts the merge, keeps the branch, prints the conflicting paths, and exits `3`. Report `BLOCKED: merge conflict` and ask the user to choose rebase / keep main / manual resolution.
   - Merging is local only. Never `git push`, never `--no-verify`; the expensive tier runs at push from `.husky/pre-push`.
 
@@ -274,6 +288,7 @@ Even when this skill is invoked alone, do not report a component as done until e
 - [ ] **Geometry parity** — wrapper, padding, grid/flex, breakpoints, item and line counts match the component; skeleton tokens only (`bg-muted`, `animate-pulse`).
 - [ ] **Translations complete** — every string lives in `messages/[locale].json` for all `supported_languages`; no in-file dictionaries.
 - [ ] **Fast gate green** — `verify-dev` passes and the targeted Jest baseline file is green.
+- [ ] **Merge withheld until approval** — the work is committed on `agent/<slug>`, `review` output is in the report, and `main` is untouched until the user explicitly approves.
 
 ---
 
@@ -289,5 +304,6 @@ Even when this skill is invoked alone, do not report a component as done until e
 - **Strict Logical Styling (BiDi):** Never use physical directions (`ml-`, `mr-`, `pl-`, `pr-`, `left-`, `right-`). Always use logical alternatives (`ms-`, `pe-`, `ps-`, `me-`, `start`, `end`).
 - **Targeted Test Execution:** Run only the specific Jest files for the component. Never the full suite, Playwright, or a production build during development — those are the expensive tier and run at `git push`.
 - **Isolation Before Code:** Never start a component in the user's working tree. Create the `agent/<slug>` worktree first and write there.
+- **Never merge before approval:** The worktree branch is a proposal, not a delivery. Commit there, run `review`, and stop. `merge` without `-Approved`/`--approved` exits `4` by design; present the review to the user and wait. Bypassing the flag with a raw `git merge`, `-X ours`, or a force-push is a contract violation, not a shortcut.
 - **Merge Conflicts Are a Stop Signal:** Abort the merge, keep the branch, and ask the user. Never `-X ours`/`-X theirs`, never force-push, never rewrite history.
 - **Storybook Story Separation:** Do not author `.stories.tsx` or run Storybook builds during standard component development unless the `nextjs-storybook-story` skill is specifically requested. Consult [`references/storybook-reference.md`](./references/storybook-reference.md).

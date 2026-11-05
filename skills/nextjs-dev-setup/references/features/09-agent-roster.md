@@ -11,8 +11,9 @@ return. Two rules made the roster safe in practice:
 
 - **Fast tier only** — targeted Jest during development; Playwright, full Jest, and
   builds run at `git push`.
-- **One worktree per task** — implementation happens on `agent/<slug>`, merged into
-  `main` only after the fast gates pass; conflicts are escalated to the user.
+- **One worktree per task** — implementation happens on `agent/<slug>` and merges
+  into `main` only after the fast gates pass **and the user approves the review**;
+  conflicts are escalated to the user.
 
 ## Enable when
 
@@ -36,7 +37,7 @@ delegation and accept the documented degraded mode.
 6. **Boundary acknowledgement** — the operator confirms the model: dev does not
    edit tests, test agents do not edit implementation, edge tests are immutable
    once created, the orchestrator audits the diff, expensive suites run pre-push,
-   and merge conflicts go to the user.
+   merges wait for explicit user approval, and merge conflicts go to the user.
 
 ## Steps
 
@@ -78,8 +79,9 @@ delegation and accept the documented degraded mode.
       the delegation brief and the review/audit step.
 - [ ] `.agents/rules/agent-boundaries.md` exists and describes brief + audit
       enforcement, the fast tier, and the worktree/conflict rules.
-- [ ] `scripts/agent-worktree.ps1` and `.sh` exist and `create` + `merge` work in a
-      scratch repository.
+- [ ] `scripts/agent-worktree.ps1` and `.sh` exist and `create`, `review`, and
+      approved `merge` work in a scratch repository; `merge` without the approval
+      flag exits `4` and leaves `main` untouched.
 - [ ] `.husky/pre-push` invokes the expensive tier (`test:prepush`).
 - [ ] Both command shortcuts exist.
 - [ ] No `{{TOKEN}}` placeholder remains.
@@ -91,8 +93,8 @@ delegation and accept the documented degraded mode.
   anything written outside `write_scope` before accepting the work.
 - `git diff` is the audit surface. For that reason the contract prefers
   `write`/`edit` over shell redirection.
-- Scoped commits on `agent/<slug>` are the one permitted commit path (the merge
-  handoff). Pushing stays with the user.
+- Scoped commits on `agent/<slug>` are the one permitted commit path (the review
+  handoff). Merging waits for explicit user approval; pushing stays with the user.
 - Other harnesses fall back to prompt-level roles plus the orchestrator's write
   audit (`DEGRADED: agent permissions unavailable`).
 - Details: [agent-roster-guide.md](../agent-roster-guide.md) and

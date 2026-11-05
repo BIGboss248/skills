@@ -247,7 +247,7 @@
     },
     {
       "name": "nextjs-component-create",
-      "version": "9c4ee58e345c",
+      "version": "6d69a25f2446",
       "files": [
         "examples/feature-card/FeatureCard.stories.tsx",
         "examples/feature-card/FeatureCard.test.tsx",
@@ -270,7 +270,7 @@
     },
     {
       "name": "nextjs-component-dev",
-      "version": "1d7188f88cde",
+      "version": "47e4370a8b41",
       "files": [
         "examples/cached-data-component/actions.ts",
         "examples/cached-data-component/product-cache.ts",
@@ -305,7 +305,7 @@
     },
     {
       "name": "nextjs-dev-setup",
-      "version": "d366f7e50a93",
+      "version": "81ff3d31b378",
       "files": [
         "examples/sample-component.stories.tsx",
         "examples/sample-component.test.tsx",
@@ -405,7 +405,7 @@
     },
     {
       "name": "nextjs-page-dev",
-      "version": "2ef0f5b52134",
+      "version": "f1cf8ff010cf",
       "files": [
         "references/metadata-and-seo.md",
         "references/page-conventions-and-lifecycle.md",
