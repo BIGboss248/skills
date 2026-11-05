@@ -9,9 +9,10 @@ the same corrections.
 
 1. Which stack-specific mandatory skills apply? (For example
    `nextjs-component-dev` / `nextjs-page-dev` for App Router, or the Flutter
-   equivalents.) Keep `self-repair` and `codebase-memory` regardless. Add
-   `github-triage` when GitHub Issues are enabled (F7) and `plan` when the
-   planning workflow is enabled (F12).
+   equivalents.) Keep `self-repair` regardless. `codebase-memory` is **not** a
+   skill here: the contract carries a short "Code search (codebase-memory MCP)"
+   instruction instead. Add `github-triage` when GitHub Issues are enabled (F7)
+   and `plan` when the planning workflow is enabled (F12).
 2. Should `.agents/autofix.json` be created if it does not exist?
 3. Should the engineering standards baseline
    (`.agents/rules/engineering-standards.md`) be deployed? Default yes — it is
@@ -54,10 +55,17 @@ the same corrections.
    provenance or "tools used" footer, merge into it and keep the bullet-list
    shape. When declined, delete the section and record the decision in
    `.agents/setup-features.json` under `notes`.
+10. Keep the "Code search (codebase-memory MCP)" section verbatim. It replaces
+    the former `codebase-memory` skill: the instruction is deliberately short
+    (index-first, graph-first, grep only as a declared fallback) and costs one
+    paragraph instead of a full skill in every request. Delete the section only
+    when F3 was skipped and the user accepts plain grep; record that in
+    `.agents/setup-features.json` under `notes`.
 
 ## Acceptance
 
-- [ ] `AGENTS.md` names `self-repair`, `codebase-memory`, the confirmed stack skills, `github-triage` when GitHub Issues are enabled, and `plan` when F12 is enabled.
+- [ ] `AGENTS.md` names `self-repair`, the confirmed stack skills, `github-triage` when GitHub Issues are enabled, and `plan` when F12 is enabled.
+- [ ] `AGENTS.md` contains the "Code search (codebase-memory MCP)" instruction (or a recorded waiver when F3 was skipped), and does **not** list `codebase-memory` as a mandatory skill.
 - [ ] The issue-logging contract is present when `github-triage` is listed, and the planning contract plus plan location when `plan` is listed.
 - [ ] The commit-approval clause (stage, show `git diff --cached`, wait) is present in "Commit and quality gates".
 - [ ] When question 4 is accepted, "Output provenance footer" is present and requires a `- Skills:` and `- MCP servers:` bullet list on every response, including `none` values.

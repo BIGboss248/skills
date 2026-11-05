@@ -47,6 +47,7 @@ whenever the project needs agent tooling (GitHub, browser, Flutter, Go, SEO).
 ## Notes
 
 - Server list, recommendation matrix, and disabling semantics: [mcp-server-catalog.md](../mcp-server-catalog.md).
+- F2 installs the matching "Code search (codebase-memory MCP)" instruction in `AGENTS.md`. Registering the server without that instruction leaves the agent grepping; when F2 is skipped, record the gap in `.agents/setup-features.json`.
 - Prefer pinned local installs over `npx <pkg>@latest`; cold `npx` resolution
   routinely exceeds the 30s MCP connect timeout.
 - AGY ignores `"disabled": true` inside `mcpServers`; move unwanted entries to

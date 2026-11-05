@@ -21,15 +21,6 @@
       ]
     },
     {
-      "name": "codebase-memory",
-      "version": "c415e5affc10",
-      "files": [
-        "references/anti-patterns.md",
-        "references/tool-reference.md",
-        "SKILL.md"
-      ]
-    },
-    {
       "name": "component-design",
       "version": "53c68595fda8",
       "files": [
@@ -314,7 +305,7 @@
     },
     {
       "name": "nextjs-dev-setup",
-      "version": "629be86edb52",
+      "version": "d366f7e50a93",
       "files": [
         "examples/sample-component.stories.tsx",
         "examples/sample-component.test.tsx",
@@ -567,7 +558,7 @@
     },
     {
       "name": "setup-repository",
-      "version": "803f203802e2",
+      "version": "b1eea4590f77",
       "files": [
         "references/codebase-memory-and-mcp.md",
         "references/docker-and-cicd-guide.md",

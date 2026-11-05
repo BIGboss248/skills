@@ -12,16 +12,27 @@ them.
 | Skill | When | Why |
 | :--- | :--- | :--- |
 | `self-repair` | Session start, before every task, and immediately after any user correction, preference, or diagnosed bug. | Reads and appends imperative rules in `.agents/autofix.json` so the same mistake is not repeated. |
-| `codebase-memory` | Before any codebase search, symbol lookup, or architecture inspection. | Enforces the index-first protocol (`index_status` / `index_repository`) and graph-first exploration instead of naive grep. |
 | `github-triage` | When a bug, regression, or failing test is found, or an issue needs triage or closure. | Deduplicates issues, logs diagnostics, gates closure on tests, and bridges the fix into `autofix.json`. |
 | `<stack>-component-dev` | Before creating or editing a component on that stack (e.g. `nextjs-component-dev`, `flutter-component-dev`). | Applies the project's component standards, tokens, tests, and accessibility rules. |
 | `<stack>-page-dev` | Before creating or editing a route/page on that stack (e.g. `nextjs-page-dev`). | Applies the page contract: metadata, loading/error boundaries, data fetching, tests. |
 | `plan` | Before starting any task that needs three or more steps, and whenever the user says `/plan`. | Interviews first and writes an executable, verifiable plan to `docs/plan/<slug>.md`; planning never edits source files and ends at an approval gate. |
 
 Replace the `<stack>-*` rows with the skills that match this repository's
-framework and delete the rows that do not apply. Keep `self-repair` and
-`codebase-memory`; keep `github-triage` only when GitHub Issues are enabled for
-this repository.
+framework and delete the rows that do not apply. Keep `self-repair`; keep
+`github-triage` only when GitHub Issues are enabled for this repository.
+
+## Code search (codebase-memory MCP)
+
+Search code with the `codebase-memory` MCP server, not blind text grep:
+
+- Verify index freshness (`index_status`) or re-index on demand
+  (`index_repository`, `mode: "fast"`) — background auto-watch stays off.
+- Prefer `search_graph` for symbols, `trace_path` for callers/callees,
+  `get_code_snippet` for exact source, and `get_architecture` for orientation.
+- Use `search_code` / `rg` / `git grep` only for literal text in Markdown, JSON,
+  or CSS, and for line ranges flagged under `parse_partial`.
+- When the server is unavailable, fall back to `rg` / `git grep` and say so
+  instead of pretending the graph answered.
 
 ## Rule capture (`autofix.json`)
 
