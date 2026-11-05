@@ -94,6 +94,21 @@ base branch: `<base>`.
   accepted; add `-2`, `-3` for further reviews on the same day. Format:
   `.agents/rules/code-review-report.md`.
 
+## Code scanning (`codeql` skill)
+
+Applies when CodeQL code scanning is enabled (feature F13 of the repository setup).
+
+- The CodeQL workflow is a **signal, not a gate**. Never add it to required status
+  checks, rulesets, deployment environments, or the Release Please flow. It ships
+  without a `pull_request` trigger on purpose — restoring one re-blocks merges.
+- CodeQL alerts are not GitHub issues. They live in the Security tab and do not
+  enter the `github-triage` loop. The only issue the workflow files is the
+  analysis-failure tracker, labelled `security` and `codeql`.
+- Dismiss a false positive in the alert with a documented reason; never suppress
+  it inline in code without review.
+- Load the `codeql` skill before editing `.github/workflows/codeql.yml`,
+  interpreting SARIF, or debugging an extraction failure.
+
 ## Issue logging (`github-triage`)
 
 Applies when GitHub Issues are enabled (feature F7 of the repository setup).

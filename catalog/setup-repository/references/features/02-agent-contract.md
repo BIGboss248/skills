@@ -11,8 +11,9 @@ the same corrections.
    `nextjs-component-dev` / `nextjs-page-dev` for App Router, or the Flutter
    equivalents.) Keep `self-repair` regardless. `codebase-memory` is **not** a
    skill here: the contract carries a short "Code search (codebase-memory MCP)"
-   instruction instead. Add `github-triage` when GitHub Issues are enabled (F7)
-   and `plan` when the planning workflow is enabled (F12).
+   instruction instead. Add `github-triage` when GitHub Issues are enabled (F7),
+   `plan` when the planning workflow is enabled (F12), and `codeql` when code
+   scanning is enabled (F13).
 2. Should `.agents/autofix.json` be created if it does not exist?
 3. Should the engineering standards baseline
    (`.agents/rules/engineering-standards.md`) be deployed? Default yes — it is
@@ -32,7 +33,9 @@ the same corrections.
 4. Copy the "Issue logging (`github-triage`)" section from the template when
    GitHub Issues are enabled; keep it next to the rule-capture section. Copy the
    "Planning (`plan` skill)" section when F12 is enabled and record the plan
-   location and review gate from its runbook.
+   location and review gate from its runbook. Copy the "Code scanning (`codeql`
+   skill)" section when F13 is enabled — it carries the three non-gating
+   properties, and dropping one silently re-blocks the repository.
 5. Create `.agents/autofix.json` with `[]` if missing; the `self-repair` skill
    owns the schema and appends rules.
 6. Deploy [engineering-standards.md](../../resources/engineering-standards.md) to
@@ -64,7 +67,7 @@ the same corrections.
 
 ## Acceptance
 
-- [ ] `AGENTS.md` names `self-repair`, the confirmed stack skills, `github-triage` when GitHub Issues are enabled, and `plan` when F12 is enabled.
+- [ ] `AGENTS.md` names `self-repair`, the confirmed stack skills, `github-triage` when GitHub Issues are enabled, `plan` when F12 is enabled, and `codeql` when F13 is enabled.
 - [ ] `AGENTS.md` contains the "Code search (codebase-memory MCP)" instruction (or a recorded waiver when F3 was skipped), and does **not** list `codebase-memory` as a mandatory skill.
 - [ ] The issue-logging contract is present when `github-triage` is listed, and the planning contract plus plan location when `plan` is listed.
 - [ ] The commit-approval clause (stage, show `git diff --cached`, wait) is present in "Commit and quality gates".

@@ -21,6 +21,19 @@
       ]
     },
     {
+      "name": "codeql",
+      "version": "5a54856577ca",
+      "files": [
+        "references/alert-management.md",
+        "references/cli-commands.md",
+        "references/compiled-languages.md",
+        "references/sarif-output.md",
+        "references/troubleshooting.md",
+        "references/workflow-configuration.md",
+        "SKILL.md"
+      ]
+    },
+    {
       "name": "component-design",
       "version": "53c68595fda8",
       "files": [
@@ -556,7 +569,7 @@
     },
     {
       "name": "setup-repository",
-      "version": "b1eea4590f77",
+      "version": "ce0cd69a221a",
       "files": [
         "references/codebase-memory-and-mcp.md",
         "references/docker-and-cicd-guide.md",
@@ -572,6 +585,7 @@
         "references/features/10-code-review.md",
         "references/features/11-nextjs-i18n.md",
         "references/features/12-planning-workflow.md",
+        "references/features/13-code-scanning.md",
         "references/github-repository-setup.md",
         "references/mcp-server-catalog.md",
         "resources/engineering-standards.md",
@@ -579,6 +593,7 @@
         "resources/templates/bug_report.yml.template",
         "resources/templates/cbmignore.template",
         "resources/templates/code-review-report.md.template",
+        "resources/templates/codeql.yml.template",
         "resources/templates/docker-compose.prod.yml.template",
         "resources/templates/docker-compose.yml.template",
         "resources/templates/Dockerfile.template",

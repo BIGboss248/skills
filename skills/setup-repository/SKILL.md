@@ -6,7 +6,7 @@ description: >-
   repo, or initialize repository.
 metadata:
   author: BIGboss248
-  version: "3.2"
+  version: "3.3"
 ---
 
 # Setup Repository (Feature-Driven)
@@ -52,10 +52,11 @@ Use [feature-selection-interview.md](./resources/templates/feature-selection-int
 | F10 | Code review gate (`reviewer` subagent + report standard) | on | F2 |
 | F11 | Next.js internationalization (`next-intl`, locale routing, dictionaries) | off | Next.js App Router project, F1 |
 | F12 | Planning workflow (`plan` skill + `/plan` command) | on | — |
+| F13 | Code scanning (CodeQL, **non-blocking** — notifies on failure, never gates) | off | F6, GHAS, a CodeQL-supported language |
 
 ### 1.3 Ask in adaptive rounds
 
-1. **Preset** — Minimal (`F1, F2`), Standard (`F1, F2, F4, F6, F7, F8, F10, F12`, plus `F3` when installed), Full (all except `F9` unless a CI check exists, plus `F11` for Next.js App Router projects), or Custom.
+1. **Preset** — Minimal (`F1, F2`), Standard (`F1, F2, F4, F6, F7, F8, F10, F12`, plus `F3` when installed), Full (all except `F9` unless a CI check exists, plus `F11` for Next.js App Router projects and `F13` for supported languages), or Custom.
 2. **Adjustments** — multi-select overrides; record every add/remove.
 3. **Per-feature options** — only for enabled features; each runbook lists its own questions.
 
@@ -68,7 +69,7 @@ Use [feature-selection-interview.md](./resources/templates/feature-selection-int
 
 ## Phase 2 — Execute Enabled Features
 
-Run in dependency order: **F1 → F2 → F3 → F4 → F5 → F6 → F7 → F8 → F9 → F10 → F11 → F12**.
+Run in dependency order: **F1 → F2 → F3 → F4 → F5 → F6 → F7 → F8 → F13 → F9 → F10 → F11 → F12**.
 
 For each enabled feature:
 
@@ -86,6 +87,7 @@ For each enabled feature:
 | F6 GitHub repository | [06-github-repository.md](./references/features/06-github-repository.md) |
 | F7 GitHub Issues & triage | [07-triage-templates.md](./references/features/07-triage-templates.md) |
 | F8 Release Please | [08-release-please.md](./references/features/08-release-please.md) |
+| F13 Code scanning (CodeQL) | [13-code-scanning.md](./references/features/13-code-scanning.md) |
 | F9 Branch protection | [09-branch-protection.md](./references/features/09-branch-protection.md) |
 | F10 Code review gate | [10-code-review.md](./references/features/10-code-review.md) |
 | F11 Next.js i18n | [11-nextjs-i18n.md](./references/features/11-nextjs-i18n.md) |
@@ -98,6 +100,8 @@ Do not touch files owned only by disabled features — not even to "prepare" the
 - [ ] Re-run every enabled feature's acceptance check.
 - [ ] `git ls-files` contains no `.env*` values, database dumps, or `acme.json`.
 - [ ] Reconcile the selection record against the working tree; no feature is half-applied.
+- [ ] If F13 is enabled: `.github/workflows/codeql.yml` has no `pull_request`
+  trigger, and the default branch protection does not require a CodeQL context.
 - [ ] Confirm each disabled feature was left untouched.
 
 ## Phase 4 — Report and Handoff
@@ -120,6 +124,24 @@ Do not touch files owned only by disabled features — not even to "prepare" the
 ## Edge Cases & Common Mistakes
 
 - **F9 before CI** — protection that requires a non-existent check blocks every push. Defer it.
+- **F13 is never a gate** — a CodeQL check added to required checks, a ruleset, or
+  a release gate converts a notification into a blocker. Ship it with no
+  `pull_request` trigger, no protection entry, and a `notify` job that files an
+  issue instead. Removing any of those three makes the feature contradict the
+  user's request.
+- **F13 `continue-on-error`** — at job level it flattens
+  `needs.analyze.result` to `success`, so the notifier never fires and failures
+  become silent. Let `analyze` fail; let `notify` report.
+- **F13 before F9** — F13 publishes the check name, but F9 may only require it
+  once a run exists (`gh run list --workflow=codeql.yml`). In a fresh run nothing
+  is committed yet, so F9 records the context name and defers, exactly as it does
+  without F13.
+- **F13 without GHAS** — a private repository without Advanced Security cannot
+  upload SARIF. Detect it before writing the workflow and report `[BLOCKED]`; a
+  scaffolded workflow that can only fail is worse than none.
+- **F13 unsupported language** — Dart/Flutter, PHP, and Elixir are outside the
+  CodeQL list. Report `[SKIPPED]` with the reason instead of scaffolding a
+  workflow that scans nothing.
 - **F7 labels** — templates work locally; remote labels need an authenticated `gh` and a remote.
 - **F6 scaffolding flags** — `gh repo create --license` / `--gitignore` can overwrite existing files.
 - **F8 baseline** — without `bootstrap-sha`, Release Please scans history from before the tooling existed.

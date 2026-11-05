@@ -1,9 +1,9 @@
 # GitHub Repository Provisioning Runbook
 
 Backs features **F6** (repository, metadata, docs), **F7** (templates), **F8**
-(Release Please), and **F9** (branch protection). Derived from the
-`nextjs-wordpress-starter` Phase 0 gate. Use it after the local scaffold exists
-and before CI/CD work starts.
+(Release Please), **F13** (CodeQL code scanning) and **F9** (branch protection).
+Derived from the `nextjs-wordpress-starter` Phase 0 gate. Use it after the local
+scaffold exists and before CI/CD work starts.
 
 ---
 
