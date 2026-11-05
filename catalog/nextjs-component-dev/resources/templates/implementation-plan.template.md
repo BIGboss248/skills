@@ -3,6 +3,7 @@
 - **Page / Scope**: `[page segment / header / footer / sidebar / shared / ui]`
 - **Component Path**: `[new_component_dir]/[surface]/[component_name].tsx` (flat file; `[surface]` = page segment, layout region, `shared`, or `ui`)
 - **Owning Surface**: `[page segment / header / footer / sidebar / shared / ui]` — rendered by `[page or layout file]`
+- **Surface Evidence**: `[the page/layout file that renders it, or "no renderer yet → page segment being built"]`
 - **Component Classification**: `[RSC (Server Component) | Client Component (Interactive)]`
 - **Design Spec Reference**: `docs/design/components/[page]/[component]/design-spec.md`
 - **Next.js Docs Consulted**: `node_modules/next/dist/docs/01-app/...`
@@ -17,6 +18,22 @@
 - [ ] `[new_component_dir]/[surface]/[component_name].edge.test.tsx` (Adversarial Edge-Case Tests)
 
 > Flat files inside the surface folder. No per-component subfolder and no per-component `index.ts`; an optional area-level `[surface]/index.ts` barrel may re-export the surface.
+
+### 1.1 Surface Decision (evidence required)
+
+| Check | Result |
+| :--- | :--- |
+| Renderers found (files/imports) | `app/[locale]/<segment>/page.tsx`, `app/[locale]/layout.tsx`, or none yet |
+| Renderer count | `[0 / 1 / 2+]` |
+| Surface chosen by §1.1 | `[<page-segment> / <layout-region> / shared / ui]` |
+| Forbidden-folder check | `[no global/, no components/<component_name>/, no per-component folder]` |
+
+### 1.2 Skeleton Contract (§1.2)
+
+- **Skeleton file**: `[new_component_dir]/[surface]/[component_name]_skeleton.tsx`
+- **Wired in**: `[parent file]` via `[<Suspense fallback> | next/dynamic loading | loading.tsx]`
+- **Geometry mirrored**: `[outer wrapper classes, padding, grid/flex, breakpoints, item count, text-line count]`
+- **Waiver**: `[none | approved by user — reason]`
 
 ---
 

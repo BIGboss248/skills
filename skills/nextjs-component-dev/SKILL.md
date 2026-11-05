@@ -4,7 +4,7 @@ description: >-
   Build Next.js App Router React components with Suspense skeletons, semantic OKLCH tokens, next-intl dictionaries, and Tailwind logical styling; test authoring is delegated to nextjs-adversarial-qa. MANDATORY SKILL: activate for every new component, UI section, card, widget, or layout element. Triggers on "/nextjs-component-dev", "create component", "new component", "build component", "develop component".
 metadata:
   author: BIGboss248
-  version: "2.0"
+  version: "2.1"
 ---
 
 # Next.js Component & Skeleton Development (`nextjs-component-dev`)
@@ -13,6 +13,14 @@ Specialized workflow for creating production-ready React Server Components (RSC)
 
 > [!CRITICAL]
 > **MANDATORY COMPONENT CREATION INVARIANT:** Whenever you create any new React or Next.js component (whether requested directly by the user, created as part of a page build, or executed from `docs/plan/`), you **MUST** strictly follow every architectural standard and workflow step in this skill. Never create ad-hoc `.tsx` component files without executing this workflow (Next.js local docs lookup, `implementation_plan.md`, surface-folder placement (`<new_component_dir>/<surface>/<component_name>.tsx`), `messages/[locale].json` dictionary sync, QA baseline `<component_name>.test.tsx`, `<component_name>_skeleton.tsx`, and `verify-dev` verification).
+
+> [!IMPORTANT]
+> **Standalone invocation is self-sufficient.** When this skill is triggered on its own (`/nextjs-component-dev`, "create component", "build this card") — with no orchestrator, page skill, or plan file driving it — the same two gates still apply and are never delegated or skipped:
+>
+> 1. **Surface-first categorization (§1.1)** — resolve the owning surface folder from the component's renderers *before* the first write.
+> 2. **Skeleton-first streaming (§1.2)** — ship `<component_name>_skeleton.tsx` **and** wire it as the `<Suspense>` / `next/dynamic` fallback so it renders first while the component streams.
+>
+> If either gate cannot be satisfied, stop and ask the user. Never fall back to an ad-hoc file, a `global/` folder, a per-component folder, or a component without a skeleton.
 
 > [!TIP]
 > **Modular Assets & Templates:**
@@ -36,15 +44,67 @@ Specialized workflow for creating production-ready React Server Components (RSC)
 
 ## Architectural Rules & Standards
 
-### 1. Planning Context & Paths
+### 1. Planning Context, Surface Categorization & Skeleton-First Streaming
 
 - Read `docs/project.json` to resolve `package_manager`, `new_component_dir`, `style_file_dir`, `component_library`, `dictionaries_dir` (default: `"messages"`), and `supported_languages`.
 - All internal routes MUST use `ROUTES` from `@/lib/routes`.
 - All author/site metadata MUST use `SITE_CONFIG` from `@/lib/site-config`.
-- Target path: `<new_component_dir>/<surface>/<component_name>.tsx` — **flat files, categorized by the page or layout region that renders the component.** Resolve the surface in Phase 0 and record it in `implementation_plan.md`.
-  - Category: `<page-segment>/` (e.g. `home/`, `about/`, `lab/`) for page-scoped sections; `<layout-region>/` (`header/`, `footer/`, `sidebar/`) for layout chrome; `shared/` for cross-page reuse; `ui/` for design-system primitives.
-  - Never use a generic `global/` folder and never a per-component subfolder.
-  - Naming: `snake_case.tsx` files with `PascalCase` exports (`theme_button.tsx` → `ThemeButton`). Companions are flat siblings in the same surface folder: `<component_name>_skeleton.tsx`, `<component_name>.test.tsx`, `<component_name>.edge.test.tsx`, `<component_name>.test-plan.md`, `<component_name>.stories.tsx` (Storybook only when in scope). No per-component `index.ts`; an optional area-level `<surface>/index.ts` barrel is allowed.
+
+#### 1.1 Surface Categorization (mandatory — also when invoked alone)
+
+A component's folder is decided by **who renders it**, never by its own name. Resolve the surface before the first write and record the evidence in `implementation_plan.md`.
+
+| Owning surface | Use when | Examples |
+| :--- | :--- | :--- |
+| `<page-segment>/` | Exactly one route segment renders it (`app/[locale]/<segment>/page.tsx` or its sections) | `home/hero.tsx`, `about/team_grid.tsx`, `lab/experiment_card.tsx` |
+| `<layout-region>/` | A `layout.tsx` renders it on every route | `header/navbar.tsx`, `header/theme_button.tsx`, `footer/site_footer.tsx`, `sidebar/docs_sidebar.tsx` |
+| `shared/` | Two or more surfaces or pages import it | `shared/section_heading.tsx`, `shared/empty_state.tsx` |
+| `ui/` | Design-system primitive with no page or business knowledge | `ui/button.tsx`, `ui/badge.tsx` |
+
+**Decision procedure — apply in order:**
+
+1. **Find the renderers** — grep `app/`, every `layout.tsx`, and the existing surface folders for the component name or the import that will reference it.
+2. **Zero renderers yet** → it belongs to the page segment you are building; never invent a folder from the component's own name.
+3. **Exactly one page renderer** → that page segment.
+4. **Two or more renderers, or explicitly designed for reuse** → `shared/`.
+5. **Rendered by `app/[locale]/layout.tsx` or a nested `layout.tsx`** → the matching layout region (`header/`, `footer/`, `sidebar/`).
+6. **No route knowledge, no data access, no business copy** → `ui/`.
+7. **Still ambiguous** (for example a card used by one page today and planned for three) → stop and ask the user; never guess.
+
+- **Target path**: `<new_component_dir>/<surface>/<component_name>.tsx` — flat files, no per-component subfolder, no per-component `index.ts` (an optional area-level `<surface>/index.ts` barrel is allowed).
+- **Forbidden**: the retired `global/` folder, `components/<component_name>/`, and any folder derived from the component's own name.
+- **Promotion rule**: the moment a second surface imports a page-scoped component, move it to `shared/` in the same change and update every import.
+- **Naming**: `snake_case.tsx` files with `PascalCase` exports (`theme_button.tsx` → `ThemeButton`). Companions are flat siblings in the same surface folder: `<component_name>_skeleton.tsx`, `<component_name>.test.tsx`, `<component_name>.edge.test.tsx`, `<component_name>.test-plan.md`, `<component_name>.stories.tsx` (Storybook only when in scope).
+- **Test mirror**: QA Playwright specs live at `tests/e2e/components/<surface>/<component_name>.spec.ts`.
+
+```text
+<new_component_dir>/
+├── header/                       # layout region
+│   ├── navbar.tsx
+│   ├── navbar_skeleton.tsx
+│   └── theme_button.tsx
+├── home/                         # page segment
+│   ├── hero.tsx
+│   └── hero_skeleton.tsx
+├── shared/                       # reused by 2+ surfaces
+└── ui/                           # design-system primitives
+```
+
+#### 1.2 Skeleton-First Streaming (mandatory — also when invoked alone)
+
+The skeleton is not optional polish: it is the UI the user sees **first**, while the component streams in. Every component created by this skill ships a geometry-matched skeleton **and** wires it as the streaming fallback in the same change.
+
+1. **Artifact** — `<new_component_dir>/<surface>/<component_name>_skeleton.tsx`, a flat sibling exporting `[ComponentName]Skeleton` (start from [`skeleton.template.tsx`](./resources/templates/skeleton.template.tsx)).
+2. **Wire it — an unwired skeleton is a failed deliverable:**
+   - Async RSC or data-reading section: the parent renders `<Suspense fallback={<ComponentNameSkeleton />}><ComponentName /></Suspense>`.
+   - Lazy client leaf: `dynamic(() => import("./x").then((m) => m.X), { loading: () => <XSkeleton /> })`, plus `{ ssr: false }` for browser-only APIs.
+   - TanStack Query: `useSuspenseQuery` inside `<Suspense fallback={<ComponentNameSkeleton />}>`.
+   - Route level: `loading.tsx` composes the section skeletons instead of a blank page (see `nextjs-page-dev`).
+3. **Geometry parity (CLS = 0)** — reuse the component's outer wrapper element and classes verbatim: same padding, `max-w-*`, `gap-*`, border and radius, `grid`/`flex` layout, row and column counts, responsive breakpoints (`sm:`/`md:`/`lg:`), media aspect ratios or fixed heights, and the same number of placeholder items and text lines.
+4. **Tokens only** — `animate-pulse bg-muted` (or `bg-muted/70`) blocks inside the same semantic container (`border border-border bg-card rounded-xl`). No hardcoded colors, no physical-direction classes.
+5. **Pure and static** — no data fetching, no hooks, no `"use client"`, no props beyond an optional `className`. Mark decorative blocks `aria-hidden="true"`; any localized loading label comes from the dictionary, never inline.
+6. **Streaming-order check** — on a slow response the layout must show the skeleton inside the component's exact box: never a full-page spinner and never a blank gap. Confirm with the Next DevTools Navigation Inspector ("Pause on navigations").
+7. **Exception handling** — if a component genuinely cannot suspend (a synchronous `ui/` primitive), do not silently drop the file: ask the user, record `skeleton: waived — <reason>` in `implementation_plan.md`, and expect `verify-dev` to flag the missing companion. An unwaived missing skeleton blocks Step 5.
 
 ### 2. Next.js Internal Docs Lookup (`node_modules/next/dist/docs`)
 
@@ -128,13 +188,14 @@ Specialized workflow for creating production-ready React Server Components (RSC)
 
 The implementation plan must cover:
 
-1. **Target Surface, Path & Classification**: The owning surface folder (`<page-segment>/`, `header/`, `footer/`, `sidebar/`, `shared/`, or `ui/`) with a one-line justification of which page or layout renders it, the exact flat file path `<new_component_dir>/<surface>/<component_name>.tsx`, and classification (RSC, Eager Client leaf, Lazy Client leaf with `next/dynamic`, or Client-only with `ssr: false`).
+1. **Target Surface, Path & Classification**: The owning surface folder (`<page-segment>/`, `header/`, `footer/`, `sidebar/`, `shared/`, or `ui/`) with the **renderer evidence** found in §1.1 (which page or layout file renders it, or "no renderer yet → page segment being built"), the exact flat file path `<new_component_dir>/<surface>/<component_name>.tsx`, and classification (RSC, Eager Client leaf, Lazy Client leaf with `next/dynamic`, or Client-only with `ssr: false`).
 2. **Next.js Local Docs Consulted**: Specific doc paths checked under `node_modules/next/dist/docs/` (e.g. `04-api-reference/04-components/image.md`, `03-directives/use-cache.md`, `04-api-reference/02-functions/use-router.md`).
 3. **TypeScript Contracts**: Prop interfaces and types with strict English TSDoc annotations.
 4. **Dictionary Strategy**: Explicit translation namespaces and keys to add to `messages/[locale].json` across all `supported_languages` in `docs/project.json` (zero hardcoded strings or in-file mock dictionaries).
 5. **Theme Tokens & Styling**: Identified semantic OKLCH CSS variables and logical layout classes.
 6. **Testing Strategy (delegated to `nextjs-adversarial-qa`)**: Reference the QA `<component_name>.test-plan.md` path and planned test files. Do not enumerate test cases here; the QA skill owns the coverage matrix.
 7. **Verification Gate**: `verify-dev.ps1`/`.sh` for companion files and i18n, plus the targeted Jest baseline suite. Playwright, the full Jest project, and builds are the expensive tier and run at `git push` (pre-push), not here.
+8. **Skeleton Contract (§1.2)**: The skeleton file path, the exact parent file and boundary that imports it (`Suspense fallback`, `next/dynamic` `loading`, or `loading.tsx`), the geometry elements mirrored from the component (wrapper classes, grid/flex, breakpoints, item and line counts), and any approved waiver with its reason.
 
 ---
 
@@ -142,7 +203,7 @@ The implementation plan must cover:
 
 - [ ] **Step 0: Implementation Plan Generation & Approval Gate**
   - Search and inspect `node_modules/next/dist/docs` via `codebase-memory` MCP (`search_code`, `search_graph`) for any Next.js APIs, directives, hooks, or components utilized by the planned component to ensure up-to-date context.
-  - Synthesize component requirements, scan `docs/project.json`, and generate `implementation_plan.md` documenting consulted docs and contracts.
+  - Synthesize component requirements, scan `docs/project.json`, and generate `implementation_plan.md` documenting consulted docs, the surface decision with its renderer evidence (§1.1), and the skeleton contract with its wiring target (§1.2).
   - Set `request_feedback = true` and `user_facing = true` on the artifact.
   - Wait for user review and explicit approval before writing any code.
   - **Form / Mutation Component Routing Gate**: If the component renders a form or accepts user mutations, read references/form-server-actions.md. Grill the user on whether to include useOptimistic and document the recommendation in implementation_plan.md.
@@ -173,7 +234,8 @@ The implementation plan must cover:
 - [ ] **Step 4: Component & Skeleton Implementation**
   - Create the primary component at the exact flat path resolved in Phase 0: `<new_component_dir>/<surface>/<component_name>.tsx`. Never invent a new top-level folder and never create a per-component subfolder.
   - Implement it (RSC or Client Component) consuming translations via `next-intl` (`getTranslations` or `useTranslations`) with zero hardcoded placeholders or in-file mock dictionary objects. For heavy or conditionally rendered interactive leaves, wrap via `next/dynamic` with `loading: () => <ComponentNameSkeleton />` (or `{ ssr: false }` for browser-only APIs). When building interactive cards or dense feed items with links, pair with `useLinkStatus` for contextual click feedback.
-  - Create the matching Suspense skeleton `<component_name>_skeleton.tsx` alongside it, mirroring layout geometry and classes to prevent CLS.
+  - Create the matching skeleton `<component_name>_skeleton.tsx` alongside it (§1.2): mirror the outer wrapper, padding, grid/flex, breakpoints, item and line counts, and token classes so the skeleton renders first in the component's exact box with **CLS = 0**.
+  - **Wire the skeleton in the same change.** Import it in the owning parent — the page, layout, section, or the `next/dynamic` call — and place it as the `<Suspense fallback>` (or `loading.tsx` composition). A skeleton that no boundary imports is an orphan and does not satisfy this step.
   - Follow the surface's existing naming; do not add a per-component `index.ts` barrel (an area-level `<surface>/index.ts` is optional).
 
 - [ ] **Step 5: Fast Verification Gate (no expensive suites)**
@@ -201,9 +263,26 @@ The implementation plan must cover:
 
 ---
 
+## Pre-Report Self-Audit (run before answering the user)
+
+Even when this skill is invoked alone, do not report a component as done until every line is true:
+
+- [ ] **Surface resolved with evidence** — the file sits in the surface folder that actually renders it, and the renderer path (page, layout, or "no renderer yet → page segment") is named in the plan and in the report.
+- [ ] **No forbidden folders** — no `global/`, no `components/<component_name>/`, no folder named after the component.
+- [ ] **Skeleton file exists** — `<component_name>_skeleton.tsx` is a flat sibling, or a user-approved waiver with its reason is recorded.
+- [ ] **Skeleton is wired** — a `<Suspense fallback>`, `next/dynamic` `loading`, or `loading.tsx` actually imports it; no orphan skeleton.
+- [ ] **Geometry parity** — wrapper, padding, grid/flex, breakpoints, item and line counts match the component; skeleton tokens only (`bg-muted`, `animate-pulse`).
+- [ ] **Translations complete** — every string lives in `messages/[locale].json` for all `supported_languages`; no in-file dictionaries.
+- [ ] **Fast gate green** — `verify-dev` passes and the targeted Jest baseline file is green.
+
+---
+
 ## Edge Cases & AI Pitfalls
 
 - **Surface-First Placement:** Never derive a component's folder from its own name, never resurrect the retired `global/` folder, and never nest a per-component folder. Decide the owning surface before the first write: layout region (`header/`, `footer/`, `sidebar/`) when a layout renders it, the page segment when exactly one page renders it, `shared/` when two or more surfaces do, `ui/` for design-system primitives. Promote a page-scoped component to `shared/` the moment a second surface imports it.
+- **Ambiguous surface:** A card that one page renders today but three pages will render tomorrow is `shared/` from the start only when the user confirms the reuse. Otherwise place it in the page segment and apply the promotion rule on the second import. Never guess silently.
+- **Orphan skeleton:** A `<component_name>_skeleton.tsx` that no `<Suspense>` boundary, `next/dynamic` call, or `loading.tsx` imports does not satisfy §1.2 — the user still sees a blank gap. Wire it in the same change.
+- **Skeleton geometry drift:** A generic `h-96 w-full animate-pulse` block is not a skeleton. Copy the component's real wrapper classes, grid, and breakpoints, or the layout jumps when the content streams in.
 - **Local Docs Verification via Codebase Memory MCP:** Always search `node_modules/next/dist/docs/` using `codebase-memory` MCP tools (`search_code`, `search_graph`) before authoring components. Never assume deprecated Next.js API signatures or outdated caching mechanisms; local docs reflect the exact runtime version installed.
 - **Zero In-File i18n Fallbacks:** Never hardcode dictionary objects or fallbacks (`const DEFAULT_CONTENT = {...}`) in TSX files. All text must come from `messages/[locale].json`.
 - **Hydration Warning Detection & Browser APIs:** Never access browser-only globals (`window`, `localStorage`) during SSR. Use `dynamic(() => import('./Widget'), { ssr: false, loading: () => <WidgetSkeleton /> })` instead of double-rendering `useEffect(mounted)` flags to eliminate hydration crashes cleanly.

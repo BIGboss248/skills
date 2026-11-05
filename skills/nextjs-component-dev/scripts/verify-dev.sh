@@ -68,6 +68,24 @@ if [ "$LEGACY_SKELETON" -eq 1 ]; then
     echo -e "\033[0;33m[WARN] Legacy skeleton name found. Rename '${COMP_NAME}Skeleton.tsx' to '${COMP_NAME}_skeleton.tsx' (flat snake_case convention).\033[0m"
 fi
 
+# Skeleton-first streaming: an orphan skeleton (no Suspense/dynamic/loading.tsx import) is a failed deliverable.
+SKELETON_REF="${COMP_NAME}_skeleton"
+SKELETON_LEAF="$(basename "$SKELETON_FILE")"
+WIRED=0
+for SCAN_PATH in app src "$RESOLVED_DIR"; do
+    [ -d "$SCAN_PATH" ] || continue
+    if grep -rlF --include='*.tsx' --exclude="$SKELETON_LEAF" --exclude='*.test.tsx' --exclude='*.edge.test.tsx' --exclude='*.stories.tsx' --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git --exclude-dir=dist --exclude-dir=build --exclude-dir=coverage "$SKELETON_REF" "$SCAN_PATH" >/dev/null 2>&1; then
+        WIRED=1
+        break
+    fi
+done
+
+if [ "$WIRED" -eq 0 ]; then
+    echo -e "\033[0;33m[WARN] Orphan skeleton: '$SKELETON_LEAF' is not imported by any <Suspense fallback>, next/dynamic loading, or loading.tsx. Wire it so the skeleton renders first while the component streams.\033[0m"
+else
+    echo -e "\033[0;32m[PASS] Skeleton is wired into a streaming boundary.\033[0m"
+fi
+
 # Test authoring and execution are owned by nextjs-adversarial-qa (fast tier only).
 echo -e "\033[0;36m[INFO] Fast-tier execution is delegated. Run nextjs-adversarial-qa/scripts/verify-qa.sh \"$COMPONENT_FILE\" all (Jest only; Playwright deferred to pre-push)\033[0m"
 

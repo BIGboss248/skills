@@ -16,6 +16,9 @@ the same corrections.
 3. Should the engineering standards baseline
    (`.agents/rules/engineering-standards.md`) be deployed? Default yes — it is
    the code-generation contract for the repository.
+4. Should every response end with the **output provenance footer** — a bullet
+   list of the AI skills and MCP servers actually used in that turn? Default
+   yes; it is how the user audits which capabilities touched the work.
 
 ## Steps
 
@@ -45,12 +48,19 @@ the same corrections.
    quality gates" verbatim. It is the repository's standing instruction that
    agents never author commits; dropping it makes every later session commit on
    its own initiative.
+9. Deploy the "Output provenance footer" section when question 4 is accepted.
+   It is the per-response contract: every final answer ends with a bullet list of
+   the skills and MCP servers that actually ran. If the repository already has a
+   provenance or "tools used" footer, merge into it and keep the bullet-list
+   shape. When declined, delete the section and record the decision in
+   `.agents/setup-features.json` under `notes`.
 
 ## Acceptance
 
 - [ ] `AGENTS.md` names `self-repair`, `codebase-memory`, the confirmed stack skills, `github-triage` when GitHub Issues are enabled, and `plan` when F12 is enabled.
 - [ ] The issue-logging contract is present when `github-triage` is listed, and the planning contract plus plan location when `plan` is listed.
 - [ ] The commit-approval clause (stage, show `git diff --cached`, wait) is present in "Commit and quality gates".
+- [ ] When question 4 is accepted, "Output provenance footer" is present and requires a `- Skills:` and `- MCP servers:` bullet list on every response, including `none` values.
 - [ ] No machine-owned block was removed or reworded.
 - [ ] `.agents/autofix.json` parses as a JSON array.
 - [ ] When question 3 is accepted, `.agents/rules/engineering-standards.md` exists, `AGENTS.md` links to it, `opencode.json` loads it through `instructions` when the repository uses OpenCode, and the file differs from the skill copy only by an intentional, recorded merge.
@@ -59,3 +69,5 @@ the same corrections.
 
 - Keep the contract about constraints, not documentation. If a rule needs a
   paragraph of justification, it belongs in a reference file.
+- The provenance footer is a per-response reporting rule, not a project
+  description. Keep it short and factual: what ran, never what was available.

@@ -279,7 +279,7 @@
     },
     {
       "name": "nextjs-component-dev",
-      "version": "98158a9207e3",
+      "version": "1d7188f88cde",
       "files": [
         "examples/cached-data-component/actions.ts",
         "examples/cached-data-component/product-cache.ts",
@@ -567,7 +567,7 @@
     },
     {
       "name": "setup-repository",
-      "version": "d8b1fe762def",
+      "version": "803f203802e2",
       "files": [
         "references/codebase-memory-and-mcp.md",
         "references/docker-and-cicd-guide.md",

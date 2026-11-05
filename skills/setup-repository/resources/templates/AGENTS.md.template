@@ -127,6 +127,29 @@ Do not delete or reword those blocks: committing them keeps the working tree
 clean, and removing them only recreates the change. Append project rules
 outside the managed block.
 
+## Output provenance footer
+
+End **every** response with a short bullet list naming the AI skills and MCP
+servers that produced it. This is a standing reporting contract, not a summary
+of the work.
+
+- Use exactly this shape:
+
+  ```markdown
+  ---
+  **Skills & MCP servers used**
+  - Skills: `self-repair`, `nextjs-component-dev`
+  - MCP servers: `codebase-memory` (`search_code`, `get_code_snippet`), `next-devtools` (`nextjs_index`)
+  ```
+
+- List only what actually ran in that turn. Never list a skill or server that was
+  merely available or loaded but unused.
+- For each MCP server, name the specific tool(s) called in parentheses.
+- When nothing was used, write `- Skills: none` / `- MCP servers: none`. Never
+  drop the footer.
+- Keep it to one line per category. Do not repeat the work summary, findings, or
+  next steps in the footer.
+
 ## Commit and quality gates
 
 - **Stage, show, wait for approval.** Never run `git commit`, `git commit

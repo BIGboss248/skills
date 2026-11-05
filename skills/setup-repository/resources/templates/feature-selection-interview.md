@@ -23,7 +23,7 @@ Existing files:   <AGENTS.md, docs/project.json, .github/, Dockerfile, .husky/ �
 | ID | Feature | Default | Depends on |
 | :--- | :--- | :--- | :--- |
 | F1 | Project metadata (`docs/project.json`) | on | — |
-| F2 | Agent contract (`AGENTS.md`, `.agents/autofix.json`, engineering standards) | on | — |
+| F2 | Agent contract (`AGENTS.md`, `.agents/autofix.json`, engineering standards, output provenance footer) | on | — |
 | F3 | MCP servers (ask + recommend) & Codebase Memory | on if installed | binary/MCP |
 | F4 | Git hooks (Husky + Commitlint + guarded pre-push) | on | Node project |
 | F5 | Production Docker (Dockerfile, compose, `.dockerignore`) | off | lockfile |
@@ -60,6 +60,7 @@ Resolve every removal of a dependency:
 
 Ask only the questions for enabled features; each runbook lists them. Examples:
 
+- **F2**: which stack-specific mandatory skills apply; deploy the engineering standards baseline? install the output provenance footer (skills + MCP servers used) on every response?
 - **F3**: which MCP servers does this repo need (present the recommendation from `references/mcp-server-catalog.md`); install codebase-memory if missing, or wire workspace-only?
 - **F4**: pre-push gate — `test:all`, lint only, or no test gate?
 - **F5**: app image only, compose too, and which port?

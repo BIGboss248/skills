@@ -67,6 +67,30 @@ if ($legacySkeleton) {
     Write-Host "[WARN] Legacy skeleton name found. Rename '${compName}Skeleton.tsx' to '${compName}_skeleton.tsx' (flat snake_case convention)." -ForegroundColor Yellow
 }
 
+# Skeleton-first streaming: an orphan skeleton (no Suspense/dynamic/loading.tsx import) is a failed deliverable.
+$skeletonRef = "${compName}_skeleton"
+$skeletonLeaf = Split-Path $skeletonFile -Leaf
+$wired = $false
+$scanPaths = @("app", "src", $resolvedDir) | Where-Object { Test-Path $_ } | Select-Object -Unique
+foreach ($scanPath in $scanPaths) {
+    $candidates = Get-ChildItem -Path $scanPath -Recurse -Filter *.tsx -File -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -notmatch '[\\/](node_modules|\.next|\.git|dist|build|coverage)[\\/]' -and $_.Name -ne $skeletonLeaf -and $_.Name -notmatch '\.(test|edge\.test|stories)\.tsx$' } |
+        Select-Object -First 5000
+    foreach ($candidate in $candidates) {
+        if (Select-String -Path $candidate.FullName -Pattern $skeletonRef -SimpleMatch -Quiet) {
+            $wired = $true
+            break
+        }
+    }
+    if ($wired) { break }
+}
+
+if (-not $wired) {
+    Write-Host "[WARN] Orphan skeleton: '$skeletonLeaf' is not imported by any <Suspense fallback>, next/dynamic loading, or loading.tsx. Wire it so the skeleton renders first while the component streams." -ForegroundColor Yellow
+} else {
+    Write-Host "[PASS] Skeleton is wired into a streaming boundary." -ForegroundColor Green
+}
+
 # Test execution is delegated to nextjs-adversarial-qa.
 # Fast tier only: Playwright, the full Jest project, and builds run at 'git push' (pre-push).
 Write-Host "[INFO] Fast-tier execution is delegated. Run nextjs-adversarial-qa/scripts/verify-qa.ps1 -TargetPath `"$(Join-Path $resolvedDir "$compName.tsx")`" -Mode all (Jest only; Playwright deferred to pre-push)" -ForegroundColor Cyan
