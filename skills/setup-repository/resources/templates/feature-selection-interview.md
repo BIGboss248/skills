@@ -34,12 +34,12 @@ Existing files:   <AGENTS.md, docs/project.json, .github/, Dockerfile, .husky/ �
 | F10 | Code review gate (`reviewer` subagent + report standard) | on | F2 |
 | F11 | Next.js internationalization (`next-intl`, locale routing, dictionaries) | off | Next.js App Router project, F1 |
 | F12 | Planning workflow (`plan` skill + `/plan` command) | on | — |
-| F13 | Code scanning (CodeQL, **non-blocking** — notifies on failure, never gates) | off | F6, GHAS, a CodeQL-supported language |
+| F13 | Code scanning (CodeQL, **non-blocking** — notifies on failure, never gates) | on for public repositories (off on private without GitHub Code Security) | F6, public visibility or a Code Security licence, a CodeQL-supported language |
 
 ## 3. Round 1 — Preset
 
 > Which preset should I use?
-> **Minimal** (F1, F2) · **Standard** (F1, F2, F4, F6, F7, F8, F10, F12, plus F3 when installed) · **Full** (all except F9 unless a CI check exists, plus F11 for Next.js App Router projects and F13 for CodeQL-supported languages) · **Custom**
+> **Minimal** (F1, F2) · **Standard** (F1, F2, F4, F6, F7, F8, F10, F12, plus F3 when installed and F13 when the repository is public with a CodeQL-supported language) · **Full** (all except F9 unless a CI check exists, plus F11 for Next.js App Router projects and F13 when a supported language is present) · **Custom**
 
 ## 4. Round 2 — Adjustments
 
@@ -58,7 +58,10 @@ Resolve every removal of a dependency:
 - F12 without F2 → the skill and `/plan` command still work; the `AGENTS.md` planning section is skipped and the convention is recorded only in `.agents/setup-features.json`.
 - F13 without F6 → no remote, so no workflow can run; deploy the files and record that the first scan waits for a push.
 - F13 without F7 (or with Issues disabled) → the notifier posts to the step summary only; set `CODEQL_OPEN_ISSUE=false`.
-- F13 on a private repo without GHAS → `[BLOCKED]`; report the licence requirement, deploy nothing.
+- F13 on a private repo without GitHub Code Security → `[BLOCKED]`; report the
+  licence requirement, deploy nothing, and disable any existing `CodeQL`
+  workflow (`gh workflow disable <id>`) instead of leaving a permanent red check.
+- F13 on a public repo → free to run; no licence needed.
 - F13 on an unsupported language (Dart/Flutter, PHP, Elixir) → `[SKIPPED]` with the reason.
 - F13 and F9 both enabled → F13 runs first and publishes the check name, but F9 still defers until that check has reported once.
 
@@ -77,7 +80,7 @@ Ask only the questions for enabled features; each runbook lists them. Examples:
 - **F10**: install `/review`? which base branch do reviews compare against? archive reports under `docs/reviews/`?
 - **F11**: which locales and default locale; locale prefix `always` or `as-needed`; migrate existing routes into `app/[locale]/` now or later; which locales render right-to-left?
 - **F12**: plan location (`docs/plan/<slug>.md` or a single `PLAN.md`); commit plans? install `/plan`? stop after every phase or only at the end?
-- **F13**: confirmed languages; failure notification (tracking issue / step summary only / both); build mode for compiled languages; query suite (`security-extended` or `security-and-quality`); triggers (push + weekly schedule, plus release-time scan, plus manual)? install the `codeql` skill alongside the workflow?
+- **F13**: confirm repository visibility (public = free; private needs GitHub Code Security) and the detected languages; failure notification (tracking issue / step summary only / both); build mode for compiled languages; query suite (`security-extended` or `security-and-quality`); triggers (push + weekly schedule, plus release-time scan, plus manual)? install the `codeql` skill alongside the workflow?
 
 ## 6. Confirmation
 
@@ -124,7 +127,7 @@ Proceed with these features? (yes / adjust)
 | F10 Code review gate | `.opencode/agents/reviewer.md`, `.agents/rules/code-review-report.md`, `.opencode/commands/review.md`, `AGENTS.md` | … | base branch: … |
 | F11 Next.js i18n | `i18n/routing.ts`, `i18n/request.ts`, `i18n/navigation.ts`, `proxy.ts`/`middleware.ts`, `app/[locale]/layout.tsx`, `messages/<locale>.json`, `global.d.ts`, `docs/project.json` | … | locales: … |
 | F12 Planning workflow | `skills/plan/`, `.opencode/commands/plan.md`, `AGENTS.md` | … | plan location: … |
-| F13 Code scanning (CodeQL) | `.github/workflows/codeql.yml`, `skills/codeql/`, labels/`CODEQL_OPEN_ISSUE`, `AGENTS.md` | … | languages: … · gating: none (by design) |
+| F13 Code scanning (CodeQL) | `.github/workflows/codeql.yml`, `skills/codeql/`, labels/`CODEQL_OPEN_ISSUE`, `AGENTS.md` | … | visibility: public (free) / private + Code Security · languages: … · gating: none (by design) |
 
 Preset: <preset>
 Verification: <commands and result per enabled feature>

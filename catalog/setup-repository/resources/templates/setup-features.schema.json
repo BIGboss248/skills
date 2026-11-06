@@ -6,6 +6,6 @@
   "degraded": {},
   "notes": {
     "F9": "deferred until a CI check exists",
-    "F13": "opt-in; no CodeQL-supported language detected"
+    "F13": "private repository without GitHub Code Security; workflow disabled"
   }
 }

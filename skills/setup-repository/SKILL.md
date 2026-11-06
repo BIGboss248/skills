@@ -6,7 +6,7 @@ description: >-
   repo, or initialize repository.
 metadata:
   author: BIGboss248
-  version: "3.3"
+  version: "3.4"
 ---
 
 # Setup Repository (Feature-Driven)
@@ -52,11 +52,11 @@ Use [feature-selection-interview.md](./resources/templates/feature-selection-int
 | F10 | Code review gate (`reviewer` subagent + report standard) | on | F2 |
 | F11 | Next.js internationalization (`next-intl`, locale routing, dictionaries) | off | Next.js App Router project, F1 |
 | F12 | Planning workflow (`plan` skill + `/plan` command) | on | — |
-| F13 | Code scanning (CodeQL, **non-blocking** — notifies on failure, never gates) | off | F6, GHAS, a CodeQL-supported language |
+| F13 | Code scanning (CodeQL, **non-blocking** — notifies on failure, never gates) | on for public repositories (off on private without GitHub Code Security) | F6, public visibility or a Code Security licence, a CodeQL-supported language |
 
 ### 1.3 Ask in adaptive rounds
 
-1. **Preset** — Minimal (`F1, F2`), Standard (`F1, F2, F4, F6, F7, F8, F10, F12`, plus `F3` when installed), Full (all except `F9` unless a CI check exists, plus `F11` for Next.js App Router projects and `F13` for supported languages), or Custom.
+1. **Preset** — Minimal (`F1, F2`), Standard (`F1, F2, F4, F6, F7, F8, F10, F12`, plus `F3` when installed and `F13` when the repository is public and CodeQL supports the language), Full (all except `F9` unless a CI check exists, plus `F11` for Next.js App Router projects and `F13` when a supported language is present), or Custom.
 2. **Adjustments** — multi-select overrides; record every add/remove.
 3. **Per-feature options** — only for enabled features; each runbook lists its own questions.
 
@@ -124,11 +124,11 @@ Do not touch files owned only by disabled features — not even to "prepare" the
 ## Edge Cases & Common Mistakes
 
 - **F9 before CI** — protection that requires a non-existent check blocks every push. Defer it.
-- **F13 is never a gate** — a CodeQL check added to required checks, a ruleset, or
-  a release gate converts a notification into a blocker. Ship it with no
-  `pull_request` trigger, no protection entry, and a `notify` job that files an
-  issue instead. Removing any of those three makes the feature contradict the
-  user's request.
+- **F13 is never a gate** — a CodeQL check added to required checks, a ruleset, a
+  release gate, or another workflow's `needs:` converts a notification into a
+  blocker. Ship it with no `pull_request` trigger, no protection entry, and a
+  `notify` job that files an issue instead. Removing any of those makes the
+  feature contradict the user's request.
 - **F13 `continue-on-error`** — at job level it flattens
   `needs.analyze.result` to `success`, so the notifier never fires and failures
   become silent. Let `analyze` fail; let `notify` report.
@@ -136,9 +136,12 @@ Do not touch files owned only by disabled features — not even to "prepare" the
   once a run exists (`gh run list --workflow=codeql.yml`). In a fresh run nothing
   is committed yet, so F9 records the context name and defers, exactly as it does
   without F13.
-- **F13 without GHAS** — a private repository without Advanced Security cannot
-  upload SARIF. Detect it before writing the workflow and report `[BLOCKED]`; a
-  scaffolded workflow that can only fail is worse than none.
+- **F13 on a private repository without GitHub Code Security** — code scanning is
+  free only on public repositories; private ones need the licence. Detect
+  visibility first (`gh repo view --json visibility`), report `[BLOCKED]`, and if
+  `.github/workflows/codeql.yml` already exists, disable it
+  (`gh workflow disable <id>`) — a scaffolded workflow that can only fail is worse
+  than none.
 - **F13 unsupported language** — Dart/Flutter, PHP, and Elixir are outside the
   CodeQL list. Report `[SKIPPED]` with the reason instead of scaffolding a
   workflow that scans nothing.

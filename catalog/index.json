@@ -569,7 +569,7 @@
     },
     {
       "name": "setup-repository",
-      "version": "ce0cd69a221a",
+      "version": "8c8fec5c97c9",
       "files": [
         "references/codebase-memory-and-mcp.md",
         "references/docker-and-cicd-guide.md",

@@ -2,21 +2,31 @@
 
 ## Enable when
 
-The repository has a **CodeQL-supported language** and the user wants a security
-signal without a merge gate. All three must hold:
+The repository is **publicly visible** (free) or has **GitHub Code Security**
+licensed, has a **CodeQL-supported language**, and the user wants a security
+signal without a merge gate. All of these must hold:
 
+- **public visibility, or a GitHub Code Security licence.** GitHub only processes
+  code scanning on private repositories when that licence is present — the
+  advanced-setup prerequisite is literally "it is publicly visible, or GitHub
+  Code Security is enabled";
 - a supported language is present — see the identifier table in
   [`codeql/SKILL.md`](../../../codeql/SKILL.md);
-- GitHub Advanced Security is available — free on public repositories, licensed
-  on private ones;
 - the workflow can run on GitHub-hosted runners (or a self-hosted runner with
   ≥8 GB RAM for small codebases).
 
 **Skip** for Dart/Flutter, PHP, Elixir, and any other language outside the
 CodeQL list. `pubspec.yaml` alone is not a reason to enable this feature.
 
-Default: **off**. Code scanning is opt-in, and a non-blocking scan is only worth
-its Actions minutes when the user asked for it.
+**Skip and disable** on a private repository without GitHub Code Security: a
+workflow there can only fail at the SARIF upload. If
+`.github/workflows/codeql.yml` already exists, disable it
+(`gh workflow disable <id>`) and record why — a permanently red check is worse
+than no check.
+
+Default: **on for public repositories and for licensed private ones**, off
+otherwise. Code scanning is still opt-in per feature selection, and a
+non-blocking scan is only worth its Actions minutes when the user asked for it.
 
 ## Questions
 
@@ -37,21 +47,29 @@ its Actions minutes when the user asked for it.
 
 ## Steps
 
-1. **Detect and confirm languages.** Map lockfiles to identifiers:
+1. **Confirm visibility first, then the licence.** Code scanning is free on
+   public repositories and licensed on private ones:
+
+   ```bash
+   gh repo view <owner>/<repo> --json visibility --jq '.visibility'
+   gh api repos/<owner>/<repo> --jq '.security_and_analysis'
+   ```
+
+   - `PUBLIC` → free; continue.
+   - `PRIVATE` and `security_and_analysis` is not `null` (code scanning
+     configured) → licensed; continue.
+   - `PRIVATE` and `security_and_analysis: null` → report `[BLOCKED]`, name the
+     GitHub Code Security licence requirement, and stop. Do not scaffold a
+     workflow that can only fail. If a `CodeQL` workflow already exists —
+     because the repository used to be public, or a licence lapsed — disable it
+     (`gh workflow disable <id>`) and record `[DISABLED]` with the reason.
+
+2. **Detect and confirm languages.** Map lockfiles to identifiers:
    `package.json` → `javascript-typescript`, `pyproject.toml`/`requirements.txt`
    → `python`, `go.mod` → `go`, `Cargo.toml` → `rust`, `*.csproj` → `csharp`,
    `pom.xml`/`build.gradle` → `java-kotlin`, `Package.swift` → `swift`,
    `CMakeLists.txt`/`Makefile` → `c-cpp`, `.github/workflows/` only → `actions`.
    Record unsupported languages as `[SKIPPED]` with the reason.
-2. **Verify GHAS availability** before writing anything:
-
-   ```bash
-   gh api repos/<owner>/<repo> --jq '.security_and_analysis'
-   ```
-
-   `null` or `disabled` on a private repository means no code scanning: report
-   `[BLOCKED]`, name the licence requirement, and stop. Do not scaffold a
-   workflow that can only fail.
 3. **Check for default setup** and disable it before committing an advanced
    workflow. Two enabled setups split results and double-scan:
 
@@ -111,6 +129,10 @@ its Actions minutes when the user asked for it.
 - [ ] The workflow has **no** `pull_request` trigger.
 - [ ] `gh api repos/<owner>/<repo>/branches/<default>/protection` does not list
       a CodeQL context (when F9 is configured).
+- [ ] **Visibility gate honoured:** a public repository deploys the workflow; a
+      private repository without GitHub Code Security reports `[BLOCKED]`, and
+      `gh workflow list --all` shows either no `CodeQL` workflow or one in
+      `disabled_manually` state.
 - [ ] Labels `security` and `codeql` exist, or `CODEQL_OPEN_ISSUE=false` is set.
 - [ ] `skills/codeql/SKILL.md` exists with `name: codeql` and every reference
       link resolves (when question 6 was accepted).
@@ -145,8 +167,15 @@ its Actions minutes when the user asked for it.
   a docs-only push; it does not exclude files from analysis. Directory scoping
   needs `.github/codeql/codeql-config.yml` with `paths:` / `paths-ignore:` and
   `config-file:` on the `init` step.
-- **Private repositories** need `actions: read` on the analyze job and GHAS
-  licensing, and every scheduled run bills Actions minutes.
+- **Private repositories** are the whole gate: code scanning needs **GitHub Code
+  Security** there (public repositories are free), the analyze job needs
+  `actions: read`, and every scheduled run bills Actions minutes. If a repository
+  moves from public to private and the licence is missing, the SARIF upload
+  returns HTTP 403 — disable the workflow (`gh workflow disable <id>`) and record
+  `[DISABLED]` rather than shipping a check that can only fail.
+- **Never chain F13 into the quality gate.** It is a standalone workflow; keep it
+  out of another workflow's `needs:` and out of the Release Please dependency
+  chain. A scanner outage must not block a merge or a release.
 - **Release-time scans** are additive. `release: published` adds a scan of the
   released commit; it does not make the release wait for the scan, and it must
   never be wired into the Release Please job.

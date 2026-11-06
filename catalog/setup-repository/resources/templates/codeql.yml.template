@@ -1,5 +1,10 @@
 # CodeQL code scanning — NON-BLOCKING (F13)
 #
+# Requires a PUBLIC repository (code scanning is free there) or a GitHub Code
+# Security licence on a private one. If neither holds, do not deploy this file:
+# the SARIF upload returns HTTP 403 and the check can only fail. Disable an
+# existing workflow with `gh workflow disable <id>` and record why.
+#
 # Contract, do not weaken it:
 #   * There is no `pull_request` trigger. PR annotations are what actually block
 #     merges, so the absence of that trigger is the non-blocking guarantee.
