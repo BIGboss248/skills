@@ -285,7 +285,7 @@
     },
     {
       "name": "nextjs-dev-setup",
-      "version": "70e0596d042d",
+      "version": "7f683e3a5b53",
       "files": [
         "examples/sample-component.stories.tsx",
         "references/agent-roster-guide.md",
@@ -358,6 +358,8 @@
         "resources/templates/project.template.json",
         "resources/templates/providers.tsx.template",
         "resources/templates/proxy.ts.template",
+        "resources/templates/release-please-config.json.template",
+        "resources/templates/release-please-manifest.json.template",
         "resources/templates/release-please.yml.template",
         "resources/templates/rules/agent-boundaries.md.template",
         "resources/templates/storybook-main.ts.template",

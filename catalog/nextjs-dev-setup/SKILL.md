@@ -183,6 +183,15 @@ Produce the report from
 - **N11 image names** — Docker OCI names must be lowercase.
 - **N12 test gate** — never point `pre-push` at a script that does not exist;
   degrade to lint only and record it.
+- **N12 release gate** — keep `release` and the image jobs in one workflow and
+  gate publishing on `needs.release.outputs.released == 'true'`. A push that only
+  opens/updates the release PR must build nothing and must not move `latest`;
+  only the user merging the release PR publishes a version.
+- **N12 component mismatch** — with `include-component-in-tag: false`, keep
+  `package-name: ""` in `release-please-config.json`. A non-empty name makes
+  Release Please skip tagging the merged PR (`PR component: undefined does not
+  match configured component`), leaving the release PR on `autorelease: pending`
+  and blocking every image.
 - **Test tiers** — `pre-push` is the only local execution point for Playwright and
   the full Jest project. Never wire the expensive tier into `commit-msg` or
   `pre-commit`, and never let component development run it. Details:
