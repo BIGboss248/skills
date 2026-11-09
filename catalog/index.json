@@ -14,19 +14,6 @@
       ]
     },
     {
-      "name": "codeql",
-      "version": "02715c6d72e8",
-      "files": [
-        "references/alert-management.md",
-        "references/cli-commands.md",
-        "references/compiled-languages.md",
-        "references/sarif-output.md",
-        "references/troubleshooting.md",
-        "references/workflow-configuration.md",
-        "SKILL.md"
-      ]
-    },
-    {
       "name": "flutter-app-arch",
       "version": "e8c11c5c4c5f",
       "files": [
