@@ -2,7 +2,7 @@
 
 ## GitHub Triage Infrastructure Setup
 
-Initialize the repository's GitHub Issues templates and standard triage labels during project setup so the `github-triage` skill can track bugs, log root cause diagnostics, and link `.agents/autofix.json` rules immediately:
+Initialize the repository's GitHub Issues templates and standard triage labels during project setup so the `triage` skill can track bugs, log root cause diagnostics, and link `.agents/autofix.json` rules immediately:
 
 1. **Issue Templates**:
    - `.github/ISSUE_TEMPLATE/bug_report.yml` from [`bug_report.yml.template`](../resources/templates/bug_report.yml.template)

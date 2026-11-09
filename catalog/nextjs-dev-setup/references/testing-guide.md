@@ -11,8 +11,8 @@ This guide covers the setup, architecture, and verification of Jest unit testing
 > Do NOT create placeholder or dummy test files in the user workspace during setup. Only configure framework configuration files (`jest.config.ts`, `jest.setup.ts`, `playwright.config.ts`, and `package.json` scripts).
 > Sample patterns are provided strictly for documentation:
 >
-> - Jest Unit Test Example: [`sample-component.test.tsx`](../../nextjs-test/examples/sample-component.test.tsx)
-> - Playwright E2E & Instant Test Example: [`sample-navigation.spec.ts`](../../nextjs-test/examples/sample-navigation.spec.ts)
+> - Jest Unit Test Example: [`sample-component.test.tsx`](../../tdd/examples/sample-component.test.tsx)
+> - Playwright E2E & Instant Test Example: [`sample-navigation.spec.ts`](../../tdd/examples/sample-navigation.spec.ts)
 
 ---
 
@@ -136,8 +136,8 @@ Configure test scripts with exit-code-safe flags so empty project suites do not 
 ## 6. Test Execution Tiers (fast during dev, expensive pre-push)
 
 Two tiers, one gate. Test authoring is owned by the
-[`nextjs-test`](../../nextjs-test/SKILL.md) skill. Canonical execution contract:
-[`nextjs-test/references/shared/test-execution-tiers.md`](../../nextjs-test/references/shared/test-execution-tiers.md).
+[`tdd`](../../tdd/SKILL.md) skill. Canonical execution contract:
+[`tdd/references/shared/test-execution-tiers.md`](../../tdd/references/shared/test-execution-tiers.md).
 
 | Tier | Contents | Runs where |
 | :--- | :--- | :--- |

@@ -121,7 +121,7 @@ The script deploys:
 - `.github/ISSUE_TEMPLATE/config.yml` — contact links, blank-issue policy.
 - `.github/PULL_REQUEST_TEMPLATE.md` — summary, verification, no-secrets checklist.
 
-It also provisions the remote labels used by `github-triage` (`bug`,
+It also provisions the remote labels used by `triage` (`bug`,
 `agent-triage`, `self-repair`, `verified`). GitHub only reads templates from the
 default branch, so verification happens after the first push to `main`.
 

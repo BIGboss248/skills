@@ -85,7 +85,7 @@ remotes without GitHub Actions.
       `linux/arm64` on native runners and `merge` pushes `<version>`,
       `<version>-sha-<short>`, `sha-<short>`, and `latest`.
 - [ ] The pre-push gate references only scripts that exist.
-- [ ] `github-triage` is named in `AGENTS.md` when the logging contract was
+- [ ] `triage` is named in `AGENTS.md` when the logging contract was
       installed.
 
 ## Notes

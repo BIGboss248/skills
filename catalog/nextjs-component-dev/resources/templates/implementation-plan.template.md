@@ -15,7 +15,7 @@
 - [ ] `[new_component_dir]/[surface]/[component_name].tsx` (Primary Component)
 - [ ] `[new_component_dir]/[surface]/[component_name]_skeleton.tsx` (Suspense Skeleton — **only when §1.2 verdict is `required`; delete this line for a static component**)
 
-> Test files are **not** part of this plan. `nextjs-test` owns `<component_name>.test-plan.md`, `<component_name>.test.tsx`, and `<component_name>.edge.test.tsx` and runs as a separate step.
+> Test files are **not** part of this plan. `tdd` owns `<component_name>.test-plan.md`, `<component_name>.test.tsx`, and `<component_name>.edge.test.tsx` and runs as a separate step.
 
 > Flat files inside the surface folder. No per-component subfolder and no per-component `index.ts`; an optional area-level `[surface]/index.ts` barrel may re-export the surface.
 
@@ -80,9 +80,9 @@ export interface [ComponentName]Props {
 
 ---
 
-## 5. Testing Handoff (owned by `nextjs-test`)
+## 5. Testing Handoff (owned by `tdd`)
 
-> Do not plan, author, or scaffold test cases in this document. Test authoring is owned exclusively by the `nextjs-test` skill, which produces `<component_name>.test-plan.md`, `<component_name>.test.tsx`, and `<component_name>.edge.test.tsx` as a separate step. State that handoff here and continue with implementation.
+> Do not plan, author, or scaffold test cases in this document. Test authoring is owned exclusively by the `tdd` skill, which produces `<component_name>.test-plan.md`, `<component_name>.test.tsx`, and `<component_name>.edge.test.tsx` as a separate step. State that handoff here and continue with implementation.
 
 ---
 
@@ -94,7 +94,7 @@ Creation gate (fast tier, run during development):
   ```pwsh
   pwsh .agents/skills/nextjs-component-dev/scripts/verify-dev.ps1 -ComponentPath <new_component_dir>/<surface>/<component_name>.tsx
   ```
-- Existing tests, if present, may be run read-only for feedback. Test authoring and the test suite gate belong to `nextjs-test`.
+- Existing tests, if present, may be run read-only for feedback. Test authoring and the test suite gate belong to `tdd`.
 
 Expensive tier (deferred to `git push` via `.husky/pre-push`; never run here):
 

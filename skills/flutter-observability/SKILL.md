@@ -1,57 +1,77 @@
 ---
 name: flutter-observability
 description: >-
-  Configure structured logging, global BLoC state tracing, HTTP network interceptors, and crash reporting boundaries across Flutter applications.
+  Instrument Flutter apps with structured logging and error capture. Use when
+  adding logging, BLoC tracing, network interceptors, or global error handlers.
 ---
 
-# Flutter Observability & Diagnostics (`flutter-observability`)
+# Flutter Observability Standards
 
-Production-grade runbook for implementing structured logging, global state machine observability, network tracing, and error boundary capture in Flutter desktop and mobile apps.
+How diagnostics are wired. This skill instruments only; it does not build screens
+or tests.
 
----
+## 1. No direct prints
 
-## Architectural Rules & Standards
+- `print()` is forbidden; `analysis_options.yaml` enforces `avoid_print`.
+- Use the project logger or `dart:developer.log` with levels.
+- Debug 500, info 800, warn 900, error 1000, fatal 1200.
+- Tag each logger with the owning type or service name for filtering.
 
-### 1. Zero Direct Prints
-- `print()` is strictly forbidden in production code (enforced by `analysis_options.yaml`).
-- Use structured loggers (`logger` package or `dart:developer.log`) with log levels (`debug`, `info`, `warning`, `error`).
+## 2. Global BLoC observer
 
-### 2. Global BLoC Observer
-- Implement a custom `BlocObserver` attached to `Bloc.observer` in `main.dart` to trace all state transitions and errors.
+- One `BlocObserver` is attached to `Bloc.observer` before `runApp()`.
+- It records every transition and every error with the bloc name, current state,
+  and next state.
+- It never throws: a failing observer must not break the app.
 
-### 3. Network Tracing & Correlation IDs
-- Attach a logging interceptor to HTTP/Dio clients to record request duration, status codes, and errors while sanitizing authentication tokens.
+## 3. Network tracing
 
-### 4. Global Error Boundaries
-- Capture framework errors via `FlutterError.onError`.
-- Capture async isolate exceptions via `PlatformDispatcher.instance.onError`.
+- One interceptor records method, path, status, duration, and failure.
+- Authorization headers, cookies, and bodies are stripped before logging.
+- Retries are logged once, not once per attempt.
+- A correlation id propagates from the UI action to the request.
 
----
+## 4. Global error boundaries
 
-## Step-by-Step Execution Checklist
+| Source | Handler |
+| :--- | :--- |
+| Framework and build errors | `FlutterError.onError` |
+| Async and isolate errors | `PlatformDispatcher.instance.onError` |
+| Zone errors | `runZonedGuarded` when used |
 
-- [ ] **Step 1: Scaffold AppBlocObserver**
-  - Create `lib/src/core/observability/app_bloc_observer.dart` using [app_bloc_observer.dart.template](./resources/templates/app_bloc_observer.dart.template).
-  - Register in `main()` before `runApp()`.
-- [ ] **Step 2: Structured Logger Setup**
-  - Create `lib/src/core/observability/app_logger.dart` configuring output levels and file logging for desktop troubleshooting.
-- [ ] **Step 3: Network Interceptor Integration**
-  - Add request logging interceptor to the base `Dio` or HTTP client.
-- [ ] **Step 4: Global Crash Handlers**
-  - Bind `FlutterError.onError` and `PlatformDispatcher.instance.onError` in `main.dart`.
+- Handlers log with `error` and `stackTrace`, then forward to the crash reporter
+  when one is configured.
+- A handler must never trigger work that can throw again.
 
----
+## 5. Desktop log files
 
-## Edge Cases & Known AI Pitfalls
+- Write to `getApplicationSupportDirectory()`, never the project directory.
+- Rotate: maximum 5 MB with 3 backups.
+- Never log tokens, credentials, document contents, or personal data; file paths
+  stay at trace or debug level.
 
-- **PII Leakage**: Never log raw password, JWT auth tokens, or user personal data in plain text log files or console streams.
-- **Log File Growth**: If writing log files to disk on desktop (`getApplicationSupportDirectory()`), implement log rotation (e.g., maximum 5MB with 3 backup files).
-- **Infinite Error Loops**: In custom error handlers, avoid triggering operations that throw new errors to prevent cascading stack overflows.
+## Definition of Done
 
----
+- [ ] No `print()` in the change.
+- [ ] The observer is registered before `runApp()`.
+- [ ] Interceptors redact credentials and log duration and status.
+- [ ] Both global handlers are installed and idempotent.
+- [ ] Log rotation exists when logs are written to disk.
+- [ ] No secret appears in a log line or span.
 
-## Reference Guides
+## Edge Cases & Pitfalls
 
-- [Logging Standards & Desktop File Rotation](./references/logging-standards.md)
-- [Error Boundaries & Crash Reporting](./references/error-boundaries.md)
-- [AppBlocObserver Template](./resources/templates/app_bloc_observer.dart.template)
+- **PII leakage** — passwords, JWTs, and customer data in console or file logs.
+- **Log growth** — an unrotated file fills the disk on desktop.
+- **Infinite error loops** — a handler that throws inside itself.
+- **Observer in tests** — a global observer writes noise into test output; gate it
+  by environment.
+- **Duplicate handlers** — attaching twice logs every error twice.
+- **Production verbosity** — trace-level logging in release floods storage and
+  costs frames.
+
+## References
+
+- [Logging standards and desktop rotation](./references/logging-standards.md)
+- [Error boundaries and crash reporting](./references/error-boundaries.md)
+- [BLoC observer template](./resources/templates/app_bloc_observer.dart.template)

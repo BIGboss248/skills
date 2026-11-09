@@ -48,7 +48,7 @@ To minimize GitHub Actions minutes and eliminate unnecessary billing overhead:
 
 ## 4. GitHub Triage Infrastructure Setup
 
-Initialize the repository's GitHub Issues templates and standard triage labels during project setup so the `github-triage` skill can track issues and link `autofix.json` rules immediately:
+Initialize the repository's GitHub Issues templates and standard triage labels during project setup so the `triage` skill can track issues and link `autofix.json` rules immediately:
 
 1. **Templates**:
    - `.github/ISSUE_TEMPLATE/bug_report.yml` from [`bug_report.yml.template`](../resources/templates/bug_report.yml.template)

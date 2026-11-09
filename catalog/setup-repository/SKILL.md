@@ -1,166 +1,139 @@
 ---
 name: setup-repository
 description: >-
-  Interviews the user for which repository setup features to enable, then applies
-  only those with per-feature runbooks. Triggers on /setup-repository, setup
-  repo, or initialize repository.
-metadata:
-  author: BIGboss248
-  version: "3.4"
+  Provision repository-level features. Use when initializing a repository, adding
+  hooks, issues, releases, CodeQL, Docker, or branch protection.
 ---
 
-# Setup Repository (Feature-Driven)
+# Repository Setup
 
-Turns repository onboarding into a **menu of independently selectable features**.
-Never run a fixed checklist: interview first, execute only what the user enables.
+A menu of independently selectable repository features. Setup is procedural, so
+the phases below are the job.
 
 ## Contract
 
-- **No writes before selection.** Phase 1 must end with explicit confirmation.
-- **Selected only.** Disabled features are reported as `[SKIPPED]` and left untouched.
-- **Dependencies are explicit.** If an enabled feature needs a disabled one, ask the user to enable it or accept the documented degraded result.
-- **Idempotent.** Re-running merges and updates; never overwrite existing documents or machine-owned blocks.
-- **No dummy tests.** Never scaffold placeholder or sample test files in the workspace.
-- **History is the user's.** Never run `git commit`, `git commit --amend`, or
-  `git push`. Stage the selected features, show the staged diff, and wait for
-  approval (Phase 4).
+- **No writes before selection.** Phase 1 ends with explicit confirmation.
+- **Selected only.** Disabled features are reported `[SKIPPED]` and untouched.
+- **Dependencies are explicit.** If a feature needs a disabled one, ask or record
+  the degraded result.
+- **Idempotent.** Re-running merges; never overwrite existing files.
+- **History is the user's.** Stage by path, show the diff, and stop.
 
-## Phase 1 — Feature Selection Interview (mandatory)
+## Phase 1 — Feature selection
 
-> [!IMPORTANT]
-> Present the menu and wait for an answer. Do not infer consent from silence or from a generic "set it up".
+### 1.1 Detect first
 
-### 1.1 Detect first (no questions yet)
-
-Scan `package.json` / `pyproject.toml` / `go.mod`, lockfiles, `.git` and remotes, `gh auth status`, `docker --version`, MCP config, and `.github/`. Only ask about what cannot be detected.
+Scan manifests, lockfiles, `.git` and remotes, `gh auth status`,
+`docker --version`, `.github/`, and `docs/project.json`. Ask only about what
+cannot be detected.
 
 ### 1.2 Present the menu
 
-Use [feature-selection-interview.md](./resources/templates/feature-selection-interview.md).
-
-| ID | Feature | Default | Depends on |
+| Id | Feature | Default | Depends on |
 | :--- | :--- | :--- | :--- |
 | F1 | Project metadata (`docs/project.json`) | on | — |
-| F2 | Agent contract (`AGENTS.md`, `.agents/autofix.json`, engineering standards, code-search instruction, output provenance footer) | on | — |
-| F3 | MCP servers (ask + recommend) & Codebase Memory | on if installed | binary/MCP |
-| F4 | Git hooks (Husky + Commitlint + guarded pre-push) | on | Node project |
-| F5 | Production Docker (Dockerfile, compose, `.dockerignore`) | off | lockfile |
-| F6 | GitHub repository provisioning (create/attach, metadata, topics, docs) | on | `gh` auth |
-| F7 | GitHub Issues & triage infrastructure (enable issues, issue forms, PR template, labels) | on | F6, F2 for the logging contract |
-| F8 | Release Please (config, manifest, workflow) | on | F6 for effect |
+| F2 | Project contract (`AGENTS.md`, `autofix.json`, standards) | on | — |
+| F3 | MCP servers and code intelligence | on if installed | binary/MCP |
+| F4 | Git hooks (Husky, commitlint, pre-push) | on | Node project |
+| F5 | Production Docker | off | lockfile |
+| F6 | GitHub repository provisioning | on | `gh` auth |
+| F7 | Issues and triage infrastructure | on | F6, F2 |
+| F8 | Release Please | on | F6 |
 | F9 | Branch protection | off | existing CI check |
-| F10 | Code review gate (`reviewer` subagent + report standard) | on | F2 |
-| F11 | Next.js internationalization (`next-intl`, locale routing, dictionaries) | off | Next.js App Router project, F1 |
-| F12 | Planning workflow (`plan` skill + `/plan` command) | on | — |
-| F13 | Code scanning (CodeQL, **non-blocking** — notifies on failure, never gates) | on for public repositories (off on private without GitHub Code Security) | F6, public visibility or a Code Security licence, a CodeQL-supported language |
+| F11 | Next.js internationalization | off | Next.js App Router, F1 |
+| F12 | Planning workflow | on | — |
+| F13 | Code scanning (CodeQL, non-blocking) | on for public repos | F6, supported language |
+
+MCP configuration is delegated to `ag-customizer`. Menu details, presets, and
+dependency rules: [feature selection interview](./resources/templates/feature-selection-interview.md).
 
 ### 1.3 Ask in adaptive rounds
 
-1. **Preset** — Minimal (`F1, F2`), Standard (`F1, F2, F4, F6, F7, F8, F10, F12`, plus `F3` when installed and `F13` when the repository is public and CodeQL supports the language), Full (all except `F9` unless a CI check exists, plus `F11` for Next.js App Router projects and `F13` when a supported language is present), or Custom.
-2. **Adjustments** — multi-select overrides; record every add/remove.
-3. **Per-feature options** — only for enabled features; each runbook lists its own questions.
+1. **Preset** — Minimal (`F1`, `F2`), Standard, Full, or Custom.
+2. **Adjustments** — add or remove explicit ids; record every change.
+3. **Per-feature options** — only for enabled features.
 
-### 1.4 Resolve and record
+### 1.4 Record the selection
 
-- Check dependencies and confirm any degraded mode.
-- Write the canonical selection to `.agents/setup-features.json` using the [schema](./resources/templates/setup-features.schema.json).
-- If F1 is enabled, merge `setup_features` into `docs/project.json`.
-- Summarize enabled/disabled features and ask for confirmation before Phase 2.
+- Write `.agents/setup-features.json` from
+  [the schema](./resources/templates/setup-features.schema.json).
+- When F1 is enabled, merge `setup_features` into `docs/project.json`.
+- Summarize and ask for confirmation before Phase 2.
 
-## Phase 2 — Execute Enabled Features
+## Phase 2 — Execute enabled features
 
-Run in dependency order: **F1 → F2 → F3 → F4 → F5 → F6 → F7 → F8 → F13 → F9 → F10 → F11 → F12**.
+Order: **F1 → F2 → F3 → F4 → F5 → F6 → F7 → F8 → F13 → F9 → F11 → F12**.
 
-For each enabled feature:
-
-- [ ] Open its runbook and follow it exactly.
-- [ ] Run its acceptance check.
-- [ ] Record `[IMPLEMENTED]`, `[BLOCKED]`, or `[SKIPPED]` with a reason.
+For each feature: open its runbook, follow it, run its acceptance check, and
+record `[IMPLEMENTED]`, `[BLOCKED]`, or `[SKIPPED]` with a reason.
 
 | Feature | Runbook |
 | :--- | :--- |
-| F1 Project metadata | [01-project-metadata.md](./references/features/01-project-metadata.md) |
-| F2 Agent contract | [02-agent-contract.md](./references/features/02-agent-contract.md) |
-| F3 MCP servers & Codebase Memory | [03-mcp-servers.md](./references/features/03-mcp-servers.md) |
-| F4 Git hooks | [04-git-hooks.md](./references/features/04-git-hooks.md) |
-| F5 Production Docker | [05-docker.md](./references/features/05-docker.md) |
-| F6 GitHub repository | [06-github-repository.md](./references/features/06-github-repository.md) |
-| F7 GitHub Issues & triage | [07-triage-templates.md](./references/features/07-triage-templates.md) |
-| F8 Release Please | [08-release-please.md](./references/features/08-release-please.md) |
-| F13 Code scanning (CodeQL) | [13-code-scanning.md](./references/features/13-code-scanning.md) |
-| F9 Branch protection | [09-branch-protection.md](./references/features/09-branch-protection.md) |
-| F10 Code review gate | [10-code-review.md](./references/features/10-code-review.md) |
-| F11 Next.js i18n | [11-nextjs-i18n.md](./references/features/11-nextjs-i18n.md) |
-| F12 Planning workflow | [12-planning-workflow.md](./references/features/12-planning-workflow.md) |
-
-Do not touch files owned only by disabled features — not even to "prepare" them.
+| F1 Project metadata | [01-project-metadata](./references/features/01-project-metadata.md) |
+| F2 Project contract | [02-agent-contract](./references/features/02-agent-contract.md) |
+| F3 MCP servers | [03-mcp-servers](./references/features/03-mcp-servers.md) |
+| F4 Git hooks | [04-git-hooks](./references/features/04-git-hooks.md) |
+| F5 Production Docker | [05-docker](./references/features/05-docker.md) |
+| F6 GitHub repository | [06-github-repository](./references/features/06-github-repository.md) |
+| F7 Issues and triage | [07-triage-templates](./references/features/07-triage-templates.md) |
+| F8 Release Please | [08-release-please](./references/features/08-release-please.md) |
+| F9 Branch protection | [09-branch-protection](./references/features/09-branch-protection.md) |
+| F11 Next.js i18n | [11-nextjs-i18n](./references/features/11-nextjs-i18n.md) |
+| F12 Planning workflow | [12-planning-workflow](./references/features/12-planning-workflow.md) |
+| F13 Code scanning | [13-code-scanning](./references/features/13-code-scanning.md) |
 
 ## Phase 3 — Verify
 
-- [ ] Re-run every enabled feature's acceptance check.
-- [ ] `git ls-files` contains no `.env*` values, database dumps, or `acme.json`.
-- [ ] Reconcile the selection record against the working tree; no feature is half-applied.
-- [ ] If F13 is enabled: `.github/workflows/codeql.yml` has no `pull_request`
-  trigger, and the default branch protection does not require a CodeQL context.
-- [ ] Confirm each disabled feature was left untouched.
+- Re-run each enabled feature's acceptance check.
+- `git ls-files` contains no `.env*` values, database dump, or `acme.json`.
+- Reconcile the selection against the working tree; nothing is half-applied.
+- F13: the workflow has no `pull_request` trigger and no protection entry.
+- Every disabled feature is untouched.
 
-## Phase 4 — Report and Handoff
+## Phase 4 — Report
 
-1. Produce the report defined at the end of the interview template. It must
-   include:
-   - the selected preset and the final enabled/disabled list;
-   - one row per feature with status and reason;
-   - the exact commands run and their result.
-2. **Stage only, never commit.** `git add` the files that belong to the selected
-   features (never `git add -A` / `git add .`, which sweeps in the user's
-   in-progress edits), then show the user:
-   - `git diff --cached --stat` and the actual hunks;
-   - the proposed Conventional Commit message (and a follow-up message per
-     additional logical change when the run produced more than one);
-   - anything deliberately left unstaged, with the reason.
-3. **Stop and wait.** Commit or push only after an explicit approval in the same
-   session, then re-run the acceptance checks. Silence is not consent.
+- Preset, final enabled/disabled list, one row per feature with status and reason.
+- The exact commands and results.
+- **Stage only.** `git add` the selected paths (never `-A`), show
+  `git diff --cached --stat` and the hunks, and propose the commit messages.
+- Stop. Commit or push only after explicit approval in this session.
 
-## Edge Cases & Common Mistakes
+## Definition of Done
 
-- **F9 before CI** — protection that requires a non-existent check blocks every push. Defer it.
-- **F13 is never a gate** — a CodeQL check added to required checks, a ruleset, a
-  release gate, or another workflow's `needs:` converts a notification into a
-  blocker. Ship it with no `pull_request` trigger, no protection entry, and a
-  `notify` job that files an issue instead. Removing any of those makes the
-  feature contradict the user's request.
-- **F13 `continue-on-error`** — at job level it flattens
-  `needs.analyze.result` to `success`, so the notifier never fires and failures
-  become silent. Let `analyze` fail; let `notify` report.
-- **F13 before F9** — F13 publishes the check name, but F9 may only require it
-  once a run exists (`gh run list --workflow=codeql.yml`). In a fresh run nothing
-  is committed yet, so F9 records the context name and defers, exactly as it does
-  without F13.
-- **F13 on a private repository without GitHub Code Security** — code scanning is
-  free only on public repositories; private ones need the licence. Detect
-  visibility first (`gh repo view --json visibility`), report `[BLOCKED]`, and if
-  `.github/workflows/codeql.yml` already exists, disable it
-  (`gh workflow disable <id>`) — a scaffolded workflow that can only fail is worse
-  than none.
-- **F13 unsupported language** — Dart/Flutter, PHP, and Elixir are outside the
-  CodeQL list. Report `[SKIPPED]` with the reason instead of scaffolding a
-  workflow that scans nothing.
-- **F7 labels** — templates work locally; remote labels need an authenticated `gh` and a remote.
-- **F6 scaffolding flags** — `gh repo create --license` / `--gitignore` can overwrite existing files.
-- **F8 baseline** — without `bootstrap-sha`, Release Please scans history from before the tooling existed.
-- **F2 merges** — never delete machine-owned blocks; Next.js rewrites its own `AGENTS.md` section.
-- **F3 watchers** — `auto_watch=true` causes editor stutter; keep it off and index on demand.
-- **F3 MCP selection** — never enable every server silently; ask with a recommendation from [mcp-server-catalog.md](./references/mcp-server-catalog.md) and register only the accepted set.
-- **Committing on the user's behalf** — a setup run often finishes with a dirty
-  tree full of unrelated work. Stage the feature files by path, show the diff,
-  and let the user commit; an agent-authored commit is an unapproved commit.
-- **Scope drift** — if the user adds or removes a feature mid-run, reopen Phase 1 and update the record.
-- **F10 permission order** — the reviewer's blanket `*` deny comes first, the narrow allows next, and the specific denies (redirects, `.env`, `--output`) last, because **last match wins**. Moving a deny before an allow silently re-grants edits or arbitrary shell. Never add the report standard to `instructions`.
-- **F11 double scaffolding** — `nextjs-dev-setup` feature N4 already scaffolds `next-intl`. When it ran first, verify the result and report `[UNTOUCHED]`; never rewrite `i18n/*`, the locale layout, or the interceptor on a working setup.
-- **F11 interceptor** — Next.js 16+ uses `proxy.ts`, Next.js <=15 uses `middleware.ts`. Keeping both applies the locale redirect twice; delete the other file and merge custom logic into one handler.
-- **F11 document shell** — `<html>`/`<body>` live only in `app/[locale]/layout.tsx`. Leaving them in `app/layout.tsx` as well nests document elements and breaks `lang`/`dir`.
-- **F11 dictionary drift** — a locale added to `routing.ts` without a matching `messages/<locale>.json`, or with missing keys, fails the verifier and the build; scaffold every locale in the same step.
-- **F12 plan drift** — a plan amended after execution starts is amended in place (`A1`, `P2.1a`), never renumbered; completed steps and links depend on the numbers.
-- **F12 planning vs permission** — producing a plan never authorizes implementation. The approval gate is mandatory, and a destructive step inside an approved plan asks again.
-- **F12 duplicate planning** — a repository that already generates a roadmap (F11/Next.js plans, `PLAN.md`) keeps one planning convention; verify the existing one and report `[UNTOUCHED]` instead of installing a second.
-- **Repo-vs-app overlap** — `nextjs-dev-setup` features `N1/N4/N10/N11/N12` overlap with `F1/F11/F3/F5/F4/F7/F8`. Detect existing app-level setup first; verify and report `[UNTOUCHED]` instead of re-scaffolding the same files.
+- [ ] Selection recorded and confirmed before any write.
+- [ ] Every enabled feature implemented and its acceptance check run.
+- [ ] Disabled features untouched.
+- [ ] No secret committed; no commit made by the agent.
+- [ ] The report names deferred or degraded items.
+
+## Edge Cases & Pitfalls
+
+- **F9 before CI** — protection requiring a non-existent check blocks every push.
+- **F13 as a gate** — adding it to required checks turns a notification into a
+  blocker. Ship it non-blocking, with a notify job.
+- **F13 `continue-on-error` at job level** — flattens the result; the notifier
+  never fires.
+- **F13 on a private repo without Code Security** — report `[BLOCKED]`; disable a
+  scaffolded workflow that can only fail.
+- **F13 unsupported language** — Dart/Flutter, PHP, and Elixir scan nothing.
+- **F6 scaffolding flags** — `--license` / `--gitignore` can overwrite files.
+- **F7 labels** — templates work locally; remote labels need `gh` and a remote.
+- **F8 baseline** — without `bootstrap-sha`, Release Please scans older history.
+- **F2 merges** — never delete machine-owned blocks.
+- **F3 selection** — ask with a recommendation; never enable every server.
+- **F11 double scaffolding** — if `nextjs-dev-setup` already ran, verify and
+  report `[UNTOUCHED]`.
+- **F11 interceptor** — Next.js 16 uses `proxy.ts`, earlier versions
+  `middleware.ts`; keeping both double-redirects.
+- **F11 document shell** — `<html>` and `<body>` live only in the locale layout.
+- **F11 dictionary drift** — a locale in routing without a matching dictionary
+  fails the build.
+- **F12 plan drift** — amend in place (`A1`, `P2.1a`); never renumber.
+- **F12 planning is not authorization** — approval gates still apply.
+
+## References
+
+- [Feature selection interview](./resources/templates/feature-selection-interview.md)
+- [MCP server catalog](./references/mcp-server-catalog.md)
+- [Feature runbooks](./references/features/)
+- [Templates](./resources/templates/)

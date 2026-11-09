@@ -7,7 +7,7 @@ Reference for Step 3. Register only the servers the repository needs: every enab
 | Server | Transport | Command / URL | Tools | Use it for |
 | :--- | :--- | :--- | ---: | :--- |
 | `codebase-memory` | stdio | `codebase-memory-mcp` | 15 | Indexed code/notes graph: `search_graph`, `trace_path`, `get_code_snippet`, change impact |
-| `github` | HTTP | `https://api.githubcopilot.com/mcp/` + `Authorization: Bearer <PAT>` | 46 | Issues, PRs, releases, code search, `github-triage` |
+| `github` | HTTP | `https://api.githubcopilot.com/mcp/` + `Authorization: Bearer <PAT>` | 46 | Issues, PRs, releases, code search, `triage` |
 | `next-devtools` | stdio | `npx -y next-devtools-mcp@latest` | 4 | Next.js 16+ `/_next/mcp`: errors, routes, logs, compile, `nextjs_docs` |
 | `chrome-devtools-mcp` | stdio | `npx -y chrome-devtools-mcp@latest` | 32 | DOM/console/network inspection, Lighthouse, performance traces, screencasts |
 | `playwright` | stdio | `npx -y @playwright/mcp@latest` | 25 | E2E flows and multi-browser automation |
@@ -26,7 +26,7 @@ Derive the recommendation from Step 1 discovery, then let the user confirm.
 | Detected signal | Recommend |
 | :--- | :--- |
 | Any repository | `codebase-memory` (always) |
-| `git remote` points to GitHub, or `github-triage` is used | `github` |
+| `git remote` points to GitHub, or `triage` is used | `github` |
 | `next` >= 16 in `package.json` | `next-devtools`, `chrome-devtools-mcp` |
 | Browser debugging, Lighthouse, Core Web Vitals work | `chrome-devtools-mcp` |
 | E2E test suite (Playwright/Cypress) or scripted browser flows | `playwright` |

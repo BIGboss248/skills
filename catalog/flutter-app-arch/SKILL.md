@@ -1,57 +1,78 @@
 ---
 name: flutter-app-arch
 description: >-
-  Architect and scaffold Flutter applications using official layer recommendations and BLoC state management. Use when designing models, data providers, repositories, BLoCs, or theme systems.
+  Architect Flutter apps with layered data, domain, and presentation code. Use
+  when designing models, repositories, data providers, BLoCs, or dependency
+  wiring.
 ---
 
-# Flutter Application Architecture (`flutter-app-arch`)
+# Flutter Architecture Standards
 
-Provides structured, production-grade guidance for architecting Flutter applications using the official [Flutter App Architecture Recommendations](https://docs.flutter.dev/app-architecture/recommendations) and [BLoC Architecture](file:///d:/Scripts/Obsidian/Computer/Front%20end/Flutter/Bloc%20state%20management.md).
+How the layers are shaped. This skill designs structure only: it does not build
+screens, write tests, or plan the roadmap.
 
----
+## Layers
 
-## Architecture Overview
+| Layer | Contains | May depend on |
+| :--- | :--- | :--- |
+| Presentation | Widgets, screens, theme | Domain (events/state), theme tokens |
+| Domain | BLoC/Cubit, events, states, entities | Data abstractions, pure Dart |
+| Data | Repositories | Providers |
+| Data source | File system, Excel, archive, DB, HTTP | Platform APIs |
 
-```mermaid
-flowchart TD
-    UI["Presentation Layer<br/>(Widgets, Screens, Theme)"] -->|Dispatches Events| BLoC["Domain Layer (BLoC)<br/>(Business Logic & State Emission)"]
-    BLoC -->|Requests Entities| Repo["Data Layer (Repository)<br/>(Abstraction & Formatting)"]
-    Repo -->|Fetches Raw Data| Provider["Data Layer (Provider)<br/>(File System, Excel, Archive, DB)"]
-    BLoC -->|Emits Immutable States| UI
+Dependencies point inward: presentation knows the domain, the domain knows
+abstractions, and only providers know the platform. A widget must never call a
+provider directly.
+
+## Rules
+
+- States are immutable and `Equatable`; emit new instances, never mutate a
+  collection inside a state.
+- Events describe user intent, not widget calls.
+- Business logic contains no `BuildContext`, no platform import, and no UI type.
+- Repositories coordinate providers; a provider performs one I/O concern.
+- Heavy work (spreadsheet parsing, compression, large JSON) runs in
+  `Isolate.run()`, never on the UI isolate.
+- Dependency injection is explicit and configured at the composition root.
+- The state library comes from `docs/project.json` when present; otherwise follow
+  the library already imported by the app and do not introduce a second one.
+
+## File layout
+
+```text
+lib/src/
+├── data/models/         entities
+├── data/providers/      one I/O concern each
+├── data/repositories/   coordination + mapping
+├── logic/<feature>/     event, state, bloc
+└── presentation/        screens/, widgets/, theme/
 ```
 
----
+## Definition of Done
 
-## Workflow Checklist
+- [ ] Each new file sits in its layer and imports only inward.
+- [ ] States are immutable and comparable.
+- [ ] No platform, file system, or network call exists in the domain.
+- [ ] Heavy work is isolated.
+- [ ] The state library matches the project's declared choice.
+- [ ] No widget, test, or roadmap file was written.
 
-Execute architectural milestones systematically:
+## Edge Cases & Pitfalls
 
-- [ ] **Step 1: Data Layer Scaffolding**
-  - Create raw data providers under `lib/src/data/providers/` (e.g. `ExcelProvider`, `ArchiveProvider`).
-  - Create domain repositories under `lib/src/data/repositories/` to coordinate multiple data providers.
-  - Model entity classes under `lib/src/data/models/` with immutability.
-- [ ] **Step 2: Business Logic (BLoC) Implementation**
-  - Define explicit user intents as Events (`lib/src/logic/<feature>/<feature>_event.dart`).
-  - Define UI snapshots as States (`lib/src/logic/<feature>/<feature>_state.dart`) using `Equatable`.
-  - Coordinate logic in BLoC without any UI widget or platform dependencies.
-  - Offload heavy operations (Excel parsing, compression) to background isolates via `Isolate.run()`.
-- [ ] **Step 3: Presentation & Theme Integration**
-  - Scaffold screens under `lib/src/presentation/screens/` and widgets under `lib/src/presentation/widgets/`.
-  - Connect widgets via `BlocBuilder` and `BlocConsumer`.
-  - Use semantic Material 3 tokens via [app_theme.dart.template](./resources/templates/app_theme.dart.template).
+- **UI thread blocking** — parsing or compressing on the main isolate freezes
+  frames; use `Isolate.run()`.
+- **`CardTheme` type mismatch** — Material 3 `ThemeData.cardTheme` requires
+  `CardThemeData`, not `CardTheme`.
+- **State mutation** — mutating a list in a state means `Equatable` reports no
+  change and the UI never rebuilds.
+- **Provider in a widget** — direct I/O in `build()` re-runs on every rebuild.
+- **Two state libraries** — mixing BLoC and Riverpod in one feature doubles the
+  wiring and the failure modes.
+- **Fat repository** — a repository that also parses, formats, and caches is
+  three responsibilities in one seam.
 
----
+## References
 
-## Edge Cases & Known Pitfalls
-
-- **UI Thread Blocking**: Never parse large Excel spreadsheets or compress archives directly on the main UI isolate; wrap file processing with `Isolate.run()`.
-- **CardTheme Type Mismatch**: In Flutter 3.x/Material 3, `ThemeData.cardTheme` requires `CardThemeData`, not `CardTheme`.
-- **State Mutation**: Never mutate collections inside emitted BLoC states; always emit new instances (`List.unmodifiable` or copies).
-
----
-
-## Deep References
-
-- [Architecture & BLoC Deep Dive](./references/architecture_guide.md)
-- [Theming & Styling Guidelines](./references/theming_guide.md)
-- [Theme Template File](./resources/templates/app_theme.dart.template)
+- [Architecture and BLoC deep dive](./references/architecture_guide.md)
+- [Theming guidelines](./references/theming_guide.md)
+- [Theme template](./resources/templates/app_theme.dart.template)

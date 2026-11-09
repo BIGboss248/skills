@@ -48,7 +48,7 @@ description: Comprehensive description in third person. States exactly what the 
    - Include specific technical keywords and alternative trigger phrases.
    - Example:
      ```yaml
-     description: End-to-end workflow for planning Next.js App Router projects, composing optional health-monitoring, OpenTelemetry, and headless WooCommerce feature packs. Triggers on "/nextjs-plan", "plan a nextjs app", or "generate plan".
+     description: Define the Next.js project specification, including routes, locales, tokens, architecture contracts, and capability decisions. Triggers on "/nextjs-spec", "spec a nextjs app", or "record nextjs decisions".
      ```
 
 ---

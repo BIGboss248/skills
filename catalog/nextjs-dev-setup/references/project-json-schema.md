@@ -40,7 +40,7 @@ prescribe a CSS file structure, token vocabulary, or color space.
   },
   "roles": [
     { "role": "implementation", "agent": "nextjs-dev", "path": ".opencode/agents/nextjs-dev.md", "model": null, "enabled": true },
-    { "role": "test-author", "agent": "nextjs-test-author", "path": ".opencode/agents/nextjs-test-author.md", "model": null, "enabled": true },
+    { "role": "test-author", "agent": "tdd-author", "path": ".opencode/agents/tdd-author.md", "model": null, "enabled": true },
     { "role": "qa-auditor", "agent": "nextjs-qa-auditor", "path": ".opencode/agents/nextjs-qa-auditor.md", "model": null, "enabled": true }
   ],
   "boundaries_rule": ".agents/rules/agent-boundaries.md",

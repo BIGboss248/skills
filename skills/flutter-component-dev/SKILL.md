@@ -1,94 +1,104 @@
 ---
 name: flutter-component-dev
 description: >-
-  Build production-ready Flutter widgets and screens with embedded diagnostic logging (dart:developer levels), theme tokens, ARB localization, and desktop ergonomics. Trigger with "flutter component dev", "create widget", "build screen", or "add flutter component".
+  Build Flutter widgets and screens to project standards. Use when creating a
+  widget or screen, or fixing state wiring, theming, localization, logging, or
+  desktop ergonomics.
 ---
 
-# Flutter Component & Widget Development (`flutter-component-dev`)
+# Flutter Widget Standards
 
-Specialized workflow for creating production-ready Flutter presentation widgets and screens driven by [`docs/project.json`](file:///d:/Scripts/FtFileSorter/docs/project.json)—adhering to clean architectural layering, configured state management, semantic theme tokens, desktop ergonomics, embedded diagnostic logging (`dart:developer`), zero-hardcoded strings, and test-driven verification.
+How a correct widget or screen is built. This skill writes presentation code
+only: it does not write tests and it does not plan.
 
----
+## Inputs & fallbacks
 
-## Architectural Rules & Standards (Driven by `docs/project.json`)
+1. `docs/project.json` — `state_management.library`,
+   `theming.semantic_tokens`, `i18n.supported_locales`, `i18n.rtl_supported`,
+   `platforms`.
+2. If absent, derive from the code: the state library already imported, the
+   `ThemeExtension` already defined, the ARB files present, and the platforms in
+   `pubspec.yaml`.
+3. Ask at most two questions when the state contract is genuinely unclear.
 
-### 1. Specification Inspection
-Before authoring any widget or screen, read `docs/project.json`:
-- **State Management**: Identify `project.json.state_management.library` (`bloc`, `cubit`, `riverpod`, etc.) to use the appropriate state consumer/builder.
-- **Theming & Color Palettes**: Identify `project.json.theming.color_palettes` and `project.json.theming.semantic_tokens` to bind UI elements to `Theme.of(context).colorScheme` or `Theme.of(context).extension<AppThemeExtension>()`.
-- **Localization**: Read `project.json.i18n.supported_locales` and `project.json.i18n.rtl_supported`.
-- **Target Platforms**: Check `project.json.platforms` for desktop targets (`windows`, `macos`, `linux`).
+## 1. Presentation purity
 
-### 2. Presentation Purity & State Wiring
-- No direct database, file system, or network calls inside `Widget.build()`.
-- Bind UI to state using the project's configured state management library:
-  - **BLoC / Cubit**: Use `BlocBuilder`, `BlocSelector`, or `BlocConsumer`.
-  - **Riverpod**: Extend `ConsumerWidget` or `ConsumerStatefulWidget` and bind via `ref.watch()`.
+- No database, file system, or network call inside `build()`.
+- Bind to state through the project's library: `BlocBuilder`, `BlocSelector`,
+  or `BlocConsumer` for BLoC; `ref.watch()` for Riverpod.
+- The widget receives data and callbacks; it does not decide business outcomes.
 
-### 3. Loading, Feedback & Error Recovery
-- **Desktop Target**: Use subtle progress bars (`LinearProgressIndicator`), progress rings (`CircularProgressIndicator`), or button spinners. Avoid full-screen mobile shimmering skeletons unless handling large remote grids.
-- **Error Recovery**: Every async widget must implement an error state with a clear message and a retry callback.
+## 2. Theming
 
-### 4. Desktop Ergonomics (when desktop in `platforms`)
-- Add `MouseRegion(cursor: SystemMouseCursors.click)` for interactive custom items.
-- Support right-click contextual menus with `ContextMenuRegion`.
-- Manage keyboard focus cleanly with `FocusNode` and keyboard shortcuts (`Shortcuts`/`Actions`).
+- Bind colors to `Theme.of(context).colorScheme` or
+  `Theme.of(context).extension<AppThemeExtension>()`.
+- No literal `Color(0x...)` outside the theme definitions.
+- Spacing and radius come from the token extension, not from scattered numbers.
+- Details: [theme and tokens](./references/theme-and-tokens.md).
 
-### 5. Zero Hardcoded Strings & RTL Support
-- Extract all user-facing strings into ARB catalogs across all `project.json.i18n.supported_locales` (e.g. `lib/l10n/app_en.arb`, `lib/l10n/app_fa.arb`).
-- Access strings via `AppLocalizations.of(context)!`.
-- If `project.json.i18n.rtl_supported` is true, use `EdgeInsetsDirectional` and `AlignmentDirectional` exclusively.
+## 3. Loading, error, and empty states
 
-### 6. Embedded Component Diagnostics & Logging (`dart:developer.log`)
-- Embed structured logging in widgets using [`dart:developer.log`](https://api.flutter.dev/flutter/dart-developer/log.html) to make debugging fast and filterable in Flutter DevTools and IDE consoles.
-- Standardize the logger tag with `name: '$runtimeType'` (or widget name) for instant log stream filtering.
-- Apply standardized integer severity levels:
-  - **DEBUG** (`level: 500`): State updates, rebuild diagnostics, controller listeners, animation ticks.
-  - **INFO** (`level: 800`): `initState`, `dispose`, user interactions (taps, inputs, button presses, navigation).
-  - **WARN** (`level: 900`): Non-fatal fallbacks (missing image/avatar, placeholder fallbacks), empty datasets, slow render alerts.
-  - **ERROR** (`level: 1000`): Caught exceptions in callbacks, failed async tasks, network/image load failures (passing `error` and `stackTrace`).
-  - **FATAL** (`level: 1200`): Critical UI invariant breaches, unhandled exhaustive enum/state branches, unrecoverable assertion breaks.
-- See [Component Logging & Diagnostics Guide](./references/component-logging.md).
+- Every async surface renders three states: loading, data, failure with retry.
+- Desktop: prefer inline progress (linear or circular) or a button spinner.
+  Full-screen shimmer belongs to large remote grids, not to settings panes.
+- An error state names what failed and offers one retry action.
 
----
+## 4. Localization and RTL
 
-## Step-by-Step Execution Checklist
+- All user-facing strings come from ARB catalogs for every supported locale.
+- Access via `AppLocalizations.of(context)!`.
+- When RTL is supported, use `EdgeInsetsDirectional` and `AlignmentDirectional`
+  exclusively.
+- Details: [l10n and RTL](./references/l10n-and-rtl.md).
 
-- [ ] **Step 1: Inspect `docs/project.json`**
-  - Verify state library, theme tokens, supported locales, and target platforms.
-- [ ] **Step 2: State Contract Alignment**
-  - Verify state events, notifications, and status variants (`Initial`, `Loading`, `Success`, `Failure`).
-- [ ] **Step 3: Scaffolding the Widget**
-  - Author the widget in `lib/src/presentation/widgets/<widget_name>.dart`.
-  - Use `Theme.of(context).colorScheme` or custom `ThemeExtension` tokens.
-- [ ] **Step 4: Desktop Ergonomics Integration**
-  - Add hover, keyboard, and focus handling if running on desktop targets.
-- [ ] **Step 5: Diagnostic Logging Integration**
-  - Embed `dart:developer.log()` across lifecycle (`initState`/`dispose`), user action triggers, fallback branches (`WARN`), and error states (`ERROR` / `FATAL`).
-- [ ] **Step 6: Widget Testing (TDD)**
-  - Author `test/presentation/<widget_name>_test.dart`.
-  - Test `Loading`, `Success`, and `Failure` state rendering.
-  - Test user interaction (taps, inputs).
-- [ ] **Step 7: Targeted Test Run**
-  - Execute the test:
-    ```powershell
-    flutter test test/presentation/<widget_name>_test.dart
-    ```
+## 5. Desktop ergonomics
 
----
+Apply only when a desktop platform is targeted:
 
-## Edge Cases & Known AI Pitfalls
+- `MouseRegion(cursor: SystemMouseCursors.click)` on custom interactive items.
+- Context menus through `ContextMenuRegion`.
+- Keyboard focus with `FocusNode`, `Shortcuts`, and `Actions`.
+- Minimum 44×44 logical pixels for interactive targets.
+- Details: [desktop ergonomics](./references/desktop-ergonomics.md).
 
-- **Unmounted Context**: Never call `Navigator` or `ScaffoldMessenger` across async gaps without checking `if (!context.mounted) return;`.
-- **Text Overflow**: Wrap long or dynamic text with `overflow: TextOverflow.ellipsis` or place inside scrollable containers.
-- **Controller Leaks**: Always dispose `TextEditingController`, `ScrollController`, and `FocusNode` in `State.dispose()`.
-- **DevTools Log Spam**: Never invoke logging unconditionally inside repetitive hot loops or raw `build()` without state change guards.
+## 6. Diagnostics
 
----
+- Log through `dart:developer.log` or the project logger, with
+  `name: '$runtimeType'` for filtering.
+- Levels: DEBUG 500 (rebuilds, listeners), INFO 800 (lifecycle, user actions),
+  WARN 900 (fallbacks, empty data), ERROR 1000 (caught exceptions, failed
+  futures), FATAL 1200 (invariant breaches).
+- Log operation boundaries, never every statement, and never from `build()`.
+- Details: [component logging](./references/component-logging.md).
 
-## Reference Guides
+## Definition of Done
 
-- [Component Logging & Diagnostics Guide](./references/component-logging.md)
-- [Desktop Ergonomics Guide](./references/desktop-ergonomics.md)
-- [Theming & Tokens Guide](./references/theme-and-tokens.md)
-- [Localization & RTL Guide](./references/l10n-and-rtl.md)
+- [ ] No I/O in `build()`; state comes from the declared library.
+- [ ] All colors and spacing come from theme tokens.
+- [ ] Loading, data, and failure states all render.
+- [ ] Every string resolves from an ARB catalog in every locale.
+- [ ] Directional layout uses directional APIs.
+- [ ] Desktop affordances exist when desktop is a target.
+- [ ] Controllers, focus nodes, and subscriptions are disposed.
+- [ ] No test was authored here; `tdd` owns tests.
+
+## Edge Cases & Pitfalls
+
+- **Unmounted context** — check `if (!context.mounted) return;` after an `await`.
+- **Text overflow** — long dynamic strings need `ellipsis`, `maxLines`, or a
+  scrollable container.
+- **Controller leaks** — dispose `TextEditingController`, `ScrollController`, and
+  `FocusNode`.
+- **Log spam** — unconditional logging in a hot path floods DevTools.
+- **Logger in `build()`** — add I/O during layout.
+- **Mobile layout on desktop** — a stretched phone layout is not a desktop
+  design.
+- **Hardcoded copy** — a string literal bypasses every locale.
+
+## References
+
+- [Component logging](./references/component-logging.md)
+- [Desktop ergonomics](./references/desktop-ergonomics.md)
+- [Theme and tokens](./references/theme-and-tokens.md)
+- [Localization and RTL](./references/l10n-and-rtl.md)
+- [Logger template](./resources/templates/component_logger.dart.template)

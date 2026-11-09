@@ -1,52 +1,84 @@
 ---
 name: rest-api-design
 description: >-
-  Design, specify, and audit production-grade RESTful APIs conforming to OpenAPI Specification 3.1 and RFC standards across any backend framework. Use when designing REST APIs, modeling resource endpoints, creating OpenAPI schemas, establishing HTTP status and error contracts, or auditing API architectures.
+  Design REST APIs to OpenAPI 3.1 and RFC contracts. Use when modeling resources,
+  choosing status codes, writing schemas, or auditing API conformance.
 ---
 
-# Universal REST API Design Standard (`rest-api-design`)
+# REST API Design Standard
 
-A framework-agnostic architectural standard for designing, specifying, and auditing production RESTful APIs adhering to the [OpenAPI Specification 3.1](https://spec.openapis.org/oas/latest.html) and IETF RFC standards.
+Framework-agnostic HTTP and OpenAPI rules. This skill defines the contract only.
 
----
+## 1. Resources and URIs
 
-## 5-Phase API Design Lifecycle
+- Plural collection nouns: `/orders`, not `/getOrders`.
+- Nested resources at most two levels: `/tenants/{id}/users`.
+- Non-CRUD transitions are sub-resource controllers:
+  `POST /orders/{id}/cancel`.
+- Filtering, sorting, and pagination are standard query parameters, and the
+  cursor/offset choice is part of the contract.
+- Reference: [resource modeling and URIs](./references/resource-modeling-and-uris.md).
 
-```mermaid
-flowchart LR
-    P1["1. Resource Modeling<br/>(Nouns, plural collections, sub-resources)"] --> P2["2. HTTP Verb & Status Matrix<br/>(Safety, idempotency, status codes)"]
-    P2 --> P3["3. Schema & OpenAPI 3.1<br/>(JSON Schema 2020-12, parameters)"]
-    P3 --> P4["4. Error & Security Contracts<br/>(RFC 9457 Problem Details, Auth schemes)"]
-    P4 --> P5["5. Conformance Audit<br/>(Spectral linting, breaking change review)"]
-```
+## 2. Methods and status codes
 
-### Phase 1: Resource Modeling & URI Architecture
-1. Identify primary domain resources and pluralize collection paths (`/orders`, `/users`, not `/getOrders`).
-2. Structure 1-to-N relationships hierarchically up to 2 levels maximum (`/tenants/{id}/users`).
-3. Model state transitions or non-CRUD operations using the sub-resource controller pattern (`POST /orders/{id}/cancel`).
-4. Apply standard query parameters for filtering, sorting (`?sort=-createdAt`), and pagination (cursor or offset).
-5. Consult the [Resource Modeling & URI Conventions Guide](./references/resource-modeling-and-uris.md).
+- `GET` safe, `PUT` full replace, `PATCH` partial, `DELETE` remove.
+- Canonical codes: `200`, `201` with `Location`, `204`, `400`, `401`, `403`,
+  `404`, `409`, `422`, `429`, `500`.
+- Concurrency uses `ETag` and `If-Match`, not a bespoke version field.
+- Matrix: [methods and status codes](./references/http-methods-and-status-codes.md).
 
-### Phase 2: HTTP Verbs, Idempotency & Status Codes
-1. Enforce strict HTTP method semantics (`GET` safe/idempotent, `PUT` full replace, `PATCH` partial update, `DELETE` remove).
-2. Assign canonical status codes: `200 OK`, `201 Created` with `Location` header, `204 No Content`, `400`, `401`, `403`, `404`, `409`, `422`, `429`, and `500`.
-3. Support optimistic locking on concurrent updates via `ETag` and `If-Match`.
-4. Consult the [HTTP Methods & Status Codes Matrix](./references/http-methods-and-status-codes.md).
+## 3. Schemas and OpenAPI 3.1
 
-### Phase 3: Schema Modeling & OpenAPI 3.1 Authoring
-1. Author specifications targeting **OpenAPI 3.1.0** utilizing full JSON Schema 2020-12 support (`type: ["string", "null"]`).
-2. Separate entities into clear DTO contracts: Entity schemas, Creation inputs (`omit id, createdAt`), and Update inputs.
-3. Start from the production-ready starter template in [openapi-v3.1.template.yaml](./resources/templates/openapi-v3.1.template.yaml) and [api-design-spec.template.md](./resources/templates/api-design-spec.template.md).
-4. Review structure nuances in the [OpenAPI 3.1 Architecture Guide](./references/openapi-3-1-spec-structure.md).
+- Target OpenAPI 3.1.0 with JSON Schema 2020-12 (`type: ["string", "null"]`).
+- Separate entity, create-input, and update-input schemas. A create input never
+  accepts `id` or timestamps.
+- Templates: [OpenAPI starter](./resources/templates/openapi-v3.1.template.yaml) ·
+  [design spec](./resources/templates/api-design-spec.template.md).
+- Structure: [OpenAPI 3.1 guide](./references/openapi-3-1-spec-structure.md).
 
-### Phase 4: Standard Error Envelopes & Security
-1. Format all client and server error responses as **RFC 9457 Problem Details** (`application/problem+json`).
-2. For `422 Unprocessable Content` validation errors, return detailed `invalid_params: [{ name, reason }]` arrays.
-3. Define global security schemes under `components.securitySchemes` (Bearer JWT, API Key, or OAuth2).
-4. Review the [RFC 9457 Problem Details Reference](./references/rfc9457-problem-details.md) and schema in [problem-details.schema.yaml](./resources/templates/problem-details.schema.yaml).
+## 4. Errors and security
 
-### Phase 5: Versioning, Evolution & Verification
-1. Adopt URI path versioning (`/api/v1/`) for public APIs to maximize client clarity and CDN caching.
-2. Adhere to non-breaking evolution rules (additive changes only; deprecate with RFC 8594 `Sunset` headers).
-3. Review the [API Versioning & Deprecation Guide](./references/versioning-and-evolution.md).
-4. Inspect the complete real-world reference implementation in [order-management-api.openapi.yaml](./examples/order-management-api.openapi.yaml).
+- Every error is RFC 9457 Problem Details with
+  `application/problem+json`.
+- `422` carries `invalid_params: [{ name, reason }]`.
+- Security schemes live in `components.securitySchemes` (bearer, API key,
+  OAuth2).
+- References: [RFC 9457](./references/rfc9457-problem-details.md) ·
+  [problem schema](./resources/templates/problem-details.schema.yaml).
+
+## 5. Versioning and evolution
+
+- Public APIs use URI path versioning (`/api/v1/`).
+- Evolution is additive; deprecation uses RFC 8594 `Sunset` headers.
+- Reference: [versioning and deprecation](./references/versioning-and-evolution.md).
+- Worked example: [order API](./examples/order-management-api.openapi.yaml).
+
+## Definition of Done
+
+- [ ] Resources, methods, and status codes are consistent across the document.
+- [ ] Every error path returns a problem document.
+- [ ] Create and update schemas differ from the entity schema.
+- [ ] Pagination and filtering are specified, not implied.
+- [ ] Security schemes are declared globally.
+- [ ] The specification validates against OpenAPI 3.1.
+
+## Edge Cases & Pitfalls
+
+- **Verb in the path** — RPC habits leak into REST routes.
+- **`200` for everything** — clients cannot distinguish outcomes.
+- **Entity reuse for input** — accepting `id` invites mass assignment.
+- **Nullable drift** — 3.0 `nullable: true` is invalid in 3.1.
+- **Pagination afterthought** — an unbounded list is a production incident.
+- **Error shape per endpoint** — one problem format, everywhere.
+- **Breaking change disguised as additive** — removing or retyping a field is
+  breaking even if the path version did not change.
+
+## References
+
+- [Resource modeling and URIs](./references/resource-modeling-and-uris.md)
+- [HTTP methods and status codes](./references/http-methods-and-status-codes.md)
+- [OpenAPI 3.1 structure](./references/openapi-3-1-spec-structure.md)
+- [RFC 9457 problem details](./references/rfc9457-problem-details.md)
+- [Versioning and evolution](./references/versioning-and-evolution.md)
+- [Templates](./resources/templates/)
+- [Worked example](./examples/order-management-api.openapi.yaml)

@@ -1,104 +1,116 @@
 ---
 name: nextjs-page-dev
 description: >-
-  Step-by-step workflow for designing and building Next.js App Router pages (RSC page.tsx, loading.tsx skeleton, error.tsx boundary, generateMetadata, JSON-LD schema, and generateStaticParams). MANDATORY SKILL: MUST ALWAYS be activated, read, and strictly followed every time the agent creates, scaffolds, or implements any new Next.js page, route, or view. Triggers on "/nextjs-page-dev", "create page", "new page", "develop page", "build route", "implement page", or any page creation task.
-metadata:
-  author: BIGboss248
-  version: "1.4"
+  Build Next.js App Router pages and routes. Use when creating a page, route,
+  layout, loading state, error boundary, metadata, or JSON-LD.
 ---
 
-# Next.js Page & Route Development (`nextjs-page-dev`)
+# Next.js Page Standards
 
-Specialized workflow for creating production-ready Next.js App Router pages with async route params, localized translation dictionaries, dynamic metadata, type-safe JSON-LD structured data (`schema-dts`), and static pre-rendering.
+How a correct page is built. This skill writes implementation only: it does not
+plan, verify, or author tests.
 
-> [!CRITICAL]
-> **MANDATORY PAGE CREATION INVARIANT:** Whenever you create any new Next.js App Router page or route (`page.tsx`), you **MUST** strictly follow every architectural standard and workflow step in this skill. Furthermore, if implementing a page requires creating any new section or child components, you **MUST** activate and follow [`.agents/skills/nextjs-component-dev/SKILL.md`](../nextjs-component-dev/SKILL.md) for each new component.
+## Inputs & fallbacks
 
-> [!TIP]
-> **Modular Assets & Deep Guides:**
-> - Streaming & UI Boundaries: [`references/streaming-and-boundaries.md`](./references/streaming-and-boundaries.md)
-> - Page Conventions & Lifecycle: [`references/page-conventions-and-lifecycle.md`](./references/page-conventions-and-lifecycle.md)
-> - SEO & Structured Data Guide: [`references/seo-structured-data-guide.md`](./references/seo-structured-data-guide.md)
-> - Reusable Templates: [`resources/templates/`](./resources/templates/)
-> - Page Specification Template: [`page-spec.template.md`](./resources/templates/page-spec.template.md)
-> - Page Test Suite (separate skill, run after creation): [`../nextjs-test/SKILL.md`](../nextjs-test/SKILL.md) (`page` mode)
-> - Verification Script: [`scripts/verify-page.ps1`](./scripts/verify-page.ps1) (Windows) / [`scripts/verify-page.sh`](./scripts/verify-page.sh) (Linux)
+1. `docs/project.json` — `supported_languages`, `dictionaries_dir`,
+   `new_component_dir`.
+2. Derive from the workspace: locales from `messages/*.json` or
+   `i18n/routing.ts`; routes from the route registry and existing `app/` folders.
+3. A page spec is optional. If none exists, derive route, intent, data sources,
+   and edge states from the request and the surrounding routes, then state the
+   assumptions you made.
 
----
+## 1. Route conventions
 
-## Architectural Rules & Standards
+- Localized pages live at `app/[locale]/<route-path>/page.tsx`; non-localized at
+  `app/<route-path>/page.tsx`.
+- Build URLs from the route registry (`lib/routes.ts` or equivalent), never from
+  string literals scattered in JSX.
+- Async route props: `params` and `searchParams` are promises in Next.js 16 —
+  await them.
+- Companion files sit beside `page.tsx`: `loading.tsx`, `error.tsx`,
+  `not-found.tsx`.
 
-### 1. Planning Context & Route Registry
-- Read `docs/project.json` to resolve `supported_languages`, `dictionaries_dir` (default: `"messages"`), and `new_component_dir`.
-- All navigation URLs MUST reference `ROUTES` from `@/lib/routes` or `@/i18n/navigation`.
-- Target page path hierarchy: `app/[locale]/<route-path>/page.tsx` (or `app/<route-path>/page.tsx` if non-localized).
+## 2. Copy and translation
 
-### 2. Zero Hardcoding & Dictionary Population
-- **No Hardcoded Copy:** Page headings, titles, descriptions, and static labels must be added to `messages/[locale].json` across all `supported_languages` before writing JSX.
-- **RSC Translations:** Read translations in Server Components using `await getTranslations('<namespace>')`.
+- No user-facing text in the page or its metadata. Every title, description, and
+  label lives in `messages/[locale].json` for all supported locales.
+- Server Components read with `await getTranslations('<namespace>')`.
+- Provider and parity details: `nextjs-i18n-usage`.
 
-### 3. SEO, Metadata & JSON-LD
-- **Dynamic Metadata:** Export `generateMetadata({ params, searchParams }: Props)` providing dynamic `title`, `description`, and canonical URL (`alternates: { canonical: ... }`).
-- **Structured Data:** Inject typed JSON-LD using `schema-dts` (`WithContext<T>`) wrapped in `<script type="application/ld+json">` with `<` characters escaped as `\u003c`.
-- Consult [`references/seo-structured-data-guide.md`](./references/seo-structured-data-guide.md) for schemas.
+## 3. Metadata
 
-### 4. Static Pre-Rendering (`generateStaticParams`)
-- If the page is nested under a `[locale]` dynamic segment (or any dynamic segment) and `supported_languages` contains >1 locale, export `generateStaticParams()` returning `{ locale }` for all supported locales.
+- Export `generateMetadata` and resolve `title`, `description`, and
+  `alternates.canonical` from the active locale.
+- Metadata strings come from dictionaries, not literals.
+- Do not duplicate metadata already set by a parent layout unless the page must
+  override it.
+- Details: [metadata and SEO](./references/metadata-and-seo.md).
 
-### 5. Instant Navigation & Granular Suspense Push-Down
-- **Granular Loading States**: Push `<Suspense>` down to specific dynamic sub-components so static/cached sections (header, hero, cached product info) lift into the **Static Shell** and **App Shell** immediately.
-- **Opting Out**: If a segment is inherently dynamic and instant feedback is not desired, configure `export const instant = false`.
-- Consult [`references/streaming-and-boundaries.md`](./references/streaming-and-boundaries.md) for streaming patterns.
+## 4. Structured data
 
-### 6. Child Component Delegation (`nextjs-component-dev`)
-- Never write complex section components inline inside `page.tsx` or create ad-hoc component files outside the workflow. Whenever a page requires new section or UI components, place them as flat `snake_case` files in the page's surface folder (`<new_component_dir>/<page-segment>/<component_name>.tsx`) by activating and strictly executing [`.agents/skills/nextjs-component-dev/SKILL.md`](../nextjs-component-dev/SKILL.md) for each component.
-- Every new section component follows the `nextjs-component-dev` workflow (surface folder, dictionaries, and the §1.2 skeleton verdict). A skeleton is created and wired only when the component can suspend or lazy-load; static sections ship without one. Tests are not part of that workflow and are owned by `nextjs-test`.
+- Emit JSON-LD with `schema-dts` types, wrapped in
+  `<script type="application/ld+json">`.
+- Escape `<` as `\u003c` in the serialized payload.
+- One graph per page; reference shared entities by `@id`.
+- Schemas and examples: [structured data guide](./references/seo-structured-data-guide.md).
 
-### 7. Agent Boundaries & Source Isolation
-- Implementation is written by `nextjs-dev` when orchestrated. This skill never authors tests.
-- All page test authoring belongs to the `nextjs-test` skill; no other skill or command writes test files, and test agents write only through `nextjs-test`.
-- Only the orchestrator updates `docs/plan/05-pages-and-components.md`.
-- All page work happens on branch `agent/<slug>` in its own worktree (contract: [`../nextjs-dev-setup/references/agent-worktree-isolation.md`](../nextjs-dev-setup/references/agent-worktree-isolation.md)); it merges into `main` only after the review is approved. A merge conflict is never resolved by an agent: abort, keep the branch, and ask the user.
+## 5. Static pre-rendering
 
----
+- When the route is under a dynamic segment and more than one locale exists,
+  export `generateStaticParams()` returning every supported locale.
+- When the route accepts slugs or ids, return the known values or declare the
+  route dynamic; never return an empty array silently.
+- Details: [static params and i18n](./references/static-params-and-i18n.md).
 
-## Workflow Steps
+## 6. Streaming and boundaries
 
-- [ ] **Step 0: Page Specification & Implementation Plan**
-  - Read `docs/project.json` and target route definition in `lib/routes.ts`.
-  - Scaffold `docs/design/pages/<route>/page-spec.md` from [page-spec.template.md](./resources/templates/page-spec.template.md); every §7 row must be explicit before implementation.
-  - Formulate page metadata, JSON-LD schema type, translation namespaces, and component layout.
-  - Present the concise implementation plan and the §7 edge-case table for approval when creating major new pages.
+- Push `<Suspense>` down to dynamic slots so static content renders immediately.
+- `loading.tsx` composes the section skeletons of the page, not a blank page or a
+  full-page spinner.
+- `error.tsx` is a client component and needs a reset path; `not-found.tsx`
+  renders for unmatched segments.
+- Opt out of instant navigation only with a deliberate `export const instant =
+  false`, not by accident.
+- Details: [streaming and boundaries](./references/streaming-and-boundaries.md).
 
-- [ ] **Step 1: Populate Translation Dictionaries**
-  - Add page title, meta description, and page body copy across all locale files (`messages/en.json`, `messages/fa.json`, etc.) under a dedicated page namespace.
+## 7. Composition
 
-- [ ] **Step 2: Create Companion Skeletons (`loading.tsx`)**
-  - If the page streams content or fetches data, deploy `loading.tsx` from [loading.tsx.template](./resources/templates/loading.tsx.template).
+- Section components belong in the page's surface folder and follow
+  `nextjs-component-dev`.
+- Do not inline complex sections inside `page.tsx`.
+- Page lifecycle and file conventions: [page conventions](./references/page-conventions-and-lifecycle.md).
 
-- [ ] **Step 3: Implement Page Component (`page.tsx`)**
-  - Deploy and customize [page.tsx.template](./resources/templates/page.tsx.template):
-    1. Define async props interface (`params: Promise<{ locale: string, ... }>`, `searchParams`).
-    2. Export `generateMetadata()` resolving dynamic titles and canonical alternates.
-    3. Export `generateStaticParams()` for localized/dynamic routes.
-    4. Implement page RSC composing section components from the page's surface folder (`<new_component_dir>/<page-segment>/`; using `nextjs-component-dev` for any new components).
-    5. Render `<JsonLd>` structured data component.
+## Definition of Done
 
-- [ ] **Step 4: Verification & Sanity Check (fast tier)**
-  - Run the page verification script:
-    - **Windows (PowerShell):**
-      ```pwsh
-      pwsh .agents/skills/nextjs-page-dev/scripts/verify-page.ps1 -RoutePath <route_dir>
-      ```
-    - **Linux / macOS (Bash):**
-      ```bash
-      bash .agents/skills/nextjs-page-dev/scripts/verify-page.sh <route_dir>
-      ```
-  - **No test authoring here.** Do not create `tests/e2e/pages/<route>.spec.ts` or any test file; `nextjs-test` owns the page suite and runs as a separate step.
-  - **Forbidden here:** `pnpm run test:e2e`, `pnpm exec playwright test`, `pnpm build` — expensive tier, pre-push only.
-  - Ensure zero TypeScript, missing dictionary, metadata, or JSON-LD errors.
+- [ ] `page.tsx` awaits `params`/`searchParams` and builds URLs from the registry.
+- [ ] Metadata and JSON-LD resolve per locale, from dictionaries.
+- [ ] `generateStaticParams()` exists when the route is localized and dynamic.
+- [ ] `loading.tsx` and `error.tsx` exist when the page streams or can fail.
+- [ ] No string literal reaches the rendered output.
+- [ ] No test was authored here; `tdd` owns tests.
+- [ ] Type checking and the targeted checks pass.
 
-- [ ] **Step 5: Implementation Plan Checklist Synchronization**
-  - When orchestrated, the orchestrator checks off the completed page infrastructure items (`page.tsx`, `loading.tsx`, `error.tsx`, `generateMetadata`, `JSON-LD Schema`, `generateStaticParams()`) in `docs/plan/05-pages-and-components.md`.
-  - If all component sub-checklists and page infrastructure tasks for this page are completed, the orchestrator checks off the parent page item (`- [x]`).
-  - When invoked directly without the orchestrator, perform this step yourself.
+## Edge Cases & Pitfalls
+
+- **Awaiting props late** — reading `params.locale` before awaiting breaks
+  localized metadata.
+- **Hardcoded canonical** — a canonical URL without the locale creates duplicate
+  content.
+- **JSON-LD escaping** — unescaped `<` breaks the script tag.
+- **Full-page skeleton** — a single top-level fallback flashes the whole route.
+- **Empty static params** — an empty array disables pre-rendering without saying
+  so.
+- **Client-only page** — a page with no `await` and no data still does not need
+  `"use client"`.
+- **Shell assumptions** — the page does not own the header, footer, or theme;
+  those belong to the layout.
+
+## References
+
+- [Metadata and SEO](./references/metadata-and-seo.md)
+- [Structured data guide](./references/seo-structured-data-guide.md)
+- [Static params and i18n](./references/static-params-and-i18n.md)
+- [Streaming and boundaries](./references/streaming-and-boundaries.md)
+- [Page conventions and lifecycle](./references/page-conventions-and-lifecycle.md)
+- [Templates](./resources/templates/)

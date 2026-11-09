@@ -113,7 +113,7 @@ non-blocking scan is only worth its Actions minutes when the user asked for it.
    - the CodeQL workflow is a signal, never a gate — do not add it to required
      checks, rulesets, or a release gate;
    - alert findings are **not** GitHub issues: they live in the Security tab and
-     do not enter the `github-triage` dedupe loop;
+     do not enter the `triage` dedupe loop;
    - dismissal requires a documented reason in the alert, and the `security` /
      `codeql` labels belong to analysis-failure issues only;
    - the `codeql` skill is the mandatory skill for CodeQL workflow edits, SARIF

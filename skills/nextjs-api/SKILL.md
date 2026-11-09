@@ -1,61 +1,92 @@
 ---
 name: nextjs-api
 description: >-
-  Author, validate, and scaffold OpenAPI 3.1-compliant REST API route handlers, request validation, RFC 9457 error contracts, and interactive documentation in Next.js 16 App Router. Use when creating or updating API route endpoints, designing REST APIs, adding Route Handlers under 'app/api/', or integrating OpenAPI documentation and client SDKs.
+  Write Next.js Route Handlers with OpenAPI 3.1 contracts. Use when adding or
+  changing files under app/api/, designing endpoints, or fixing request
+  validation and error payloads.
 ---
 
-# Next.js 16 OpenAPI Route Handler (`nextjs-api`)
+# Next.js Route Handler Standards
 
-Production runbook for designing, scaffolding, and verifying OpenAPI 3.1-compliant REST route handlers in Next.js 16 App Router (`app/api/**/route.ts`).
+How a correct HTTP endpoint is built in Next.js 16. This skill writes route
+handlers only: it does not plan, verify, or author tests.
 
----
+## 1. Route Handler or Server Action
 
-## Architectural Boundary: Route Handlers vs Server Actions
+| Use | When |
+| :--- | :--- |
+| `app/api/**/route.ts` | Public or third-party API, mobile client, webhook, streaming (`text/event-stream`) |
+| `'use server'` action | Private mutation invoked by this app's own React tree |
 
-- **Use Route Handlers (`app/api/**/route.ts`)**: For public REST APIs, mobile clients, external integrations, webhooks, and streaming endpoints (`text/event-stream`). Must adhere to the [OpenAPI Specification](https://spec.openapis.org/oas/latest.html).
-- **Use Server Actions (`'use server'`)**: For private internal React mutations, form submissions, and direct cache invalidation (`updateTag`) coupled with React Server Components. Never expose REST endpoints for purely internal React state mutations.
+Never expose a REST endpoint for a mutation only your own components call.
 
----
+## 2. Resource and URI modeling
 
-## 5-Step Execution Workflow
+- Plural nouns: `/api/v1/orders`, never `/api/v1/getOrders`.
+- Verbs belong to HTTP: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`.
+- `GET`, `PUT`, and `DELETE` are safe or idempotent; `POST` is neither.
+- Version at the path root, not per resource.
+- Decide the auth scheme before writing the handler (bearer JWT, API key, session
+  cookie) and state it in the OpenAPI document.
+- Framework-agnostic HTTP semantics: `rest-api-design`.
 
-```mermaid
-flowchart LR
-    S1["1. Resource & URI Design<br/>(Plural nouns, verbs, status codes)"] --> S2["2. Zod & OpenAPI Schemas<br/>(Contract definitions & types)"]
-    S2 --> S3["3. Route Handler Scaffold<br/>(RFC 9457 errors & Next.js 16 async params)"]
-    S3 --> S4["4. Interactive Docs<br/>(/api/openapi.json & Scalar UI)"]
-    S4 --> S5["5. Automated Verification<br/>(Type check & contract tests)"]
-```
+## 3. Contracts
 
-### Step 1: Resource & URI Modeling
-1. Establish plural resource names (e.g., `/api/v1/orders`, not `/api/v1/getOrders`).
-2. Map HTTP methods to safe/idempotent semantics (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS`).
-3. Determine authentication scheme (Bearer JWT, API Key, Session cookie).
-4. Review [OpenAPI Specification Guidelines](./references/openapi-spec-guidelines.md).
+- Request, query, and response models are Zod schemas with `.openapi()`
+  metadata; the schema is the single source of both runtime validation and the
+  published document.
+- Register paths and schemas in the central registry (`lib/openapi.ts`).
+- Unknown fields are rejected, not stripped, unless the API documents otherwise.
+- Details: [Zod to OpenAPI](./references/zod-to-openapi.md) ·
+  [OpenAPI guidelines](./references/openapi-spec-guidelines.md).
 
-### Step 2: Schema Definition with Zod
-1. Define request, query, and response models using Zod with `.openapi()` metadata annotations.
-2. Register schemas and paths into the central OpenAPI registry (`lib/openapi.ts`).
-3. Review [Zod to OpenAPI Reference](./references/zod-to-openapi.md) and scaffold from [openapi-registry.ts.template](./resources/templates/openapi-registry.ts.template).
+## 4. Handler rules
 
-### Step 3: Implement Next.js 16 Route Handlers
-1. Create `route.ts` under the target route segment (`app/api/v1/[resource]/route.ts`).
-2. Await asynchronous request primitives: `context.params`, `cookies()`, and `headers()`.
-3. Support client disconnect abort signals via `request.signal`.
-4. Validate incoming payload and query strings via Zod `safeParse`.
-5. Return standardized error envelopes using RFC 9457 Problem Details (`application/problem+json`).
-6. Apply explicit caching if needed via `"use cache"`, `cacheLife()`, and `cacheTag()`.
-7. Reference [Route Handler Patterns](./references/route-handler-patterns.md) and templates:
-   - Collection endpoint: [route-standard.ts.template](./resources/templates/route-standard.ts.template)
-   - Dynamic entity endpoint: [route-dynamic.ts.template](./resources/templates/route-dynamic.ts.template)
-   - Streaming SSE endpoint: [route-streaming.ts.template](./resources/templates/route-streaming.ts.template)
-   - Error utilities: [problem-details.ts.template](./resources/templates/problem-details.ts.template)
+- Await `context.params`, `cookies()`, and `headers()`.
+- Validate with `safeParse` and return a `400` problem document on failure.
+- Errors use RFC 9457 `application/problem+json` with `type`, `title`, `status`,
+  `detail`, and `instance`.
+- Forward `request.signal` to upstream calls so a client disconnect cancels work.
+- Cache deliberately: `'use cache'` with `cacheLife()` and `cacheTag()`, never by
+  accident.
+- Streaming endpoints set `Content-Type: text/event-stream` and flush explicitly.
+- Patterns and templates: [route patterns](./references/route-handler-patterns.md) ·
+  [templates](./resources/templates/).
 
-### Step 4: Expose OpenAPI Document & Interactive UI
-1. Expose the compiled JSON specification at `/api/openapi.json` via [docs-route.ts.template](./resources/templates/docs-route.ts.template).
-2. Render zero-bundle-overhead interactive documentation at `/api/docs` using [scalar-page.tsx.template](./resources/templates/scalar-page.tsx.template).
+## 5. Documentation
 
-### Step 5: Verification & Quality Gate
-1. Run static type checking: `pnpm run build` or `pnpm tsc --noEmit`.
-2. Verify route response codes, schema conformance, and error payloads. Test authoring is owned exclusively by [`nextjs-test`](../nextjs-test/SKILL.md); this skill never creates or edits test files. If tests already exist, run the targeted files read-only; otherwise hand off to `nextjs-test`.
-3. Review the complete working reference implementation in [products-api-example.ts](./examples/products-api-example.ts).
+- Serve the compiled document at `/api/openapi.json`.
+- Serve interactive docs at `/api/docs` from a zero-bundle viewer.
+- Keep examples in the schema, not only in prose.
+
+## Definition of Done
+
+- [ ] Path, method, and status codes match the resource model.
+- [ ] Every input is validated; every failure returns a problem document.
+- [ ] The route appears in the OpenAPI registry and the served document.
+- [ ] Auth scheme is enforced and documented.
+- [ ] Caching is explicit or absent.
+- [ ] No test was authored here; `tdd` owns tests.
+- [ ] Type checking and the targeted contract check pass.
+
+## Edge Cases & Pitfalls
+
+- **Synchronous params** — Next.js 16 params are promises; awaiting is mandatory.
+- **Validation after use** — validating after a database call wastes the request
+  and can leak partial writes.
+- **Leaking internals** — problem `detail` must not carry stack traces or SQL.
+- **Status-code soup** — choose the status from the resource outcome, not from
+  the exception type.
+- **Unbounded lists** — pagination is part of the contract, not an afterthought.
+- **Accidental caching** — a `GET` that reads a session must not be cached
+  publicly.
+- **Docs drift** — a handler not registered in the registry is invisible to
+  clients.
+
+## References
+
+- [OpenAPI spec guidelines](./references/openapi-spec-guidelines.md)
+- [Route handler patterns](./references/route-handler-patterns.md)
+- [Zod to OpenAPI](./references/zod-to-openapi.md)
+- [Templates](./resources/templates/)
+- [Working example](./examples/products-api-example.ts)

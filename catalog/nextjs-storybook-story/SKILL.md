@@ -1,81 +1,93 @@
 ---
 name: nextjs-storybook-story
-description: Workflow and engineering standards for crafting co-located Storybook CSF3 stories (<component_name>.stories.tsx) with interactive controls, action spies, and 4 canonical theme variants.
-metadata:
-  author: BIGboss248
-  version: "1.1"
+description: >-
+  Write co-located Storybook CSF3 stories. Use when creating or updating a
+  .stories.tsx file, adding controls, docs, or theme variants.
 ---
 
-# Next.js Storybook CSF3 Story Generation (`nextjs-storybook-story`)
+# Storybook Story Standards
 
-Specialized workflow for generating and updating co-located Storybook stories (`<component_name>.stories.tsx`) in Component Story Format 3 (CSF3).
+How a correct story is written. This skill writes stories only: it does not run
+builds, and it does not write tests.
 
-> [!TIP]
-> **Modular Assets:**
-> - Reference story implementations: [`examples/`](./examples/)
-> - Test authoring is owned by [`nextjs-test`](../nextjs-test/SKILL.md); do not add test files here.
-> - Verification Scripts: [`scripts/verify-storybook.ps1`](./scripts/verify-storybook.ps1) (Windows) / [`scripts/verify-storybook.sh`](./scripts/verify-storybook.sh) (Linux)
+## 1. Scope
 
----
+- Only the main component of a surface gets a story. Internal micro leaf clients
+  (a toggle, a click handler) do not.
+- One story file per component, colocated as
+  `<surface>/<component_name>.stories.tsx`.
 
-## Architectural Rules & Standards
+## 2. CSF3 structure
 
-### 1. Main Component Scope Only (Micro Leaf Client Exclusion)
-* Interactive client logic is pushed down to small leaf Client Components (e.g. toggle buttons, click listeners).
-* **DO NOT** create stories for internal micro leaf client helpers.
-* **ONLY the main component** (primary feature section or composite UI block) requires a Storybook story.
+- `Meta<typeof Component>` and `StoryObj<typeof Component>`.
+- `tags: ["autodocs"]`.
+- Map props to controls (`text`, `select`, `boolean`, `number`) in `argTypes`.
+- Provide realistic default values in `args`; no placeholder lorem ipsum.
 
-### 2. CSF3 Structure & Interactive Controls
-* Use Component Story Format 3 (CSF3) with `Meta<typeof ComponentName>` and `StoryObj<typeof ComponentName>`.
-* Include tags: `tags: ["autodocs", "ai-generated"]`.
-* Map TypeScript props to interactive controls (`text`, `select`, `boolean`, `number`) in `meta.argTypes`.
-* Provide realistic default prop values in `args`.
+## 3. Action spies
 
-### 3. Action Spies (`fn()` from `'storybook/test'`)
-* For all callback and mutation props (e.g. `onClick`, `onToggle`, `onSubmit`), bind `fn()` from `'storybook/test'` in default `args` so user interactions log cleanly to the Storybook Actions panel.
+- Bind `fn()` from `storybook/test` to every callback prop (`onClick`,
+  `onSubmit`, `onToggle`) in the default `args` so interactions land in the
+  Actions panel.
 
-### 4. Structured Documentation (`parameters.docs`)
-* Write comprehensive markdown in `meta.parameters.docs.description.component`:
-  * **Overview & Purpose:** What the component is and why it exists.
-  * **Architecture & Boundaries:** RSC vs leaf Client Component (`"use client"`), hooks, caching.
-  * **Key Interactions:** Click handlers, state toggles, and animations.
-  * **Accessibility & Motion:** ARIA roles/labels and `prefers-reduced-motion`.
-* Annotate individual stories with `parameters.docs.description.story`.
+## 4. Documentation
 
-### 5. Four Canonical Story Variants & Production Tokens (MANDATORY)
-* **Zero Hardcoded Colors:** Under NO circumstances use arbitrary hex values (`#FAFAFA`, `#050505`) or non-token palette colors (`border-zinc-200`, `text-zinc-500`).
-* **Semantic Production Tokens:** Exclusively use semantic theme tokens from `app/globals.css` (`bg-background`, `text-foreground`, `border-border`, `text-muted-foreground`).
-* Export strictly four story variants wrapped in semantic container cards with scoped `.light` and `.dark` classes:
-  1. **`Light`**: Configured with `{ themes: { themeOverride: "light" }, backgrounds: { default: "light" } }` in a `.light bg-background text-foreground border-border` card labeled `"Light Mode"`.
-  2. **`Dark`**: Configured with `{ themes: { themeOverride: "dark" }, backgrounds: { default: "dark" } }` in a `.dark bg-background text-foreground border-border` card labeled `"Dark Mode"`.
-  3. **`SkeletonLight`**: `render: () => <[ComponentName]Skeleton />` in a `.light bg-background text-foreground border-border` card labeled `"Skeleton (Light)"`.
-  4. **`SkeletonDark`**: `render: () => <[ComponentName]Skeleton />` in a `.dark bg-background text-foreground border-border` card labeled `"Skeleton (Dark)"`.
+Write `parameters.docs.description.component` with:
 
----
+- **Overview** — what the component is and why it exists.
+- **Architecture** — server or client, hooks, caching.
+- **Interactions** — handlers, state, animation.
+- **Accessibility** — roles, labels, reduced-motion behavior.
 
-## Workflow Steps
+Annotate individual stories with `parameters.docs.description.story`.
 
-- [ ] **Step 1: Inspect Component Contract & Props**
-  - Read `<component_name>.tsx` and resolve all exported props, callback handlers, and visual states.
+## 5. Four canonical variants
 
-- [ ] **Step 2: Generate Co-Located Story (`<component_name>.stories.tsx`)**
-  - Place `<component_name>.stories.tsx` directly alongside `<component_name>.tsx` in the same surface folder (`<new_component_dir>/<surface>/`).
-  - Implement CSF3 metadata, `argTypes`, `fn()` action spies, markdown docs, and the 4 canonical story variants.
+Export exactly four:
 
-- [ ] **Step 3: Verification & Smoke Test Execution**
-  > [!NOTE]
-  > Storybook smoke/build is part of the **expensive tier**. Run it here only because
-  > this skill was explicitly invoked. Standard component development must not run
-  > Storybook builds; `.husky/pre-push` owns them.
+| Story | Theme | Contents |
+| :--- | :--- | :--- |
+| `Light` | `themeOverride: "light"`, light background | The component |
+| `Dark` | `themeOverride: "dark"`, dark background | The component |
+| `SkeletonLight` | light | `<ComponentSkeleton />` |
+| `SkeletonDark` | dark | `<ComponentSkeleton />` |
 
-  - Run verification script to check story presence and execute Storybook smoke test:
-    * **Windows (PowerShell):**
-      ```pwsh
-      pwsh .agents/skills/nextjs-storybook-story/scripts/verify-storybook.ps1 -ComponentPath <new_component_dir>/<surface>/<component_name>.tsx
-      ```
-    * **Linux / macOS (Bash):**
-      ```bash
-      bash .agents/skills/nextjs-storybook-story/scripts/verify-storybook.sh <new_component_dir>/<surface>/<component_name>.tsx
-      ```
-  - Fix any syntax collisions or missing export errors.
+Each variant renders inside a semantic container card using production tokens
+(`bg-background`, `text-foreground`, `border-border`, `text-muted-foreground`)
+with a scoped `.light` or `.dark` class.
 
+If the component has no skeleton (static), omit the two skeleton stories and say
+so in the docs block rather than shipping an invented skeleton.
+
+## 6. Providers
+
+- Components using localized navigation or translations need
+  `NextIntlClientProvider` with real messages in the preview decorator.
+- Components using TanStack Query need a `QueryClientProvider`.
+- Details: `nextjs-i18n-usage`.
+
+## Definition of Done
+
+- [ ] The story file sits beside the component in its surface folder.
+- [ ] Controls, `args`, and `fn()` spies are bound for every public prop.
+- [ ] The docs block covers overview, architecture, interactions, a11y.
+- [ ] Four variants exist, or two when the component is static, with the reason
+  recorded.
+- [ ] No hex color or non-token utility appears.
+- [ ] No test was authored here; `tdd` owns tests.
+
+## Edge Cases & Pitfalls
+
+- **Hardcoded colors** — `#FAFAFA`, `border-zinc-200`, and friends are forbidden;
+  use tokens.
+- **Missing provider** — stories throw "No intl context found".
+- **Story for a leaf** — a leaf client helper is exercised through its parent.
+- **Invented skeleton** — a static component has no skeleton to show.
+- **Fake data** — placeholder copy in `args` hides layout defects.
+- **Build during authoring** — storybook builds run in CI or the pre-push hook,
+  not during authoring.
+
+## References
+
+- [Reference stories](./examples/)
+- [Verification script](./scripts/verify-storybook.ps1)

@@ -2,7 +2,7 @@
   "skills": [
     {
       "name": "ag-customizer",
-      "version": "9b6aff81066b",
+      "version": "c098dc0cee35",
       "files": [
         "references/hooks-guide.md",
         "references/mcp-guide.md",
@@ -14,15 +14,8 @@
       ]
     },
     {
-      "name": "agent-chatrooms",
-      "version": "5583b5035f47",
-      "files": [
-        "SKILL.md"
-      ]
-    },
-    {
       "name": "codeql",
-      "version": "5a54856577ca",
+      "version": "02715c6d72e8",
       "files": [
         "references/alert-management.md",
         "references/cli-commands.md",
@@ -34,34 +27,8 @@
       ]
     },
     {
-      "name": "component-design",
-      "version": "53c68595fda8",
-      "files": [
-        "references/adaptive-grilling-rounds.md",
-        "references/component-design-patterns.md",
-        "references/patterns/back-to-top.md",
-        "references/patterns/hero.md",
-        "references/patterns/typography-and-hierarchy.md",
-        "references/subagent-audit-protocol.md",
-        "references/token-verification-matrix.md",
-        "resources/templates/design-spec.template.md",
-        "SKILL.md"
-      ]
-    },
-    {
-      "name": "flutter-adversarial-qa",
-      "version": "7afeb22ad4ba",
-      "files": [
-        "references/adversarial-checklist.md",
-        "references/dart-pitfalls.md",
-        "references/reference.md",
-        "resources/templates/config.template.json",
-        "SKILL.md"
-      ]
-    },
-    {
       "name": "flutter-app-arch",
-      "version": "9d72baf44495",
+      "version": "e8c11c5c4c5f",
       "files": [
         "references/architecture_guide.md",
         "references/theming_guide.md",
@@ -71,7 +38,7 @@
     },
     {
       "name": "flutter-component-dev",
-      "version": "4b720ed06180",
+      "version": "9117a98a5866",
       "files": [
         "references/component-logging.md",
         "references/desktop-ergonomics.md",
@@ -85,7 +52,7 @@
     },
     {
       "name": "flutter-dev-setup",
-      "version": "f04405b46e84",
+      "version": "5b9c85ccf43f",
       "files": [
         "references/ai-tools-and-mcp.md",
         "references/flavors-and-defines.md",
@@ -107,7 +74,7 @@
     },
     {
       "name": "flutter-observability",
-      "version": "cec1fb238dfb",
+      "version": "0778c6ee16a6",
       "files": [
         "references/error-boundaries.md",
         "references/logging-standards.md",
@@ -118,38 +85,26 @@
       ]
     },
     {
-      "name": "flutter-plan",
-      "version": "32e0d9d649fc",
+      "name": "flutter-setup-localization",
+      "version": "4894f6e20ca8",
       "files": [
-        "references/interview-rounds.md",
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "flutter-spec",
+      "version": "d4aa9a9952e1",
+      "files": [
         "references/project-json-schema.md",
         "references/reference.md",
-        "references/roadmap-structure.md",
         "resources/templates/config.template.json",
         "resources/templates/project.template.json",
         "SKILL.md"
       ]
     },
     {
-      "name": "flutter-setup-localization",
-      "version": "87b3ace00695",
-      "files": [
-        "SKILL.md"
-      ]
-    },
-    {
-      "name": "flutter-testing",
-      "version": "73eca0380f07",
-      "files": [
-        "references/unit_testing_guide.md",
-        "resources/templates/bloc_test.dart.template",
-        "resources/templates/unit_test.dart.template",
-        "SKILL.md"
-      ]
-    },
-    {
       "name": "flutter-theme",
-      "version": "a305af50b774",
+      "version": "ca7d91047d93",
       "files": [
         "references/adaptive-theme.md",
         "references/animated-toggle.md",
@@ -165,7 +120,7 @@
     },
     {
       "name": "flutter-windows-desktop",
-      "version": "a29aee2d6aac",
+      "version": "4825da2a0a48",
       "files": [
         "references/cicd_automation_guide.md",
         "references/deployment_guide.md",
@@ -175,21 +130,17 @@
       ]
     },
     {
-      "name": "github-triage",
-      "version": "80f872be2850",
+      "name": "git-worktree-isolation",
+      "version": "96c073524c5e",
       "files": [
-        "references/github-mcp-and-cli.md",
-        "references/self-repair-bridge.md",
-        "references/triage-lifecycle.md",
-        "resources/templates/diagnostic_comment.md",
-        "resources/templates/resolution_comment.md",
-        "scripts/triage_issue.ps1",
+        "scripts/worktree.ps1",
+        "scripts/worktree.sh",
         "SKILL.md"
       ]
     },
     {
       "name": "headless-woocommerce-api",
-      "version": "52763ed00852",
+      "version": "4b98d7bb9a01",
       "files": [
         "examples/patch-wordpress.ps1",
         "examples/storefront-client.ts",
@@ -198,20 +149,21 @@
         "references/docker-container-operations.md",
         "references/headless-api-reference.md",
         "references/store-configuration-iran.md",
+        "references/storefront-integration.md",
+        "references/storefront-reference.md",
+        "references/verification-playbook.md",
+        "references/windows-local-dev.md",
         "references/wordpress-bootstrap-and-plugins.md",
-        "SKILL.md"
-      ]
-    },
-    {
-      "name": "multi-agent-chrome",
-      "version": "47f73526effa",
-      "files": [
+        "resources/templates/dev-traefik/docker-compose.yml",
+        "resources/templates/dev-traefik/traefik.yml",
+        "resources/templates/docker-compose.local.yml",
+        "resources/templates/woocommerce-fetcher.ts",
         "SKILL.md"
       ]
     },
     {
       "name": "nextjs-api",
-      "version": "d6172dd99dd4",
+      "version": "bc80ecddf997",
       "files": [
         "examples/products-api-example.ts",
         "references/openapi-spec-guidelines.md",
@@ -228,29 +180,8 @@
       ]
     },
     {
-      "name": "nextjs-component-create",
-      "version": "09edb971d3f5",
-      "files": [
-        "examples/feature-card/FeatureCard.stories.tsx",
-        "examples/feature-card/FeatureCard.tsx",
-        "examples/tanstack-product/product-cache.ts",
-        "examples/tanstack-product/ProductCard.stories.tsx",
-        "examples/tanstack-product/ProductCard.tsx",
-        "examples/tanstack-product/ProductSection.tsx",
-        "references/architecture-standards.md",
-        "references/orchestration-and-delegation.md",
-        "references/pitfalls.md",
-        "resources/plan-schema.json",
-        "scripts/audit-agent-writes.ps1",
-        "scripts/audit-agent-writes.sh",
-        "scripts/verify-component-create.ps1",
-        "scripts/verify-component-create.sh",
-        "SKILL.md"
-      ]
-    },
-    {
       "name": "nextjs-component-dev",
-      "version": "eb43e6332f5e",
+      "version": "32d195ae045c",
       "files": [
         "examples/cached-data-component/actions.ts",
         "examples/cached-data-component/product-cache.ts",
@@ -261,19 +192,14 @@
         "examples/tanstack-product/ProductCard.stories.tsx",
         "examples/tanstack-product/ProductCard.tsx",
         "examples/tanstack-product/ProductSection.tsx",
-        "references/adaptive-grilling-rounds.md",
         "references/caching-and-revalidation.md",
         "references/form-server-actions.md",
-        "references/i18n-and-bidi-standards.md",
         "references/instant-navigation-and-prefetching.md",
         "references/next-devtools-debugging.md",
         "references/nextjs-docs-lookup.md",
         "references/rsc-and-state-boundaries.md",
-        "references/storybook-reference.md",
-        "references/subagent-design-audit-protocol.md",
         "references/token-verification-matrix.md",
         "resources/templates/component.template.tsx",
-        "resources/templates/design-spec.template.md",
         "resources/templates/form-component.template.tsx",
         "resources/templates/implementation-plan.template.md",
         "resources/templates/link-status-button.template.tsx",
@@ -285,11 +211,9 @@
     },
     {
       "name": "nextjs-dev-setup",
-      "version": "7f683e3a5b53",
+      "version": "a96e613e9279",
       "files": [
         "examples/sample-component.stories.tsx",
-        "references/agent-roster-guide.md",
-        "references/agent-worktree-isolation.md",
         "references/app-icons-and-pwa-guide.md",
         "references/cicd-and-release-automation-guide.md",
         "references/docker-containerization-guide.md",
@@ -301,13 +225,10 @@
         "references/features/06-playwright-e2e.md",
         "references/features/07-storybook.md",
         "references/features/08-design-system-lint.md",
-        "references/features/09-agent-roster.md",
-        "references/features/10-mcp-servers.md",
         "references/features/11-docker-reverse-proxy.md",
         "references/features/12-git-hooks-cicd.md",
         "references/features/13-theming.md",
         "references/i18n-setup-guide.md",
-        "references/mcp-configuration-guide.md",
         "references/navigation-pending-guide.md",
         "references/project-json-schema.md",
         "references/setup-interview-rounds.md",
@@ -366,8 +287,6 @@
         "resources/templates/storybook-preview.tsx.template",
         "resources/templates/theme-toggle.tsx.template",
         "resources/templates/vscode-launch.json.template",
-        "scripts/agent-worktree.ps1",
-        "scripts/agent-worktree.sh",
         "scripts/init_triage_infra.ps1",
         "scripts/verify-project-config.ps1",
         "scripts/verify-project-config.sh",
@@ -375,8 +294,19 @@
       ]
     },
     {
+      "name": "nextjs-health-probe",
+      "version": "d374833ec5ad",
+      "files": [
+        "references/health-contract.md",
+        "resources/templates/docker-compose.healthcheck.template.yml",
+        "resources/templates/route-no-db.ts.template",
+        "resources/templates/route-with-db.ts.template",
+        "SKILL.md"
+      ]
+    },
+    {
       "name": "nextjs-i18n-usage",
-      "version": "29f7de00c42a",
+      "version": "651e0b5d1052",
       "files": [
         "references/examples.md",
         "scripts/verify-dictionaries.ps1",
@@ -384,8 +314,19 @@
       ]
     },
     {
+      "name": "nextjs-opentelemetry",
+      "version": "ab5d80f29109",
+      "files": [
+        "references/otel-contract.md",
+        "resources/templates/env.otel.template",
+        "resources/templates/instrumentation.ts.template",
+        "scripts/mock_collector.js",
+        "SKILL.md"
+      ]
+    },
+    {
       "name": "nextjs-page-dev",
-      "version": "9617a693a2cc",
+      "version": "5d077b0fff58",
       "files": [
         "references/metadata-and-seo.md",
         "references/page-conventions-and-lifecycle.md",
@@ -396,7 +337,6 @@
         "resources/templates/json-ld.tsx.template",
         "resources/templates/layout.tsx.template",
         "resources/templates/loading.tsx.template",
-        "resources/templates/page-spec.template.md",
         "resources/templates/page.tsx.template",
         "scripts/verify-page.ps1",
         "scripts/verify-page.sh",
@@ -404,27 +344,23 @@
       ]
     },
     {
-      "name": "nextjs-plan",
-      "version": "10f3b222ab14",
+      "name": "nextjs-project-scaffold",
+      "version": "ebb2082fa456",
+      "files": [
+        "references/project-schema.md",
+        "resources/templates/project.json.template",
+        "resources/templates/routes.ts.template",
+        "resources/templates/site-config.ts.template",
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "nextjs-spec",
+      "version": "9f5ae24e7a55",
       "files": [
         "references/architecture-contracts.md",
-        "references/execution-ledger.md",
         "references/feature-packs.md",
-        "references/features/health-monitoring.md",
-        "references/features/opentelemetry.md",
-        "references/features/woocommerce.md",
-        "references/features/woocommerce/storefront-reference.md",
-        "references/features/woocommerce/verification-playbook.md",
-        "references/features/woocommerce/windows-local-dev.md",
-        "references/grilling-interview.md",
-        "references/plan-checklist-structure.md",
-        "references/plan-verification.md",
-        "references/project-schema.md",
         "references/workspace-inspection.md",
-        "resources/features/woocommerce/dev-traefik/docker-compose.yml",
-        "resources/features/woocommerce/dev-traefik/traefik.yml",
-        "resources/features/woocommerce/docker-compose.local.yml",
-        "resources/features/woocommerce/woocommerce-fetcher.ts",
         "resources/templates/01-strategy-brief.md.template",
         "resources/templates/02-sitemap-and-routes.md.template",
         "resources/templates/03-ui-design-tokens.md.template",
@@ -432,31 +368,14 @@
         "resources/templates/api/route.ts.template",
         "resources/templates/env.development.template",
         "resources/templates/env.example.template",
-        "resources/templates/health/docker-compose.healthcheck.template.yml",
-        "resources/templates/health/route-no-db.ts.template",
-        "resources/templates/health/route-with-db.ts.template",
-        "resources/templates/otel/env.otel.template",
-        "resources/templates/otel/instrumentation.ts.template",
-        "resources/templates/plan/01-discovery.md.template",
-        "resources/templates/plan/02-environment.md.template",
-        "resources/templates/plan/03-health-probe.md.template",
-        "resources/templates/plan/04-foundations.md.template",
-        "resources/templates/plan/05-pages.md.template",
-        "resources/templates/plan/06-apis-metadata.md.template",
-        "resources/templates/plan/07-integrations.md.template",
-        "resources/templates/plan/README.md.template",
-        "resources/templates/project.json.template",
-        "resources/templates/routes.ts.template",
         "resources/templates/seo/robots.ts.template",
         "resources/templates/seo/sitemap.ts.template",
-        "resources/templates/site-config.ts.template",
-        "scripts/mock_collector.js",
         "SKILL.md"
       ]
     },
     {
       "name": "nextjs-storybook-story",
-      "version": "be6221fdb861",
+      "version": "9fc4bf0a69c7",
       "files": [
         "examples/feature-card/FeatureCard.stories.tsx",
         "examples/feature-card/FeatureCard.tsx",
@@ -470,59 +389,8 @@
       ]
     },
     {
-      "name": "nextjs-test",
-      "version": "35df2f6d5ea1",
-      "files": [
-        "examples/component-baseline/FeatureCard.test.tsx",
-        "examples/component-baseline/ProductCard.test.tsx",
-        "examples/page-suite/about.spec.ts",
-        "examples/README.md",
-        "examples/sample-component.test.tsx",
-        "examples/sample-navigation.spec.ts",
-        "references/adversarial/adversarial-test-matrix.md",
-        "references/authoring/page-testing-standards.md",
-        "references/authoring/unit-testing-standards.md",
-        "references/shared/pitfalls.md",
-        "references/shared/playwright-e2e-standards.md",
-        "references/shared/subagent-test-author-protocol.md",
-        "references/shared/test-execution-tiers.md",
-        "references/shared/test-plan-and-report-schema.md",
-        "references/shared/test-strategy-matrix.md",
-        "resources/prompts/adversarial/adversarial-auditor-subagent.md",
-        "resources/prompts/authoring/test-author-subagent.md",
-        "resources/templates/adversarial/edge-test.template.tsx",
-        "resources/templates/adversarial/playwright-component-spec.template.ts",
-        "resources/templates/adversarial/qa-report.template.md",
-        "resources/templates/authoring/component-unit-test.template.tsx",
-        "resources/templates/authoring/playwright-page-spec.template.ts",
-        "resources/templates/authoring/test-plan.template.md",
-        "resources/test-plan.schema.json",
-        "scripts/verify-qa.ps1",
-        "scripts/verify-qa.sh",
-        "SKILL.md"
-      ]
-    },
-    {
-      "name": "plan",
-      "version": "a0bdfa39e51f",
-      "files": [
-        "references/interview-rounds.md",
-        "references/plan-structure.md",
-        "references/task-types.md",
-        "resources/templates/plan.md.template",
-        "SKILL.md"
-      ]
-    },
-    {
-      "name": "prompt-contracts",
-      "version": "4c67f7473319",
-      "files": [
-        "SKILL.md"
-      ]
-    },
-    {
       "name": "rest-api-design",
-      "version": "268fd973c89f",
+      "version": "7a9ab11a780f",
       "files": [
         "examples/order-management-api.openapi.yaml",
         "references/http-methods-and-status-codes.md",
@@ -537,15 +405,8 @@
       ]
     },
     {
-      "name": "reverse-prompting",
-      "version": "c2904bfe7a4b",
-      "files": [
-        "SKILL.md"
-      ]
-    },
-    {
       "name": "self-repair",
-      "version": "b571ddff547f",
+      "version": "c05391e0331f",
       "files": [
         "assets/autofix.template.json",
         "references/rule-categories.md",
@@ -555,7 +416,7 @@
     },
     {
       "name": "seo-ops",
-      "version": "9ae346ffca0e",
+      "version": "82ed0d129f5c",
       "files": [
         "references/cicd-pipeline-guide.md",
         "references/mcp-setup-guide.md",
@@ -571,7 +432,7 @@
     },
     {
       "name": "setup-repository",
-      "version": "8c8fec5c97c9",
+      "version": "9a1e3676ddca",
       "files": [
         "references/codebase-memory-and-mcp.md",
         "references/docker-and-cicd-guide.md",
@@ -611,7 +472,6 @@
         "resources/templates/i18n/request.ts.template",
         "resources/templates/i18n/routing.ts.template",
         "resources/templates/issue_config.yml.template",
-        "resources/templates/plan.command.md.template",
         "resources/templates/pull_request_template.md.template",
         "resources/templates/release-please.yml.template",
         "resources/templates/review.command.md.template",
@@ -639,25 +499,11 @@
     },
     {
       "name": "stitch-design",
-      "version": "1c977deeb546",
+      "version": "5c05fd1d7b15",
       "files": [
         "references/stitch-api-protocol.md",
         "references/subagent-audit-prompt.md",
         "resources/templates/stitch-meta.json.template",
-        "SKILL.md"
-      ]
-    },
-    {
-      "name": "stochastic-multi-agent-consensus",
-      "version": "36e111852c5f",
-      "files": [
-        "SKILL.md"
-      ]
-    },
-    {
-      "name": "subagent-verification-loops",
-      "version": "41d9f6a9851d",
-      "files": [
         "SKILL.md"
       ]
     }

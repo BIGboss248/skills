@@ -30,7 +30,7 @@ project wants Next.js instant-navigation insights.
 5. Add `test:e2e` and extend `test:all` when selected; add `test:prepush` for the
    N12 hook.
 6. Do **not** create placeholder specs (Rule 3); the pattern in
-   [sample-navigation.spec.ts](../../../nextjs-test/examples/sample-navigation.spec.ts) is for
+   [sample-navigation.spec.ts](../../../tdd/examples/sample-navigation.spec.ts) is for
    reference only.
 
 ## Acceptance

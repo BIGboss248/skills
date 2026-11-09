@@ -1,71 +1,76 @@
 ---
 name: nextjs-i18n-usage
-description: Read/write translation dictionaries (messages/[locale].json), next-intl hooks (getTranslations/useTranslations), providers (Storybook/tests/subtrees), and BiDi styling. Triggers on "/nextjs-i18n-usage", "i18n dictionary", "use translations", "read dictionary", "i18n provider", "next-intl hooks", "storybook i18n", "test i18n", "add translation keys", "localize component", "create a component", "update a component".
-metadata:
-  author: BIGboss248
-  version: "1.1"
+description: >-
+  Consume next-intl dictionaries and providers in Next.js. Use when adding
+  translation keys, fixing missing translations, wiring providers in Storybook
+  or tests, or auditing RTL and BiDi styling.
 ---
 
-# Next.js i18n Dictionaries & Providers (`nextjs-i18n-usage`)
+# next-intl Standards
 
-Engineering standards, hooks, and provider patterns for consuming **`next-intl`** translations across React Server Components, Client Components, Storybook stories, and test harnesses.
+How translations are consumed. This skill owns dictionary and provider rules; it
+does not create components or pages.
 
-> [!TIP]
-> **Implementation Patterns:** Consult [`references/examples.md`](./references/examples.md) for complete code examples (RSC, Client forms, language switchers, Storybook decorators, and test wrappers).
-> **Fast Execution:** Delegate dictionary validation or key sync to a lightweight subagent (`Model: 'flash'`).
+## 1. Zero hardcoding
 
----
+- No user-facing string in JSX, metadata, or JSON-LD literals.
+- No in-file fallback dictionaries (`const DEFAULT_CONTENT = {...}` is forbidden).
+- When copy changes, update every locale file in the same change.
+- Dictionaries live at the project's configured `messages/` directory — the root
+  `messages/`, not `app/dictionaries`.
 
-## 1. Zero-Hardcoding Contract
+## 2. API matrix
 
-- **Zero Hardcoded Text:** Never write user-facing labels, placeholders, or fallback strings in JSX.
-- **No Mock Objects:** In-file mock dictionaries (e.g. `const DEFAULT_CONTENT = {...}`) are FORBIDDEN.
-- **Synchronous Sync:** When adding/updating UI copy, insert authentic translations across **ALL** locale files in `messages/[locale].json` (e.g., `messages/en.json` and `messages/fa.json`) before writing JSX.
+| Context | API |
+| :--- | :--- |
+| Async Server Component | `await getTranslations('namespace')` |
+| Server formatter | `await getFormatter()` |
+| `generateMetadata` | `await getTranslations('namespace')` |
+| Client Component | `useTranslations('namespace')` |
+| Client formatter | `useFormatter()` |
+| Rich text with React nodes | `t.rich('key', { link: (chunks) => <Link ...>{chunks}</Link> })` |
+| Internal navigation | the localized `Link`, `useRouter`, `usePathname` from `@/i18n/navigation` |
+| Storybook | `<NextIntlClientProvider locale messages>` in the preview decorator |
+| Jest/RTL | a `renderWithIntl` wrapper using real messages |
 
----
+## 3. RTL and BiDi
 
-## 2. API & Hooks Quick Reference
+- Logical utilities only: `ms-`, `me-`, `ps-`, `pe-`, `start`, `end`,
+  `text-start`, `text-end`.
+- Forbidden: `ml-`, `mr-`, `pl-`, `pr-`, `left-`, `right-`, `text-left`,
+  `text-right`.
+- Direction is set on `<html>` from the active locale (`rtl` for `fa`/`ar`).
+- Icons that imply direction (arrows, chevrons) flip with the locale.
 
-| Environment / Target       | Hook / API               | Example Syntax                                                                           |
-| :------------------------- | :----------------------- | :--------------------------------------------------------------------------------------- |
-| **Server Component (RSC)** | `getTranslations`        | `const t = await getTranslations('namespace');`                                          |
-| **Server Formatter**       | `getFormatter`           | `const format = await getFormatter(); format.dateTime(...)`                              |
-| **Dynamic Metadata**       | `getTranslations`        | `export async function generateMetadata({ params }) { ... }`                             |
-| **Client Component**       | `useTranslations`        | `const t = useTranslations('namespace');`                                                |
-| **Client Formatter**       | `useFormatter`           | `const format = useFormatter(); format.number(...)`                                      |
-| **Rich Text (Client)**     | `t.rich`                 | `t.rich('terms', { link: (c) => <Link href="/t">{c}</Link> })`                           |
-| **Navigation**             | `@/i18n/navigation`      | `import { Link, useRouter, usePathname } from '@/i18n/navigation';`                      |
-| **Storybook Preview**      | `NextIntlClientProvider` | Wrap preview decorator with `<NextIntlClientProvider locale="en" messages={enMessages}>` |
-| **Unit Testing (Jest)**    | `renderWithIntl`         | Wrap render with `<NextIntlClientProvider locale="en" messages={messages}>`              |
+## 4. Parity
 
----
+- Every key exists in every locale file; missing keys fail the check, extra keys
+  are reported.
+- Placeholders and plural forms must match across locales.
+- Run the repo's parity check, or compare key sets directly when none exists.
 
-## 3. BiDi (LTR / RTL) & Styling Standards
+## Definition of Done
 
-1. **Tailwind Logical Properties Only:**
-   - **Forbidden:** `ml-*`, `mr-*`, `pl-*`, `pr-*`, `left-*`, `right-*`, `text-left`, `text-right`
-   - **Required:** `ms-*`, `me-*`, `ps-*`, `pe-*`, `start-*`, `end-*`, `text-start`, `text-end`
-2. **Dynamic Direction:** Dynamic `<html dir="rtl">` for `fa`/`ar` and `dir="ltr"` for `en`.
+- [ ] No literal user-facing string in the change.
+- [ ] Keys added to every supported locale.
+- [ ] The correct hook is used for the render context (server vs client).
+- [ ] Providers present wherever the component renders outside the app tree.
+- [ ] No physical-direction utility in the change.
+- [ ] Parity check passes or its absence is reported.
 
----
+## Edge Cases & Pitfalls
 
-## 4. Anti-Patterns & Pitfalls
+| Mistake | Cause | Fix |
+| :--- | :--- | :--- |
+| `useTranslations` in an async RSC | Hooks cannot run there | `await getTranslations` |
+| `getTranslations` in a client file | Server-only | `useTranslations` |
+| "No intl context found" | Missing provider in Storybook/test | Wrap with `NextIntlClientProvider` |
+| `t('key') \|\| 'Fallback'` | Hidden missing key | Add the key to every locale |
+| Raw `next/link` | Drops the locale prefix | Use the localized `Link` |
+| Global progress bar | Wrong feedback model | `useLinkStatus` inside the localized link |
+| `text-left` in an RTL locale | Physical direction | `text-start` |
 
-| Mistake                         | Root Cause                                  | Solution                                           |
-| :------------------------------ | :------------------------------------------ | :------------------------------------------------- |
-| **`useTranslations` in RSC**    | Hooks cannot run in async Server Components | Use `await getTranslations('ns')`                  |
-| **`getTranslations` in Client** | Server-only async function                  | Use `useTranslations('ns')` with `"use client"`    |
-| **"No intl context found"**     | Missing provider in Storybook/test          | Wrap story/test in `<NextIntlClientProvider>`      |
-| **Hardcoded Fallbacks**         | e.g. `t('btn') \|\| 'Submit'`               | Add key to `messages/en.json` & `messages/fa.json` |
-| **Raw `next/link`**             | Drops locale prefix on route change         | Use `Link` from `@/i18n/navigation`                |
-| **Global progress bar package** | Extra dependency and provider, and it does not say *which* link was clicked | Render a `useLinkStatus()` child inside the i18n `Link` |
+## References
 
----
-
-## 5. Parity Verification
-
-Execute dictionary parity check:
-
-```pwsh
-pwsh .agents/skills/nextjs-i18n-usage/scripts/verify-dictionaries.ps1
-```
+- [Implementation examples](./references/examples.md)
+- [Parity script](./scripts/verify-dictionaries.ps1)

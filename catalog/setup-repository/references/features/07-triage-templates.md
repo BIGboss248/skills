@@ -3,7 +3,7 @@
 ## Enable when
 
 The repository accepts issues or pull requests through GitHub. This feature sets
-up the **infrastructure**; the `github-triage` skill owns the runtime triage
+up the **infrastructure**; the `triage` skill owns the runtime triage
 loop.
 
 ## Questions
@@ -14,7 +14,7 @@ loop.
 4. Provision the remote labels (`bug`, `enhancement`, `agent-triage`,
    `self-repair`, `verified`)?
 5. Contact links for `config.yml` (docs, discussions, security policy)?
-6. Should the `github-triage` logging contract live in `AGENTS.md` (F2) or
+6. Should the `triage` logging contract live in `AGENTS.md` (F2) or
    `CONTRIBUTING.md`? Default: `AGENTS.md`, with a pointer from `CONTRIBUTING.md`.
 
 ## Steps
@@ -32,7 +32,7 @@ loop.
    dropdown/checkbox, required flags where intended.
 5. Install the logging contract from
    [AGENTS.md.template](../../resources/templates/AGENTS.md.template)
-   ("Issue logging (`github-triage`)" section): dedupe → register →
+   ("Issue logging (`triage`)" section): dedupe → register →
    diagnose → fix/verify → capture rule → resolve → report. If F2 is disabled,
    place the same contract in `CONTRIBUTING.md` and link it from the README.
 6. Push to `main` before expecting the forms to appear in the GitHub UI.
@@ -45,13 +45,13 @@ loop.
 - [ ] PR template exists when selected.
 - [ ] Labels exist on the remote when provisioning was selected and possible;
       otherwise the skip is recorded in the report.
-- [ ] `AGENTS.md` (or `CONTRIBUTING.md`) names `github-triage` and states the
+- [ ] `AGENTS.md` (or `CONTRIBUTING.md`) names `triage` and states the
       dedupe / verify-before-close / autofix-bridge rules.
 
 ## Notes
 
 - Triage *runtime* behavior (dedupe, root cause, test verification, rule linking)
-  belongs to `github-triage`, not to this setup feature.
+  belongs to `triage`, not to this setup feature.
 - `AGENTS.md` is the preferred home because it is loaded every session; a
   `CONTRIBUTING.md`-only contract is a degraded setup and must be reported as
   such.

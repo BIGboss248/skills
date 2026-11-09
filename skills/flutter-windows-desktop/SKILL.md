@@ -1,52 +1,90 @@
 ---
 name: flutter-windows-desktop
 description: >-
-  Develop, debug, build, obfuscate, and package Flutter desktop applications on Windows with automated Release Please CI/CD. Use when configuring build flavors, obfuscation, VS Code launch options, or CI/CD pipelines.
+  Build and package Flutter Windows desktop apps. Use when configuring desktop
+  targets, release builds, obfuscation, MSIX or installer packaging, or release
+  CI.
 ---
 
-# Flutter Windows Desktop (`flutter-windows-desktop`)
+# Flutter Windows Desktop Standards
 
-Comprehensive orchestration guide for developing, packaging, and deploying Flutter Windows applications referencing official [Flutter Windows Deployment](https://docs.flutter.dev/deployment/windows), [Continuous Delivery](https://docs.flutter.dev/deployment/cd), and [Fastlane & Release Automation](https://docs.fastlane.tools/).
+How a Windows build is produced and shipped. This skill covers the platform only.
 
----
+## Platform rules
 
-## Windows Desktop Workflow Checklist
+- Desktop embedding is enabled once: `flutter config --enable-windows-desktop`.
+- `flutter doctor` must be clean before a release build.
+- Debug, profile, and release are three distinct launch configurations; profile is
+  the only one that reports real frame and memory behavior.
 
-Follow this procedure for desktop development and distribution:
+## Release build
 
-- [ ] **Phase 1: Environment & Platform Enablement**
-  - Enable desktop embedding: `flutter config --enable-windows-desktop`.
-  - Validate system prerequisites with `flutter doctor`.
-  - Configure `.vscode/launch.json` and `.vscode/settings.json` for target device `windows`.
-- [ ] **Phase 2: Local Run & DevTools Profiling**
-  - Launch debug instance: `flutter run -d windows`.
-  - Profile frame rendering and memory: `flutter run -d windows --profile`.
-  - Monitor DevTools layout and inspect CPU isolates.
-- [ ] **Phase 3: Production Build & Obfuscation**
-  - Execute release build with symbol splitting to safeguard proprietary logic:
-    ```powershell
-    flutter build windows --release --obfuscate --split-debug-info=build/windows/symbols
-    ```
-- [ ] **Phase 4: Packaging & Automated CI/CD Release**
-  - Configure PR validation workflow: [ci.yml.template](./resources/templates/ci.yml.template).
-  - Configure automated release workflow: [release-please.yml.template](./resources/templates/release-please.yml.template).
-  - Track versions with `release-please-config.json` and `.release-please-manifest.json`.
-  - Automated release pipeline packages `build/windows/x64/runner/Release/` and uploads `.zip` directly to GitHub Releases.
+- Build with symbols split so a production stack trace can be de-obfuscated:
+  `flutter build windows --release --obfuscate --split-debug-info=build/windows/symbols`.
+- Archive `build/windows/symbols/` with every release; a release without its
+  symbol map cannot read crash reports.
+- Never distribute `<app>.exe` alone. The plugin DLLs, `flutter_windows.dll`, and
+  the `data/` folder ship together.
 
----
+## Packaging order
 
-## Edge Cases & Known Pitfalls
+1. Compress the portable archive (`.zip`).
+2. Compile the installer (`ISCC.exe "/DMyAppVersion=<version>" windows\installer\setup.iss`).
+3. Run `dart run msix:create` **last**.
 
-- **Redistributable DLLs**: Windows standalone executables require accompanying DLLs (`flutter_windows.dll`, plugin DLLs) and the `data/` folder in the same directory as `<app>.exe`. Never distribute `<app>.exe` in isolation.
-- **Obfuscation Symbols**: Keep `build/windows/symbols/` archived alongside every release; stack traces from production crashes cannot be de-obfuscated without the matching symbol map.
-- **Workflow Concurrency on Main**: In release workflows on `main`, configure `concurrency: cancel-in-progress: false` to prevent release builds from being cancelled by subsequent pushes.
-- **Fastlane Scope**: Fastlane automates mobile store deployments (iOS App Store / Google Play); for Windows desktop, use native GitHub Actions Windows runners with PowerShell and Flutter CLI.
+Running MSIX before the zip and installer bundles the `.msix` inside them.
 
----
+`setup.iss` resolves relative paths from its own directory; keep
+`SetupIconFile=..\runner\resources\app_icon.ico` and
+`OutputDir=..\..\build\windows`.
 
-## Deep References
+## MSIX rules
 
-- [Windows Deployment & Packaging Specs](./references/deployment_guide.md)
-- [CI/CD & Fastlane / Release Automation Guide](./references/cicd_automation_guide.md)
-- [PR Validation Workflow Template](./resources/templates/ci.yml.template)
-- [Release Please Windows Workflow Template](./resources/templates/release-please.yml.template)
+- `msix_config.capabilities` is a comma-separated string
+  (`capabilities: internetClient`), never a YAML list — a list crashes
+  `msix:create` with `type 'YamlList' is not a subtype of type 'String?'`.
+- `install_certificate: false`, and pass `--install-certificate false` in CI so
+  the build never blocks on an interactive prompt.
+- The output file is
+  `build/windows/x64/runner/Release/<pubspec_name>.msix` unless `output_name` is
+  set.
+
+## CI and release
+
+- PR validation workflow: [ci template](./resources/templates/ci.yml.template).
+- Release workflow: [release-please template](./resources/templates/release-please.yml.template).
+- Release Please tracks versions through `release-please-config.json` and
+  `.release-please-manifest.json`.
+- `concurrency: cancel-in-progress: false` on release jobs so a push never
+  cancels an in-flight build.
+- Upload the `.zip`, the `.exe` installer, and the `.msix` as release assets.
+- Fastlane targets mobile stores; it has no role in Windows desktop.
+
+## Definition of Done
+
+- [ ] `flutter doctor` clean and desktop embedding enabled.
+- [ ] Release build produced with obfuscation and symbols archived.
+- [ ] Packaging ran in order: zip, installer, MSIX.
+- [ ] The archive does not contain the `.msix`.
+- [ ] Release workflow uploads all three artifacts.
+- [ ] No secret appears in the workflow or the bundle.
+- [ ] Release build, installer, and CI artifacts were produced.
+
+## Edge Cases & Pitfalls
+
+- **Isolated exe** — missing DLLs or `data/` means an instant crash on another
+  machine.
+- **Lost symbols** — obfuscated crash reports become unreadable.
+- **MSIX capabilities list** — the most common CI crash in this setup.
+- **Certificate prompt** — blocks CI until it times out.
+- **Install order** — MSIX created first bloats the zip and installer.
+- **Release PR permissions** — GitHub blocks `GITHUB_TOKEN` from opening PRs
+  unless the repository allows it.
+- **Cancelled releases** — default concurrency cancels a running release build.
+
+## References
+
+- [Windows deployment and packaging](./references/deployment_guide.md)
+- [CI/CD and release automation](./references/cicd_automation_guide.md)
+- [PR validation template](./resources/templates/ci.yml.template)
+- [Release workflow template](./resources/templates/release-please.yml.template)
