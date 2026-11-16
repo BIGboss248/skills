@@ -39,4 +39,5 @@ This reference defines the schema, precedence rules, and categorization taxonomy
 1. **Higher Number Wins**: When two rules provide conflicting instructions, the higher `Rule_number` (newer rule) takes precedence over older rules.
 2. **Immutability**: Never delete existing rules to preserve historical audit trail. If an older rule is superseded, write the new rule with a higher number and document the reason in `Why`.
 3. **Imperative Phrasing**: Always write instructions in clear imperative terms (`"Never/Always do X - because Y"`).
+4. **Workspace Scope**: A ruleset applies only inside the workspace that owns `.agents/autofix.json`. Rules from another workspace — including the Obsidian vault when the task runs in a separate repository — never participate in conflict resolution; they can only be re-added locally as a new rule whose `Why` names the origin.
 

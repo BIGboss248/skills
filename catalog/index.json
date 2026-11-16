@@ -393,7 +393,7 @@
     },
     {
       "name": "self-repair",
-      "version": "c05391e0331f",
+      "version": "2c0e22a401ba",
       "files": [
         "assets/autofix.template.json",
         "references/rule-categories.md",
