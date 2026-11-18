@@ -33,7 +33,7 @@ exist, or no lockfile is present).
 Present the four categories and their features with defaults. Ask:
 
 > Which categories should I keep, and do you want to name any specific features
-> (N1–N13) to add or drop?
+> (N1–N14) to add or drop?
 
 Rules:
 
@@ -61,6 +61,9 @@ Rules:
   (`class` / `data-theme` / `data-mode`); default theme and system following;
   palette scope (keep values vs derive dark pairs); toggle placement and shape;
   motion on theme change; storage key.
+- **N14 Sentry**: account or project availability, then the pasted setup prompt
+  Sentry produces. The prompt is the spec; ask for it rather than describing the
+  integration yourself.
 
 ### Category B — Testing & Quality
 

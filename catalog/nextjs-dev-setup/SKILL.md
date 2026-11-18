@@ -44,6 +44,7 @@ cannot be detected.
 | N7 | Storybook | off | N2 |
 | N8 | Design-system lint | on | N2 |
 | N13 | Theming and dark mode | on | N2 |
+| N14 | Sentry accountability | on | N2 |
 | N11 | Production Docker and reverse proxy | off | N2 |
 | N12 | Git hooks and CI/CD | on | N2, N5/N6 for the gate |
 
@@ -69,7 +70,7 @@ Menu, presets, and dependency resolution:
 
 ## Phase 2 — Execute enabled features
 
-Order: **N1 → N2 → N3 → N4 → N5 → N6 → N7 → N8 → N13 → N11 → N12**.
+Order: **N1 → N2 → N3 → N4 → N5 → N6 → N7 → N8 → N13 → N14 → N11 → N12**.
 
 For each enabled feature: generate one `implementation_plan.md` before the first
 write, open its runbook, follow it, run its acceptance check, and record
@@ -86,6 +87,7 @@ write, open its runbook, follow it, run its acceptance check, and record
 | N7 Storybook | [07-storybook](./references/features/07-storybook.md) |
 | N8 Design-system lint | [08-design-system-lint](./references/features/08-design-system-lint.md) |
 | N13 Theming | [13-theming](./references/features/13-theming.md) |
+| N14 Sentry | [14-sentry](./references/features/14-sentry.md) |
 | N11 Docker and proxy | [11-docker-reverse-proxy](./references/features/11-docker-reverse-proxy.md) |
 | N12 Git hooks and CI/CD | [12-git-hooks-cicd](./references/features/12-git-hooks-cicd.md) |
 
@@ -120,6 +122,8 @@ checks belong to `tdd`, `code-review`, and the repository's own hooks.
 - [ ] Every enabled feature implemented and its acceptance check run.
 - [ ] Disabled features untouched and reported `[SKIPPED]`.
 - [ ] No dummy test, no secret, no commit.
+- [ ] When N14 is enabled, the setup followed the prompt the client pasted from
+      Sentry, and a real error was confirmed in Sentry.
 - [ ] The report names deferred or degraded items.
 
 ## Edge Cases & Pitfalls
@@ -137,6 +141,10 @@ checks belong to `tdd`, `code-review`, and the repository's own hooks.
   to lint and record it.
 - **Release gate** — keep `release` and image jobs in one workflow and publish
   only when `needs.release.outputs.released == 'true'`.
+- **Sentry prompt vs. reality** — the pasted prompt describes the SDK it knows;
+  confirm any build-time value it introduces actually exists during `next build`,
+  because `NEXT_PUBLIC_*` is inlined there and a platform that injects it only at
+  runtime ships an empty DSN.
 - **Component mismatch** — with `include-component-in-tag: false`, keep
   `package-name: ""` in the release config.
 - **Expensive tier** — pre-push is the only local execution point for Playwright

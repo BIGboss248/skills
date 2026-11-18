@@ -39,7 +39,7 @@
     },
     {
       "name": "flutter-dev-setup",
-      "version": "5b9c85ccf43f",
+      "version": "853e2711d2bf",
       "files": [
         "references/ai-tools-and-mcp.md",
         "references/flavors-and-defines.md",
@@ -198,7 +198,7 @@
     },
     {
       "name": "nextjs-dev-setup",
-      "version": "a96e613e9279",
+      "version": "a07d4d17320c",
       "files": [
         "examples/sample-component.stories.tsx",
         "references/app-icons-and-pwa-guide.md",
@@ -215,6 +215,7 @@
         "references/features/11-docker-reverse-proxy.md",
         "references/features/12-git-hooks-cicd.md",
         "references/features/13-theming.md",
+        "references/features/14-sentry.md",
         "references/i18n-setup-guide.md",
         "references/navigation-pending-guide.md",
         "references/project-json-schema.md",

@@ -151,7 +151,7 @@ Full contract: [`.agents/rules/agent-boundaries.md`](./.agents/rules/agent-bound
 ## 5. Setup Feature Selection (`.agents/nextjs-setup-features.json`)
 
 Read the recorded selection before assuming a tool exists: a disabled feature is
-deliberate, not broken. `N1`–`N13` map to the runbooks under
+deliberate, not broken. `N1`–`N14` map to the runbooks under
 `nextjs-dev-setup/references/features/`. Do not add configuration for a disabled
 feature without enabling it in the selection first.
 

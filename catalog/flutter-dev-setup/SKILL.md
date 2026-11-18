@@ -2,7 +2,8 @@
 name: flutter-dev-setup
 description: >-
   Bootstrap a Flutter development environment. Use when initializing a Flutter
-  project, or adding linting, logging, flavors, hooks, triage, or release CI.
+  project, or adding linting, logging, crash reporting, flavors, hooks, triage,
+  or release CI.
 ---
 
 # Flutter Environment Setup
@@ -53,7 +54,16 @@ Setup is procedural, so the stages below are the job.
   `--dart-define-from-file`.
 - Details: [flavors and defines](./references/flavors-and-defines.md).
 
-## Stage 5 — Hooks
+## Stage 5 — Crash reporting (Sentry)
+
+- Ask the client to create a Sentry project for the app.
+- Ask them to copy the setup prompt Sentry produces for a coding agent and paste
+  it into the chat.
+- Follow that prompt: it decides the packages, the initialization, and the symbol
+  upload. Do not restate it here or fill the gaps from memory.
+- No account and no prompt → record `[BLOCKED]`; never invent a DSN.
+
+## Stage 6 — Hooks
 
 - Use `lefthook`, not Node/Husky, to keep a pure Dart toolchain.
 - Pre-commit: `dart format --set-exit-if-changed .` and
@@ -62,14 +72,14 @@ Setup is procedural, so the stages below are the job.
 - Pre-push: `flutter test`.
 - Config: [git hooks and lints](./references/git-hooks-and-lints.md).
 
-## Stage 6 — Triage infrastructure
+## Stage 7 — Triage infrastructure
 
 - Run `scripts/init_triage_infra.ps1` to scaffold issue forms and register the
   triage labels used by `triage`.
 - Templates: [bug report](./resources/templates/bug_report.yml.template) ·
   [issue config](./resources/templates/issue_config.yml.template).
 
-## Stage 7 — Release CI
+## Stage 8 — Release CI
 
 - Deploy [the release workflow](./resources/templates/release-please.yml.template)
   and the Release Please config and manifest.
@@ -86,6 +96,8 @@ MCP server configuration is owned by `ag-customizer`, not this skill.
 
 - [ ] `flutter doctor` clean and desktop embedding enabled when targeted.
 - [ ] Launch targets, analysis options, logger, and flavors exist.
+- [ ] Crash reporting followed the client's pasted Sentry prompt, or is recorded
+      as `[BLOCKED]` with the reason.
 - [ ] Hooks run format, analyze, commitlint, and test.
 - [ ] Triage forms and labels exist.
 - [ ] Release workflow builds and uploads every declared platform artifact.

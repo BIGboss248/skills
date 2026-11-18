@@ -30,6 +30,7 @@ categories the user keeps. Any feature can also be named explicitly by ID.
 | | N3 App icons & PWA manifest | on | N2 |
 | | N4 Internationalization (`next-intl`) | on | N1, N2 |
 | | N13 Theming & light/dark mode (`next-themes`) | on | N2; N8 recommended |
+| | N14 Sentry accountability (client pastes Sentry's own setup prompt) | on | N2 |
 | **B — Testing & Quality** | N5 Jest unit testing | on | N2 |
 | | N6 Playwright E2E & instant navigation | on | N2 |
 | | N7 Storybook workshop | off | N2 |
@@ -42,20 +43,20 @@ categories the user keeps. Any feature can also be named explicitly by ID.
 ## 3. Round 1 — Preset
 
 > Which preset should I use?
-> **Minimal** (N1, N2) · **Standard** (N1–N6, N8–N10, N12–N13 — no N7 or N11) ·
+> **Minimal** (N1, N2) · **Standard** (N1–N6, N8–N10, N12–N14 — no N7 or N11) ·
 > **Full** (all applicable) · **Custom** (choose categories and/or specific IDs)
 
 ## 4. Round 2 — Categories and adjustments
 
 > Here is the Standard selection, grouped by category. Which **categories**
 > should I add or remove, and do you want to name any **specific features**
-> (N1–N13) to add or drop?
+> (N1–N14) to add or drop?
 
 Resolve every dependency and record the degraded result:
 
 - N2 without N1 → metadata stays empty; every runbook that reads project facts
   falls back to detection and the report records the degraded mode.
-- N3/N4/N5/N6/N7/N8/N9/N11/N12/N13 without N2 → blocked; enable N2 or drop them.
+- N3/N4/N5/N6/N7/N8/N9/N11/N12/N13/N14 without N2 → blocked; enable N2 or drop them.
 - N13 without N8 → theming works, but raw palette classes and arbitrary color
   values are unenforced; record the degraded result.
 - N13 without N7 → no Storybook theme decorator parity is checked.
@@ -84,6 +85,9 @@ Ask only the questions for enabled features; each runbook lists its own set.
 - **N8**: token stylesheet, rule severity.
 - **N13**: detected dark selector and strategy, default theme, palette scope,
   toggle placement/shape, motion on change, storage key.
+- **N14**: whether the client has a Sentry account and will create a project;
+  once the project exists, ask for the setup prompt Sentry generates and treat it
+  as the instructions. Never ask for a token in the chat.
 - **N9**: roster confirmation, model overrides per role, command shortcuts.
 - **N10**: accepted MCP servers, install codebase-memory, workspace vs global,
   first index mode.
@@ -108,6 +112,7 @@ then present:
 | A Foundation | N3 App icons & PWA | ENABLED |
 | A Foundation | N4 Internationalization | ENABLED |
 | A Foundation | N13 Theming & light/dark mode | ENABLED |
+| A Foundation | N14 Sentry accountability | ENABLED |
 | B Testing & Quality | N5 Jest | ENABLED |
 | B Testing & Quality | N6 Playwright | ENABLED |
 | B Testing & Quality | N7 Storybook | DISABLED |
@@ -134,6 +139,7 @@ Proceed with these features? (yes / adjust)
 | Foundation | N3 App icons & PWA | `app/favicon.ico`, `app/icon.png`, `app/apple-icon.png`, `app/manifest.ts` | … | … |
 | Foundation | N4 Internationalization | `i18n/*`, `proxy.ts`/`middleware.ts`, `app/[locale]/layout.tsx`, `messages/*.json`, `global.d.ts` | … | locales: … |
 | Foundation | N13 Theming & dark mode | providers file, `<style_file_dir>`, toggle component, `docs/project.json` | … | strategy: … |
+| Foundation | N14 Sentry accountability | files chosen by the client's pasted Sentry prompt | … | prompt: pasted / missing |
 | Testing & Quality | N5 Jest | `jest.config.ts`, `jest.setup.ts` | … | … |
 | Testing & Quality | N6 Playwright | `playwright.config.ts`, `next.config.ts` | … | … |
 | Testing & Quality | N7 Storybook | `.storybook/main.ts`, `.storybook/preview.tsx` | … | … |
