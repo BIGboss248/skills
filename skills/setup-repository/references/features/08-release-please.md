@@ -39,4 +39,8 @@ Conventional Commits.
   failing runs.
 - With manifest `0.0.0`, `initial-version: 0.1.0`, and `bump-minor-pre-major`, the
   first `feat:` yields `v0.1.0`.
+- The README release-version badge is F15's job. It reads the latest tag at render
+  time, so this runbook never writes a version number into `README.md`.
+- When F15 is enabled, confirm the badge switches from `no releases` to `vX.Y.Z`
+  after the release PR merges.
 - Full reference: [github-repository-setup.md](../github-repository-setup.md).

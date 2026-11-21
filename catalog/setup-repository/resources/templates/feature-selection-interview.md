@@ -12,6 +12,7 @@ Stack:            <detected framework / runtime>
 Package manager:  <lockfile → pnpm|npm|yarn|bun>
 Git remote:       <origin URL or "none">
 GitHub CLI:       <authenticated as … | not authenticated | not installed>
+Project scope:    <present | missing (gh auth refresh -s project)>
 Docker:           <version | not installed>
 Codebase Memory:  <MCP registered | binary installed | unavailable>
 MCP servers:      <registered servers or "none">
@@ -35,11 +36,13 @@ Existing files:   <AGENTS.md, docs/project.json, .github/, Dockerfile, .husky/ �
 | F11 | Next.js internationalization (`next-intl`, locale routing, dictionaries) | off | Next.js App Router project, F1 |
 | F12 | Planning workflow (`to-spec` -> `to-tickets`) | on | — |
 | F13 | Code scanning (CodeQL, **non-blocking** — notifies on failure, never gates) | on for public repositories (off on private without GitHub Code Security) | F6, public visibility or a Code Security licence, a CodeQL-supported language |
+| F14 | GitHub Project board (auto-add issues/PRs, Status → Done on close) | on if the `project` scope is present | F6, `project` token scope |
+| F15 | README badges (CI validation workflow status + latest release version) | on | F6, a committed CI workflow, F8 for the version |
 
 ## 3. Round 1 — Preset
 
 > Which preset should I use?
-> **Minimal** (F1, F2) · **Standard** (F1, F2, F4, F6, F7, F8, F10, F12, plus F3 when installed and F13 when the repository is public with a CodeQL-supported language) · **Full** (all except F9 unless a CI check exists, plus F11 for Next.js App Router projects and F13 when a supported language is present) · **Custom**
+> **Minimal** (F1, F2) · **Standard** (F1, F2, F4, F6, F7, F8, F10, F12, F14, F15, plus F3 when installed and F13 when the repository is public with a CodeQL-supported language) · **Full** (all except F9 unless a CI check exists, plus F11 for Next.js App Router projects and F13 when a supported language is present) · **Custom**
 
 ## 4. Round 2 — Adjustments
 
@@ -64,6 +67,15 @@ Resolve every removal of a dependency:
 - F13 on a public repo → free to run; no licence needed.
 - F13 on an unsupported language (Dart/Flutter, PHP, Elixir) → `[SKIPPED]` with the reason.
 - F13 and F9 both enabled → F13 runs first and publishes the check name, but F9 still defers until that check has reported once.
+- F14 without F6 → no remote to link; create the project and record that the link, the auto-add filter, and the Actions job all wait for the first push.
+- F14 without F7 (or with Issues disabled) → the board still collects pull requests; record that only PRs arrive.
+- F14 without the `project` token scope → `[BLOCKED]`; print `gh auth refresh -s project,read:project` and stop.
+- F14 native mode → the auto-add workflow has no API; hand it off with the exact UI steps and report `[MANUAL]`.
+- F14 headless mode without a PAT → `[BLOCKED]` at the workflow step; report that the `PROJECT_TOKEN` secret is the missing input.
+- F15 without F6 → no remote, so both badge URLs point at nothing; write the block with placeholders only if the user will create the remote, else `[SKIPPED]`.
+- F15 without F8 → CI badge only; report the release badge as deferred until the first tag exists.
+- F15 without a CI workflow → the CI badge cannot resolve; either point it at the workflow that will run the gate or ship the release badge alone.
+- F15 on a private repository → badges render `unknown` for anonymous readers; `[BLOCKED]` with the visibility as the reason, or defer until the repo is public.
 
 ## 5. Round 3 — Per-feature options (enabled only)
 
@@ -81,6 +93,8 @@ Ask only the questions for enabled features; each runbook lists them. Examples:
 - **F11**: which locales and default locale; locale prefix `always` or `as-needed`; migrate existing routes into `app/[locale]/` now or later; which locales render right-to-left?
 - **F12**: spec location (tracker or `.scratch/<slug>/issues/`); commit specs? stop after every ticket or only at the end?
 - **F13**: confirm repository visibility (public = free; private needs GitHub Code Security) and the detected languages; failure notification (tracking issue / step summary only / both); build mode for compiled languages; query suite (`security-extended` or `security-and-quality`); triggers (push + weekly schedule, plus release-time scan, plus manual)? install the `codeql` skill alongside the workflow?
+- **F14**: project owner (repository owner or another org) and title; native auto-add (UI step, no secret) or headless (Actions workflow + PAT); which Status option means checked off (default `Done`); probe issue allowed?; backfill existing open issues and PRs?
+- **F15**: which workflow file is the CI gate (and should its `name:` be shortened to `CI` for the badge label); both badges or extra ones (license, runtime version); placement under the H1 or in a Status section; is a shields.io image acceptable, or native GitHub only?
 
 ## 6. Confirmation
 
@@ -102,6 +116,8 @@ Ask only the questions for enabled features; each runbook lists them. Examples:
 | F11 Next.js i18n | DISABLED (single locale) |
 | F12 Planning workflow | ENABLED |
 | F13 Code scanning (CodeQL) | DISABLED (no supported language) |
+| F14 GitHub Project board | ENABLED (native auto-add) |
+| F15 README badges | ENABLED (CI + release) |
 
 Preset: Standard
 Degraded: none
@@ -128,6 +144,8 @@ Proceed with these features? (yes / adjust)
 | F11 Next.js i18n | `i18n/routing.ts`, `i18n/request.ts`, `i18n/navigation.ts`, `proxy.ts`/`middleware.ts`, `app/[locale]/layout.tsx`, `messages/<locale>.json`, `global.d.ts`, `docs/project.json` | … | locales: … |
 | F12 Planning workflow | `AGENTS.md` | … | spec location: … |
 | F13 Code scanning (CodeQL) | `.github/workflows/codeql.yml`, `skills/codeql/`, labels/`CODEQL_OPEN_ISSUE`, `AGENTS.md` | … | visibility: public (free) / private + Code Security · languages: … · gating: none (by design) |
+| F14 GitHub Project board | project #`<n>`, repo link, `Item closed` workflow, auto-add filter (native) or `.github/workflows/project-sync.yml` + `PROJECT_TOKEN` (headless) | … | mode: native/headless · done option: `Done` · probe: issue #`<n>` closed |
+| F15 README badges | `README.md` (badge block under the H1) | … | workflow: `…` · branch: `…` · release badge: version / `no releases` / `[BLOCKED]` (private) |
 
 Preset: <preset>
 Verification: <commands and result per enabled feature>

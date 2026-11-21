@@ -1,9 +1,9 @@
 # GitHub Repository Provisioning Runbook
 
 Backs features **F6** (repository, metadata, docs), **F7** (templates), **F8**
-(Release Please), **F13** (CodeQL code scanning) and **F9** (branch protection).
-Derived from the `nextjs-wordpress-starter` Phase 0 gate. Use it after the local
-scaffold exists and before CI/CD work starts.
+(Release Please), **F13** (CodeQL code scanning), **F14** (project board) and
+**F9** (branch protection). Derived from the `nextjs-wordpress-starter` Phase 0
+gate. Use it after the local scaffold exists and before CI/CD work starts.
 
 ---
 
@@ -74,6 +74,8 @@ Rules:
   private repositories.
 - Enable "delete branch on merge" so release-please and feature branches do not
   accumulate.
+- `--enable-projects=false` hides the Projects tab. F14 reverses it with
+  `gh repo edit <owner>/<repo> --enable-projects=true`.
 
 Verify:
 
@@ -93,7 +95,7 @@ Every repository gets, at minimum:
 
 | File | Purpose |
 | :--- | :--- |
-| `README.md` | What it is, prerequisites, run/deploy path, links to the rest. |
+| `README.md` | What it is, prerequisites, run/deploy path, links to the rest. Status badges (CI + latest release) come from F15. |
 | `LICENSE` | Confirm the license with the owner before creating the repo. |
 | `CONTRIBUTING.md` | Branch/commit/review rules and the local test gate. |
 | `SECURITY.md` | Supported versions and private vulnerability reporting. |
@@ -128,6 +130,66 @@ default branch, so verification happens after the first push to `main`.
 Validate issue forms structurally: unique `id`s per form, supported block types,
 at least one option per dropdown/checkbox, and required flags on the blocks that
 matter.
+
+---
+
+## 4b. Project board (F14)
+
+A GitHub Project (v2) that collects the repository's issues and pull requests
+and checks them off on close. Two halves, two mechanisms:
+
+| Half | Mechanism |
+| :--- | :--- |
+| Add issues and PRs | Built-in "Auto-add to project" workflow — **UI only** — or the `.github/workflows/project-sync.yml` job |
+| Check off on close | Built-in "Item closed" workflow (Status → Done), on by default at project creation |
+
+```bash
+gh auth status                                   # needs the 'project' scope
+gh auth refresh -s project,read:project          # interactive; the user does it
+
+gh repo edit <owner>/<repo> --enable-projects=true
+gh project create --owner <owner> --title "<title>" --format json
+gh project link <number> --owner <owner> --repo <owner>/<repo>
+gh project field-list <number> --owner <owner> --format json \
+  --jq '.fields[] | select(.name == "Status")'
+```
+
+Verify the link and the workflows — the schema cannot create or edit a workflow,
+only read and delete it:
+
+```bash
+gh api graphql -f query='
+  query($login: String!, $number: Int!) {
+    user(login: $login) {
+      projectV2(number: $number) {
+        id
+        url
+        repositories(first: 20) { nodes { nameWithOwner } }
+        workflows(first: 20) { nodes { name enabled } }
+      }
+    }
+  }' -f login=<owner> -F number=<number>
+```
+
+Use `organization(login: …)` for an org owner. Expect `Item closed` to report
+`enabled: true`; `Pull request merged` is the matching default for PRs.
+
+Auto-add is the one step with no API. Either hand off the UI step (project menu
+→ Workflows → Auto-add to project → repository + filter `is:issue,pr` → Save
+and turn on workflow), or run headless with the PAT-backed workflow:
+
+```bash
+gh variable set PROJECT_OWNER --body "<owner>"
+gh variable set PROJECT_NUMBER --body "<number>"
+gh secret set PROJECT_TOKEN        # PAT: classic repo + project
+```
+
+Prove the loop before reporting success: create one issue, watch it appear in the
+project, close it, and confirm its Status is the done option. Auto-add is not
+retroactive — items created before the workflow was enabled never arrive by
+themselves.
+
+Full procedure: [features/14-github-project.md](./features/14-github-project.md).
 
 ---
 
@@ -218,6 +280,9 @@ gh repo view --json \
 git log --oneline | tail -1          # plan is the root commit
 git ls-files | grep -E '(^|/)\.env|\.sql$|acme\.json'   # must be empty
 ```
+
+When F14 is enabled, also record `gh project view <number> --owner <owner>
+--format json` (id, url) and the workflow states from section 4b.
 
 Record the result in `PLAN.md` with the date, the repository URL, and the topics
 count. A repository setup is not "done" until these commands have been run, not

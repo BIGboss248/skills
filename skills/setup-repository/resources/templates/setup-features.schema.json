@@ -1,11 +1,13 @@
 {
   "preset": "standard",
   "decided_at": "YYYY-MM-DD",
-  "enabled": ["F1", "F2", "F3", "F4", "F6", "F7", "F8"],
+  "enabled": ["F1", "F2", "F3", "F4", "F6", "F7", "F8", "F14", "F15"],
   "disabled": ["F5", "F9", "F13"],
   "degraded": {},
   "notes": {
     "F9": "deferred until a CI check exists",
-    "F13": "private repository without GitHub Code Security; workflow disabled"
+    "F13": "private repository without GitHub Code Security; workflow disabled",
+    "F14": "native auto-add (UI step, recorded [MANUAL]); done option: Done",
+    "F15": "CI badge on release-please.yml (test job); release badge renders no releases until the first tag"
   }
 }

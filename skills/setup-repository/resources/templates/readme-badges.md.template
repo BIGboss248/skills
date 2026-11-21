@@ -1,0 +1,23 @@
+<!--
+  F15 — README badges. Placement: directly under the H1, one blank line after
+  the title and before the first paragraph.
+  Replace OWNER, REPO, WORKFLOW_FILE and BRANCH with the values from
+  `gh repo view --json nameWithOwner,defaultBranchRef`.
+-->
+
+[![CI Validation](https://github.com/OWNER/REPO/actions/workflows/WORKFLOW_FILE/badge.svg?branch=BRANCH)](https://github.com/OWNER/REPO/actions/workflows/WORKFLOW_FILE)
+[![Latest release](https://img.shields.io/github/v/release/OWNER/REPO?sort=semver&display_name=tag)](https://github.com/OWNER/REPO/releases)
+
+<!--
+  Optional, only when asked for: license, runtime version, last commit.
+  [![License](https://img.shields.io/github/license/OWNER/REPO)](LICENSE)
+  [![Node](https://img.shields.io/badge/node-22.x-339933)](package.json)
+
+  CI badge alternative when the workflow's own name is too long for a badge.
+  Badge text otherwise comes from the workflow `name:` field.
+  [![CI Validation](https://img.shields.io/github/actions/workflow/status/OWNER/REPO/WORKFLOW_FILE?branch=BRANCH&label=CI%20Validation)](https://github.com/OWNER/REPO/actions/workflows/WORKFLOW_FILE)
+
+  Do not hardcode a version number: both URLs resolve at render time.
+  Never add a second copy of this block — re-running F15 merges, it does not
+  append.
+-->

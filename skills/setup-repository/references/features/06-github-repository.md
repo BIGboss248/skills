@@ -23,6 +23,8 @@ The repository needs a remote, metadata, topics, or its baseline documents.
    Omit `--license` / `--gitignore` when those files already exist.
 3. Apply metadata and topics:
    `gh repo edit <owner>/<repo> --enable-issues --enable-projects=false --enable-wiki=false --delete-branch-on-merge --template --add-topic ...`.
+   When F14 is enabled, pass `--enable-projects=true` instead: the board links
+   through that tab, and F14 would only turn it back on.
 4. Write the selected documents and fix their relative links.
 5. Verify with `gh repo view --json visibility,isTemplate,hasIssuesEnabled,hasWikiEnabled,deleteBranchOnMerge,repositoryTopics`.
 
@@ -35,6 +37,10 @@ The repository needs a remote, metadata, topics, or its baseline documents.
 ## Notes
 
 - Repository topics are not release tags. Tags come from F8.
+- Leave `README.md` without a badge block when F15 is selected; F15 inserts it
+  under the H1 and owns that section.
+- The Projects tab is off by default here. F14 re-enables it; keep
+  `--enable-projects=true` when both features are selected.
 - GitHub only reads issue/PR templates from the default branch; verify after the
   first push to `main`.
 - Full command reference: [github-repository-setup.md](../github-repository-setup.md).

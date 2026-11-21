@@ -1,0 +1,98 @@
+# Deployed by setup-repository F14 (headless mode) to .github/workflows/project-sync.yml
+#
+# Adds new issues and pull requests to a GitHub Project, and sets their Status to
+# the done option when they close.
+#
+# Required repository configuration, set by scripts/init_github_project.ps1:
+#   vars.PROJECT_OWNER     login that owns the project
+#   vars.PROJECT_NUMBER    project number (per owner, not global)
+#   secrets.PROJECT_TOKEN  PAT with the project scope, plus repo for private repos
+#
+# The built-in "Item closed" workflow does the same check-off inside the project
+# UI. This job exists so the loop also works when that workflow is off, and so
+# items created before the board existed still land in it.
+
+name: Project sync
+
+on:
+  issues:
+    types: [opened, reopened, transferred, closed]
+  pull_request:
+    types: [opened, reopened, closed]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+concurrency:
+  group: project-sync-${{ github.event.issue.number || github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+      PROJECT_OWNER: ${{ vars.PROJECT_OWNER }}
+      PROJECT_NUMBER: ${{ vars.PROJECT_NUMBER }}
+      ITEM_URL: ${{ github.event.issue.html_url || github.event.pull_request.html_url }}
+      ITEM_NODE: ${{ github.event.issue.node_id || github.event.pull_request.node_id }}
+      EVENT_ACTION: ${{ github.event.action }}
+      DONE_OPTION: Done
+    steps:
+      - name: Add the item to the project
+        if: env.EVENT_ACTION != 'closed'
+        run: |
+          set -euo pipefail
+          gh project item-add "$PROJECT_NUMBER" \
+            --owner "$PROJECT_OWNER" \
+            --url "$ITEM_URL"
+
+      - name: Check the item off
+        if: env.EVENT_ACTION == 'closed'
+        run: |
+          set -euo pipefail
+
+          project_id=$(gh project view "$PROJECT_NUMBER" \
+            --owner "$PROJECT_OWNER" --format json --jq .id)
+
+          status=$(gh project field-list "$PROJECT_NUMBER" \
+            --owner "$PROJECT_OWNER" --format json \
+            --jq '.fields[] | select(.name == "Status")')
+
+          field_id=$(echo "$status" | jq -r .id)
+          option_id=$(echo "$status" | jq -r --arg option "$DONE_OPTION" \
+            '.options[] | select(.name == $option) | .id')
+
+          if [ -z "$field_id" ] || [ "$field_id" = "null" ]; then
+            echo "::error::The project has no Status field; F14 needs a done option."
+            exit 1
+          fi
+          if [ -z "$option_id" ] || [ "$option_id" = "null" ]; then
+            echo "::error::The project Status field has no '$DONE_OPTION' option."
+            exit 1
+          fi
+
+          # The item may predate the board, or the auto-add workflow. Resolve it
+          # first: the close must work for items this job never saw.
+          item_id=$(gh api graphql -f query='
+            query($id: ID!) {
+              node(id: $id) {
+                ... on Issue { projectItems(first: 50) { nodes { id project { id } } } }
+                ... on PullRequest { projectItems(first: 50) { nodes { id project { id } } } }
+              }
+            }' -f id="$ITEM_NODE" \
+            --jq "[.data.node.projectItems.nodes[] | select(.project.id == \"$project_id\") | .id][0] // \"\"")
+
+          if [ -z "$item_id" ]; then
+            item_id=$(gh project item-add "$PROJECT_NUMBER" \
+              --owner "$PROJECT_OWNER" --url "$ITEM_URL" \
+              --format json --jq .id)
+          fi
+
+          gh project item-edit \
+            --id "$item_id" \
+            --project-id "$project_id" \
+            --field-id "$field_id" \
+            --single-select-option-id "$option_id"
