@@ -1,0 +1,128 @@
+import 'package:flutter/material.dart';
+
+/// Brand tokens, including the day and night hero plates.
+///
+/// The light theme registers the daylight asset, the dark theme the night
+/// asset. Widgets read [heroImageAsset] only, so no `build()` method branches
+/// on brightness.
+@immutable
+class AppBrandTokens extends ThemeExtension<AppBrandTokens> {
+  const AppBrandTokens({
+    required this.heroImageAsset,
+    required this.heroImageAssetAlternative,
+    required this.radiusMd,
+  });
+
+  /// Plate currently shown by the active theme.
+  final String heroImageAsset;
+
+  /// The other plate, used only for precaching during startup.
+  final String heroImageAssetAlternative;
+
+  final double radiusMd;
+
+  @override
+  AppBrandTokens copyWith({
+    String? heroImageAsset,
+    String? heroImageAssetAlternative,
+    double? radiusMd,
+  }) {
+    return AppBrandTokens(
+      heroImageAsset: heroImageAsset ?? this.heroImageAsset,
+      heroImageAssetAlternative:
+          heroImageAssetAlternative ?? this.heroImageAssetAlternative,
+      radiusMd: radiusMd ?? this.radiusMd,
+    );
+  }
+
+  @override
+  AppBrandTokens lerp(ThemeExtension<AppBrandTokens>? other, double t) => this;
+}
+
+/// Full-bleed backdrop that swaps its artwork when the theme changes.
+class ThemeAwareBackdrop extends StatelessWidget {
+  const ThemeAwareBackdrop({
+    required this.aspectRatio,
+    required this.semanticsLabel,
+    this.alignment = AlignmentDirectional.topCenter,
+    this.overlayStart = 0.55,
+    super.key,
+  });
+
+  /// Shared box for both plates. Never read the ratio from the image itself.
+  final double aspectRatio;
+
+  /// Localized description, or an empty string for a decorative plate.
+  final String semanticsLabel;
+
+  final AlignmentGeometry alignment;
+
+  /// Where the surface scrim starts, as a fraction of the box height.
+  final double overlayStart;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final tokens = theme.extension<AppBrandTokens>();
+    if (tokens == null) {
+      debugPrint(
+        'ThemeAwareBackdrop: AppBrandTokens missing from theme, '
+        'rendering a flat surface.',
+      );
+      return AspectRatio(
+        aspectRatio: aspectRatio,
+        child: ColoredBox(color: theme.colorScheme.surface),
+      );
+    }
+
+    final decorative = semanticsLabel.isEmpty;
+    final image = Image.asset(
+      tokens.heroImageAsset,
+      fit: BoxFit.cover,
+      alignment: alignment,
+      gaplessPlayback: true,
+      excludeFromSemantics: decorative,
+    );
+
+    return AspectRatio(
+      aspectRatio: aspectRatio,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(tokens.radiusMd),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            decorative
+                ? image
+                : Semantics(image: true, label: semanticsLabel, child: image),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  stops: [overlayStart, 1],
+                  colors: [
+                    theme.colorScheme.surface.withValues(alpha: 0),
+                    theme.colorScheme.surface,
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Precache both plates during startup so the first theme switch has no blank
+/// frame. Call from the bootstrap screen, not from `build()`.
+Future<void> precacheThemePlates(BuildContext context) async {
+  final tokens = Theme.of(context).extension<AppBrandTokens>();
+  if (tokens == null) return;
+  for (final asset in [
+    tokens.heroImageAsset,
+    tokens.heroImageAssetAlternative,
+  ]) {
+    await precacheImage(AssetImage(asset), context);
+  }
+}

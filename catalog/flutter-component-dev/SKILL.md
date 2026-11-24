@@ -71,6 +71,23 @@ Apply only when a desktop platform is targeted:
 - Log operation boundaries, never every statement, and never from `build()`.
 - Details: [component logging](./references/component-logging.md).
 
+## 7. Design concepts
+
+Pre-approved visual patterns a screen can adopt. Each one is a complete recipe
+with the rules that keep it correct.
+
+| Concept | What it gives a screen | Recipe |
+| :--- | :--- | :--- |
+| **Theme-aware imagery** | One scene rendered twice (daylight plate in light theme, night plate in dark), swapped by the theme | [day/night imagery](./references/theme-aware-imagery.md) · [template](./resources/templates/theme_aware_image.dart.template) |
+
+- Both asset paths come from the theme extension the light and dark themes
+  register; `build()` never branches on `Theme.of(context).brightness`.
+- Both plates fill one fixed aspect ratio so the switch moves nothing.
+- `gaplessPlayback: true`, and precache both plates at startup when the hero is
+  large.
+- Only lighting differs between plates; the scrim comes from
+  `colorScheme.surface`, never a literal color.
+
 ## Definition of Done
 
 - [ ] No I/O in `build()`; state comes from the declared library.
@@ -78,6 +95,7 @@ Apply only when a desktop platform is targeted:
 - [ ] Loading, data, and failure states all render.
 - [ ] Every string resolves from an ARB catalog in every locale.
 - [ ] Directional layout uses directional APIs.
+- [ ] Theme-swapped art resolves from a theme token, not a `brightness` branch.
 - [ ] Desktop affordances exist when desktop is a target.
 - [ ] Controllers, focus nodes, and subscriptions are disposed.
 - [ ] No test was authored here; `tdd` owns tests.
@@ -100,5 +118,7 @@ Apply only when a desktop platform is targeted:
 - [Component logging](./references/component-logging.md)
 - [Desktop ergonomics](./references/desktop-ergonomics.md)
 - [Theme and tokens](./references/theme-and-tokens.md)
+- [Theme-aware imagery (day/night artwork)](./references/theme-aware-imagery.md)
 - [Localization and RTL](./references/l10n-and-rtl.md)
 - [Logger template](./resources/templates/component_logger.dart.template)
+- [Theme-aware image template](./resources/templates/theme_aware_image.dart.template)

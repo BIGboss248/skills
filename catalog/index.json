@@ -25,15 +25,17 @@
     },
     {
       "name": "flutter-component-dev",
-      "version": "9117a98a5866",
+      "version": "39924b6a211a",
       "files": [
         "references/component-logging.md",
         "references/desktop-ergonomics.md",
         "references/l10n-and-rtl.md",
         "references/reference.md",
         "references/theme-and-tokens.md",
+        "references/theme-aware-imagery.md",
         "resources/templates/component_logger.dart.template",
         "resources/templates/config.template.json",
+        "resources/templates/theme_aware_image.dart.template",
         "SKILL.md"
       ]
     },
@@ -168,7 +170,7 @@
     },
     {
       "name": "nextjs-component-dev",
-      "version": "32d195ae045c",
+      "version": "ce620cd19379",
       "files": [
         "examples/cached-data-component/actions.ts",
         "examples/cached-data-component/product-cache.ts",
@@ -179,12 +181,15 @@
         "examples/tanstack-product/ProductCard.stories.tsx",
         "examples/tanstack-product/ProductCard.tsx",
         "examples/tanstack-product/ProductSection.tsx",
+        "examples/theme-aware-hero/hero.tsx",
+        "examples/theme-aware-hero/theme_hero_backdrop.tsx",
         "references/caching-and-revalidation.md",
         "references/form-server-actions.md",
         "references/instant-navigation-and-prefetching.md",
         "references/next-devtools-debugging.md",
         "references/nextjs-docs-lookup.md",
         "references/rsc-and-state-boundaries.md",
+        "references/theme-aware-imagery.md",
         "references/token-verification-matrix.md",
         "resources/templates/component.template.tsx",
         "resources/templates/form-component.template.tsx",

@@ -114,12 +114,31 @@ lazy import, or a browser-API gate.
 - Mutations snapshot on `onMutate`, roll back on `onError`, invalidate by tag.
 - Forms and Server Actions: [form guide](./references/form-server-actions.md).
 
+## 8. Design concepts
+
+Pre-approved visual patterns a section can adopt. Each one is a complete recipe,
+not a mood board, and each one carries rules that keep it fast.
+
+| Concept | What it gives a section | Recipe |
+| :--- | :--- | :--- |
+| **Theme-aware imagery** | One scene rendered twice (daylight plate in light theme, night plate in dark), swapped by the `.dark` class | [day/night imagery](./references/theme-aware-imagery.md) · [example](./examples/theme-aware-hero/) |
+
+- Both plates ship server-rendered in one positioned box; the switch is CSS, so
+  no `useTheme()` branch, no hydration flash, zero CLS.
+- Exactly one plate carries `priority`; the other gets `loading="lazy"` and
+  `fetchPriority="low"`.
+- Both plates share camera, crop, and negative space; only lighting differs.
+- Pair it with the `class` dark strategy and token-based scrims, never a
+  hardcoded overlay.
+
 ## Definition of Done
 
 - [ ] The file sits in the surface folder that actually renders it.
 - [ ] The skeleton verdict is recorded, and the artifact matches it.
 - [ ] Every string resolves from a dictionary in every supported locale.
 - [ ] No hardcoded color, physical direction, or unmerged class string.
+- [ ] Theme-swapped art shares one box and one `priority`, or the concept was
+  not used.
 - [ ] No test was authored here; `tdd` owns tests.
 - [ ] Type checking and the targeted checks pass.
 
@@ -142,6 +161,7 @@ lazy import, or a browser-API gate.
 ## References
 
 - [RSC and state boundaries](./references/rsc-and-state-boundaries.md)
+- [Theme-aware imagery (day/night artwork)](./references/theme-aware-imagery.md)
 - [Instant navigation and prefetching](./references/instant-navigation-and-prefetching.md)
 - [Caching and revalidation](./references/caching-and-revalidation.md)
 - [Forms and Server Actions](./references/form-server-actions.md)
