@@ -382,6 +382,13 @@
       ]
     },
     {
+      "name": "plain-output",
+      "version": "d9516c381683",
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
       "name": "rest-api-design",
       "version": "7a9ab11a780f",
       "files": [
@@ -483,7 +490,7 @@
     },
     {
       "name": "skill-creator",
-      "version": "8c8a0a4004a9",
+      "version": "6f83264b0632",
       "files": [
         "references/adaptive-discovery-rounds.md",
         "references/evals-and-verification.md",

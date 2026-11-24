@@ -1,0 +1,53 @@
+{
+  "metadata": {
+    "description": "Skill categories for the Obsidian knowledge vault. The skills CLI uses these plugin names as group headings in the `npx skills add` picker."
+  },
+  "plugins": [
+    {
+      "name": "flutter",
+      "description": "Flutter architecture, widgets, themes, localization, observability, and Windows desktop packaging.",
+      "skills": [
+        "./skills/flutter/flutter-app-arch",
+        "./skills/flutter/flutter-component-dev",
+        "./skills/flutter/flutter-dev-setup",
+        "./skills/flutter/flutter-observability",
+        "./skills/flutter/flutter-setup-localization",
+        "./skills/flutter/flutter-spec",
+        "./skills/flutter/flutter-theme",
+        "./skills/flutter/flutter-windows-desktop"
+      ]
+    },
+    {
+      "name": "nextjs",
+      "description": "Next.js App Router pages, components, API handlers, Storybook, i18n, health probes, and OpenTelemetry.",
+      "skills": [
+        "./skills/nextjs/nextjs-api",
+        "./skills/nextjs/nextjs-component-dev",
+        "./skills/nextjs/nextjs-dev-setup",
+        "./skills/nextjs/nextjs-health-probe",
+        "./skills/nextjs/nextjs-i18n-usage",
+        "./skills/nextjs/nextjs-opentelemetry",
+        "./skills/nextjs/nextjs-page-dev",
+        "./skills/nextjs/nextjs-project-scaffold",
+        "./skills/nextjs/nextjs-spec",
+        "./skills/nextjs/nextjs-storybook-story"
+      ]
+    },
+    {
+      "name": "general",
+      "description": "Cross-stack work: repository setup, branches and worktrees, API contracts, SEO checks, skill authoring, and self-repair.",
+      "skills": [
+        "./skills/general/ag-customizer",
+        "./skills/general/git-worktree-isolation",
+        "./skills/general/headless-woocommerce-api",
+        "./skills/general/plain-output",
+        "./skills/general/rest-api-design",
+        "./skills/general/self-repair",
+        "./skills/general/seo-ops",
+        "./skills/general/setup-repository",
+        "./skills/general/skill-creator",
+        "./skills/general/stitch-design"
+      ]
+    }
+  ]
+}

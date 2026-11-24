@@ -88,11 +88,11 @@ Run the platform-appropriate script to generate the folder boilerplate:
 
 - **Windows (PowerShell)**:
   ```powershell
-  powershell -ExecutionPolicy Bypass -File skills/skill-creator/scripts/scaffold_skill.ps1 -Name "<skill-name>" -Description "<skill-description>"
+  powershell -ExecutionPolicy Bypass -File skills/general/skill-creator/scripts/scaffold_skill.ps1 -Name "<skill-name>" -Description "<skill-description>" -TargetDir "skills/<category>"
   ```
 - **Linux / macOS (Bash)**:
   ```bash
-  bash skills/skill-creator/scripts/scaffold_skill.sh -n "<skill-name>" -d "<skill-description>"
+  bash skills/general/skill-creator/scripts/scaffold_skill.sh -n "<skill-name>" -d "<skill-description>" -t "skills/<category>"
   ```
 
 ---
@@ -174,11 +174,11 @@ Verify naming rules, YAML frontmatter, and file paths:
 
 - **Windows**:
   ```powershell
-  powershell -ExecutionPolicy Bypass -File skills/skill-creator/scripts/scaffold_skill.ps1 -Validate "skills/<skill-name>"
+  powershell -ExecutionPolicy Bypass -File skills/general/skill-creator/scripts/scaffold_skill.ps1 -Validate "skills/<category>/<skill-name>"
   ```
 - **Linux / macOS**:
   ```bash
-  bash skills/skill-creator/scripts/scaffold_skill.sh -v "skills/<skill-name>"
+  bash skills/general/skill-creator/scripts/scaffold_skill.sh -v "skills/<category>/<skill-name>"
   ```
 
 ### 2. Self-Correction & Verification Loops

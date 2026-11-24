@@ -3,6 +3,23 @@
 One owner per job. A local skill defines what a correct artifact is; the
 planning skills decide what to build, in what order, and whether it is done.
 
+## Folder categories
+
+#agent #skills #organization
+
+Skills live in `skills/<category>/<skill>/SKILL.md`. Three categories, listed in
+`.claude-plugin/marketplace.json` so `npx skills add` shows them as group
+headings: `flutter`, `nextjs`, and `general`. The manifest supplies the headings
+because the CLI never derives them from folder names, and installed skills land
+flat in `.agents/skills/<skill>`. See [[AI Skills and MCP Servers]] for the
+skills hub note.
+
+| Category | Skills |
+| :--- | :--- |
+| `flutter` | `flutter-app-arch`, `flutter-component-dev`, `flutter-dev-setup`, `flutter-observability`, `flutter-setup-localization`, `flutter-spec`, `flutter-theme`, `flutter-windows-desktop` |
+| `nextjs` | `nextjs-api`, `nextjs-component-dev`, `nextjs-dev-setup`, `nextjs-health-probe`, `nextjs-i18n-usage`, `nextjs-opentelemetry`, `nextjs-page-dev`, `nextjs-project-scaffold`, `nextjs-spec`, `nextjs-storybook-story` |
+| `general` | `ag-customizer`, `git-worktree-isolation`, `headless-woocommerce-api`, `plain-output`, `rest-api-design`, `self-repair`, `seo-ops`, `setup-repository`, `skill-creator`, `stitch-design` |
+
 ## Who owns what
 
 | Job | Owner | Kind |
@@ -23,6 +40,7 @@ planning skills decide what to build, in what order, and whether it is done.
 | Branch, worktree, approval, merge | `git-worktree-isolation` | local |
 | Durable project rules | `self-repair` | local |
 | Skill authoring | `skill-creator` | local |
+| Reply style | `plain-output` | local |
 | Visual prototyping | `stitch-design` | local |
 | Cross-stack API contract | `rest-api-design` | local |
 
