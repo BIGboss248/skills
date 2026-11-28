@@ -1,8 +1,6 @@
 ---
 name: plain-output
 description: Plain, short output for every reply.
-metadata:
-  opencode/autoinvoke: false
 ---
 
 # Plain Output
