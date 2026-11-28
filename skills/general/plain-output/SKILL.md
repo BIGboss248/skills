@@ -1,11 +1,8 @@
 ---
 name: plain-output
-description: >-
-  Plain, short output for every reply. ALWAYS invoke this skill on every user
-  message, with no exception: greetings, single-line answers, fix reports, code
-  reviews, plans, and explanations. Answer first, explain jargon by what it
-  causes instead of naming it, use headings and lists instead of paragraphs, and
-  put code in fenced blocks. Never wait for the user to ask for a style.
+description: Plain, short output for every reply.
+metadata:
+  opencode/autoinvoke: false
 ---
 
 # Plain Output
